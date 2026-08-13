@@ -9,9 +9,9 @@ This code expires in 15 minutes. If you didn't request it, you can safely ignore
 
 {{#actionUrl}}Verify now: {{actionUrl}}{{/actionUrl}}
 
-Need help? Contact support@crosscartglobal.com or call +8801622541719
+Need help? Contact support@crosscartbd.com or call +8801410144466
 
 --
-CROSSCART GLOBAL INTERNATIONAL EXPRESS
-1 Eagle St, Dhaka, Bangladesh
-(c) {{year}} CrossCart Global International Express. All rights reserved.
+CROSS CART GLOBAL INTERNATIONAL EXPRESS
+Warehouse No.1, Bhined SKS Tower, Mohakhali, Dhaka 1206, Bangladesh
+(c) {{year}} Cross Cart Global International Express. All rights reserved.
