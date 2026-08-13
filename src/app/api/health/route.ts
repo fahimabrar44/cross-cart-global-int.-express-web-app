@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     try {
       await connectDB();
       dbStatus = "connected";
-    } catch (dbError) {
+    } catch {
       dbStatus = "error";
     }
 

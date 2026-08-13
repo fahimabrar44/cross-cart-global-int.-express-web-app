@@ -211,7 +211,6 @@ const apiConfigSchema = new Schema<IApiConfig>(
 
 // Indexes for performance and security
 apiConfigSchema.index({ user: 1, isActive: 1 });
-apiConfigSchema.index({ apiKey: 1 }, { unique: true });
 apiConfigSchema.index({ expiresAt: 1 }, { 
   sparse: true, 
   expireAfterSeconds: 0 // Auto-delete expired configs

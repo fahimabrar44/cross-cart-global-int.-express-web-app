@@ -12,11 +12,9 @@ interface RoleGuardProps {
   fallbackRoute?: string;
 }
 
-export function RoleGuard({ children, allowedRoles, fallbackRoute = "/" }: RoleGuardProps) {
+export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
-  console.log(user, isAuthenticated);
-  
 
   useEffect(() => {
     if (!loading) {
@@ -30,6 +28,7 @@ export function RoleGuard({ children, allowedRoles, fallbackRoute = "/" }: RoleG
         return;
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {

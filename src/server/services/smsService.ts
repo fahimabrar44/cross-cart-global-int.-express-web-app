@@ -87,7 +87,6 @@ export async function sendSms(options: SmsOptions): Promise<{
       return { success: !result.error };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (provider === "twilio") {
       return {
         success: false,

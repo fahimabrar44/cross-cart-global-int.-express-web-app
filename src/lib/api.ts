@@ -1,4 +1,4 @@
-import { ApiResponse, PaginatedResponse } from "@/types";
+import { ApiResponse } from "@/types";
 
 // Base API configuration
 export const API_BASE_URL = typeof window !== "undefined" 
@@ -227,7 +227,7 @@ export async function uploadFile(
         try {
           const response = JSON.parse(xhr.responseText);
           resolve(response);
-        } catch (error) {
+        } catch {
           reject(new ApiError('Invalid JSON response', xhr.status));
         }
       } else {

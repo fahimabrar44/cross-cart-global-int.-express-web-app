@@ -28,7 +28,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 // Types
 interface HealthData {
@@ -263,7 +263,7 @@ export function DashboardOverview() {
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  const fetchHealthData = async () => {
+  const fetchHealthData = useCallback(async () => {
     try {
       const response = await fetch("/api/health");
       const data = await response.json();
@@ -274,9 +274,9 @@ export function DashboardOverview() {
       console.error("Failed to fetch health data:", error);
       setHealth(null);
     }
-  };
+  }, []);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       const response = await fetch("/api/v1/analytics?days=30", {
         headers: {
@@ -291,14 +291,14 @@ export function DashboardOverview() {
     } catch (error) {
       console.error("Failed to fetch analytics:", error);
     }
-  };
+  }, []);
 
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     setLoading(true);
     await Promise.all([fetchHealthData(), fetchAnalytics()]);
     setLastRefresh(new Date());
     setLoading(false);
-  };
+  }, [fetchHealthData, fetchAnalytics]);
 
   useEffect(() => {
     refreshData();
@@ -306,7 +306,7 @@ export function DashboardOverview() {
     // Auto refresh every 30 seconds
     const interval = setInterval(refreshData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [refreshData]);
 
   // Calculate derived metrics
   const totalOrders = analytics?.ordersSummary?.totalOrders?.[0]?.count || 0;

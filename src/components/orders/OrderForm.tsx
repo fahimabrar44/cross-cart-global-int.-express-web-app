@@ -29,7 +29,7 @@ import { countryService } from "@/services/countryService";
 import { CreateOrderData, Order } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 const addressSchema = z.object({
@@ -90,8 +90,6 @@ export function OrderForm({
   onCancel,
   loading = false,
 }: OrderFormProps) {
-  const [addItems, setAddItems] = useState(false);
-  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [countries, setCountries] = useState<any[]>([]);
 
@@ -170,11 +168,6 @@ export function OrderForm({
     };
     loadCountries();
   }, []);
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "parcel.item",
-  });
 
   const handleSubmit = (data: OrderFormData) => {
     // Calculate total prices for items

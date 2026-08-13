@@ -14,7 +14,7 @@ type GetQuery = {
 };
 
 // GET: List contacts (moderator/admin only)
-export const GET = createModeratorHandler(async ({ req, user }) => {
+export const GET = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 

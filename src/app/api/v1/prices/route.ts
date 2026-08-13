@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export const POST = createModeratorHandler(async ({ req, user }) => {
+export const POST = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

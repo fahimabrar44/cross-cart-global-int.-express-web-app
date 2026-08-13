@@ -40,7 +40,6 @@ export default function BlogsPage() {
     register,
     handleSubmit,
     setValue,
-    watch,
     reset,
     formState: { errors },
   } = useForm<BlogFormData>({

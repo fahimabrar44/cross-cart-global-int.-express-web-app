@@ -4,7 +4,7 @@ import { errorResponse, successResponse } from "@/server/common/response";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { Offer } from "@/server/models/Offer.model";
 
-export const GET = createModeratorHandler(async ({ req, user }) => {
+export const GET = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
     // Parse filters from query params

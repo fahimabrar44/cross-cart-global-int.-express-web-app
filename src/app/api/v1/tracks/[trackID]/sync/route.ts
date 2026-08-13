@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import connectDB from "@/config/db";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { successResponse, errorResponse } from "@/server/common/response";

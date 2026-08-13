@@ -7,7 +7,7 @@ import { createModeratorHandler } from "@/server/common/apiWrapper";
 // =========================
 // POST - Create Blog
 // =========================
-export const POST = createModeratorHandler(async ({ req, user }) => {
+export const POST = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
     const body = await req.json();

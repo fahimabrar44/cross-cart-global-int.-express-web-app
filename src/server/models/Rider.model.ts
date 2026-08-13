@@ -47,6 +47,5 @@ const riderSchema = new Schema<IRider>(
 
 riderSchema.index({ status: 1, branch: 1 });
 riderSchema.index({ zones: 1 });
-riderSchema.index({ phone: 1 }, { unique: true });
 
 export const Rider = models.Rider || model<IRider>("Rider", riderSchema);

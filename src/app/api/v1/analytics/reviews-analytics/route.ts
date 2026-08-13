@@ -12,7 +12,7 @@ import { createModeratorHandler } from "@/server/common/apiWrapper";
  *  - featured=true|false
  *  - limit=<number> (for top helpful reviews)
  */
-export const GET = createModeratorHandler(async ({ req, user }) => {
+export const GET = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
     const url = new URL(req.url);

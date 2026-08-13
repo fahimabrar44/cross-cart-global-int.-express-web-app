@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export const POST = createAuthHandler(async ({ req, user }) => {
+export const POST = createAuthHandler(async ({ req }) => {
   try {
     await connectDB();
     

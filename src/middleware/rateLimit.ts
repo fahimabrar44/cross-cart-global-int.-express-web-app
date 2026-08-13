@@ -57,7 +57,6 @@ export class RateLimiter {
 
     const key = this.config.keyGenerator(req);
     const now = Date.now();
-    const windowStart = now;
     const windowEnd = now + this.config.windowMs;
 
     let rateLimitData = rateLimitStore.get(key);

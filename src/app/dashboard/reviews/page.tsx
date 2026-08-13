@@ -14,7 +14,7 @@ import { RoleGuard } from "@/middleware/roleGuard";
 import { ContentService } from "@/services/dashboardService";
 import { CheckCircle, Clock, Star, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 function ReviewsContent() {
@@ -26,11 +26,7 @@ function ReviewsContent() {
   const searchParams = useSearchParams();
   const statusFilter = searchParams.get("status");
 
-  useEffect(() => {
-    fetchReviews();
-  }, [statusFilter]);
-
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       setLoading(true);{/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
       const params: any = { limit: 50 };
@@ -58,7 +54,11 @@ function ReviewsContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 {/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
   const handleView = (review: any) => {
     setSelectedReview(review);

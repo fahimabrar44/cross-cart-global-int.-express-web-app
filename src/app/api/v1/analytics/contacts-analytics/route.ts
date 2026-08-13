@@ -4,7 +4,7 @@ import { errorResponse, successResponse } from "@/server/common/response";
 import { Contact } from "@/server/models/Contact.model";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 
-export const GET = createModeratorHandler(async ({ req, user }) => {
+export const GET = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
     // 1️⃣ Status Breakdown

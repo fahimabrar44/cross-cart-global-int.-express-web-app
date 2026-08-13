@@ -1,4 +1,4 @@
-import { Document, Schema, Types, model, models } from "mongoose";
+import { Document, Schema, model, models } from "mongoose";
 
 const coverageZoneSchema = new Schema(
   {
@@ -50,6 +50,5 @@ const branchSchema = new Schema<IBranch>(
 );
 
 branchSchema.index({ city: 1, isActive: 1 });
-branchSchema.index({ code: 1 }, { unique: true });
 
 export const Branch = models.Branch || model<IBranch>("Branch", branchSchema);

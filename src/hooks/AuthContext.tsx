@@ -91,6 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     initializeAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto refresh token when it's close to expiry
@@ -102,6 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, accessToken]);
 
   // Helper function to check if token is valid

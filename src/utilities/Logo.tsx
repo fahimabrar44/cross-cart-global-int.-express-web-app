@@ -8,7 +8,7 @@ interface LogoProps {
   height?: number;
 }
 
-const Logo: React.FC<LogoProps> = ({isFooter = false, width, height}) => {
+const Logo: React.FC<LogoProps> = ({width, height}) => {
   const imgWidth = width ?? 160;
   const imgHeight = height ?? 75;
   return (

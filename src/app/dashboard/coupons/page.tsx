@@ -57,7 +57,6 @@ export default function CouponsPage() {
 
   useEffect(() => {
     fetchCoupons();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const generateCode = () => {
@@ -148,11 +147,7 @@ export default function CouponsPage() {
     }
   };
 
-  const usageLeft = (coupon: Coupon) =>
-    coupon.usageLimit > 0 ? Math.max(0, coupon.usageLimit - (coupon.usedCount || 0)) : Infinity;
-
-  return (
-    <RoleGuard allowedRoles={["admin", "moderator"]}>
+  return (    <RoleGuard allowedRoles={["admin", "moderator"]}>
       <div className="space-y-6" data-testid="coupons-page">
         <div className="flex items-center justify-between">
           <div>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/AuthContext";
 import { AlertCircle, Bell, CheckCircle, Info, Settings } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface Notification {
   _id: string;
@@ -28,11 +28,7 @@ export function NotificationPanel() {
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchNotifications();
-  }, [filter]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -69,7 +65,11 @@ export function NotificationPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, filter]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const markAsRead = async (notificationIds: string[]) => {
     if (!user) return;

@@ -1,5 +1,5 @@
 import { api, withPagination, PaginationParams } from "@/lib/api";
-import { Order, ApiResponse, PaginatedResponse } from "@/types";
+import { Order, ApiResponse } from "@/types";
 
 export interface OrderFilters extends PaginationParams {
   trackId?: string;

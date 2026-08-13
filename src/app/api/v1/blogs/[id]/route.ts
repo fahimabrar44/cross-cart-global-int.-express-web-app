@@ -48,7 +48,7 @@ export async function GET(
 // ==========================
 // PUT - update blog
 // ==========================
-export const PUT = createModeratorHandler(async ({ req, user }) => {
+export const PUT = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 
@@ -80,7 +80,7 @@ export const PUT = createModeratorHandler(async ({ req, user }) => {
 // ==========================
 // DELETE - remove blog
 // ==========================
-export const DELETE = createModeratorHandler(async ({ req, user }) => {
+export const DELETE = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 

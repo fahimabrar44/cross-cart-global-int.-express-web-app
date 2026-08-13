@@ -1,13 +1,9 @@
 import connectDB from "@/config/db";
-import { createAuthHandler, createModeratorHandler, createAdminHandler } from "@/server/common/apiWrapper";
+import { createAuthHandler, createAdminHandler } from "@/server/common/apiWrapper";
 import { errorResponse, successResponse } from "@/server/common/response";
 import { Order } from "@/server/models/Order.model";
 import { syncOrderToTrack } from "@/server/services/trackingService";
 import { Types } from "mongoose";
-
-interface Params {
-  id: string;
-}
 
 // GET: Users can view their own orders, Admin/Moderator can view all
 export const GET = createAuthHandler(async ({ req, user }) => {

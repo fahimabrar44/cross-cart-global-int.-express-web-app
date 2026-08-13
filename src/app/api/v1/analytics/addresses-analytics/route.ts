@@ -3,7 +3,7 @@ import { errorResponse, successResponse } from "@/server/common/response";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { Address } from "@/server/models/Address.model";
 
-export const GET = createModeratorHandler(async ({ req, user }) => {
+export const GET = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 

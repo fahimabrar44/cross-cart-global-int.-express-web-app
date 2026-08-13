@@ -1,5 +1,6 @@
 ﻿import PageHeader from "@/utilities/PageHeader";
 import { Calculator, Clock, DollarSign, Globe } from "lucide-react";
+import Image from "next/image";
 
 const CalculateShippingCharge = () => {
   const carriers = [
@@ -186,10 +187,12 @@ const CalculateShippingCharge = () => {
                 key={index}
                 className="bg-section rounded-lg p-6 text-center hover:shadow-lg transition-shadow"
               >
-                <img
+                <Image
                   src={carrier.logo}
                   alt={carrier.name}
-                  className="h-12 mx-auto mb-4 object-contain"
+                  width={48}
+                  height={48}
+                  className="h-12 w-auto mx-auto mb-4 object-contain"
                 />
                 <h3 className="font-semibold text-[#12352A] mb-2">
                   {carrier.name}

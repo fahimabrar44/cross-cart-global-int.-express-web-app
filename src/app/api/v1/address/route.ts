@@ -6,7 +6,7 @@ import { User } from "@/server/models/User.model";
 import { Types } from "mongoose";
 
 // GET all addresses (with optional query userId / phone)
-export const GET = createModeratorHandler(async ({ req, user }) => {
+export const GET = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 
@@ -31,7 +31,7 @@ export const GET = createModeratorHandler(async ({ req, user }) => {
 });
 
 // POST create new address for a user
-export const POST = createModeratorHandler(async ({ req, user }) => {
+export const POST = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 

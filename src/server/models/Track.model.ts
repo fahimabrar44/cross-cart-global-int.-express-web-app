@@ -82,7 +82,6 @@ trackSchema.pre("validate", async function (next) {
   next();
 });
 
-trackSchema.index({ trackId: 1 });
 trackSchema.index({ currentStatus: 1 });
 
 // Export Track Model

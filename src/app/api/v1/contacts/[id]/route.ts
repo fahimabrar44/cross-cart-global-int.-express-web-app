@@ -10,7 +10,7 @@ const extractId = (req: Request): string => {
 };
 
 // GET: Single contact
-export const GET = createModeratorHandler(async ({ req, user }) => {
+export const GET = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 

@@ -29,7 +29,6 @@ export const createOrderColumns = ({
   onView,
   onEdit,
   onDelete,
-  onUpdateStatus,
 }: OrderColumnsProps): ColumnDef<Order>[] => [
   {
     id: "select",

@@ -46,7 +46,7 @@ export async function GET(
 /**
  * PUT - update a country by ID
  */
-export const PUT = createModeratorHandler(async ({ req, user }) => {
+export const PUT = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 
@@ -86,7 +86,7 @@ export const PUT = createModeratorHandler(async ({ req, user }) => {
 /**
  * PATCH - update a country by ID
  */
-export const PATCH = createModeratorHandler(async ({ req, user }) => {
+export const PATCH = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 
@@ -127,7 +127,7 @@ export const PATCH = createModeratorHandler(async ({ req, user }) => {
 /**
  * DELETE - remove a country by ID
  */
-export const DELETE = createModeratorHandler(async ({ req, user }) => {
+export const DELETE = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 

@@ -438,7 +438,7 @@ const CreateShipment = () => {
       } else {
         setError(response.message || "Failed to create shipment");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to create shipment. Please try again.");
     } finally {
       setLoading(false);

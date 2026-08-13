@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/AuthContext";
 import { RoleGuard } from "@/middleware/roleGuard";
 import { UserService } from "@/services/dashboardService";
 import { Bell, MapPin, Save, Settings, Shield, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -61,20 +61,7 @@ export default function SettingsPage() {
     },
   });
 
-  useEffect(() => {
-    if (user) {
-      setValue("name", user.name);
-      setValue("email", user.email);
-      setValue("phone", user.phone);
-
-      // Load user-specific settings
-      if (user.phone) {
-        fetchUserAddresses();
-      }
-    }
-  }, [user]);
-
-  const fetchUserAddresses = async () => {
+  const fetchUserAddresses = useCallback(async () => {
     try {
       if (!user?.phone) return;
 
@@ -87,7 +74,20 @@ export default function SettingsPage() {
     } catch (error) {
       console.error("Failed to fetch addresses:", error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      setValue("name", user.name);
+      setValue("email", user.email);
+      setValue("phone", user.phone);
+
+      // Load user-specific settings
+      if (user.phone) {
+        fetchUserAddresses();
+      }
+    }
+  }, [user, setValue, fetchUserAddresses]);
 
   const onSubmitProfile = async (data: ProfileFormData) => {
     try {
@@ -138,7 +138,7 @@ export default function SettingsPage() {
           toast.error("Failed to update settings");
         }
       }
-    } catch (error) {
+    } catch {
       setNotificationSettings(notificationSettings);
       toast.error("An error occurred");
     }
@@ -168,7 +168,7 @@ export default function SettingsPage() {
           toast.error("Failed to update settings");
         }
       }
-    } catch (error) {
+    } catch {
       setPrivacySettings(privacySettings);
       toast.error("An error occurred");
     }

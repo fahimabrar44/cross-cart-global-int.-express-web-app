@@ -56,7 +56,6 @@ export default function OffersPage() {
 
   useEffect(() => {
     fetchOffers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreate = async () => {

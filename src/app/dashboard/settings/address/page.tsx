@@ -17,7 +17,7 @@ import {
   Plus,
   Star
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function UserAddressesPage() {
@@ -34,7 +34,7 @@ export default function UserAddressesPage() {
   const [selectedAddress, setSelectedAddress] = useState<UserAddress | null>(null);
 
   // Load user addresses
-  const loadAddresses = async () => {
+  const loadAddresses = useCallback(async () => {
     if (!user?.phone) return;
     
     try {
@@ -50,11 +50,11 @@ export default function UserAddressesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     loadAddresses();
-  }, []);
+  }, [loadAddresses]);
 
   // CRUD handlers
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -171,7 +171,6 @@ export default function UserAddressesPage() {
   });
 
   const defaultAddress = addresses.find(addr => addr.isDefault);
-  const nonDefaultAddresses = addresses.filter(addr => !addr.isDefault);
 
   if (!user) return null;
 

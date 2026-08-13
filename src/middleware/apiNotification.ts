@@ -183,7 +183,7 @@ export class ApiNotificationMiddleware {
   private static async sendActivityEmail(data: ApiActivityData): Promise<void> {
     if (!data.user) return;
 
-    const { method, endpoint, success, statusCode } = data;
+    const { method, endpoint, success } = data;
 
     // Only send emails for important activities
     const emailableActivities = [

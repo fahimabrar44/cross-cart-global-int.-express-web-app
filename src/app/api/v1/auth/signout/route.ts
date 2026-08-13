@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     let verified: string | JwtPayload;
     try {
       verified = jwt.verify(token, secret) as string | JwtPayload;
-    } catch (error) {
+    } catch {
       await LoginHistory.create({
         phone: "unknown",
         ipAddress: getIp(),

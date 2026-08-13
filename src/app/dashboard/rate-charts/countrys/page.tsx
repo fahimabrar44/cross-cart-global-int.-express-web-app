@@ -32,7 +32,7 @@ import { useAuth } from "@/hooks/AuthContext";
 import { CountryFilters, countryService } from "@/services/countryService";
 import { Country, hasPermission } from "@/types";
 import { DollarSign, Globe, Loader2, MapPin, TrendingUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface CountryStats {
@@ -71,8 +71,8 @@ export default function CountriesPage() {
     totalPages: 0,
   });
 
-  // Load countries and stats
-  const loadCountries = async () => {
+// Load countries and stats
+  const loadCountries = useCallback(async () => {
     try {
       setLoading(true);
       const response = await countryService.getCountries(filters);
@@ -96,9 +96,9 @@ export default function CountriesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const response = await countryService.getCountryStats();
       if (response.status == 200 && response.data) {
@@ -107,14 +107,15 @@ export default function CountriesPage() {
     } catch (error) {
       console.error("Failed to load stats:", error);
     }
-  };
+
+  }, []);
 
   useEffect(() => {
     loadCountries();
     if (user?.role === "admin" || user?.role === "moderator") {
       loadStats();
     }
-  }, [filters, user?.role]);
+  }, [filters, user?.role, loadCountries, loadStats]);
 
   // CRUD handlers
   {/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}

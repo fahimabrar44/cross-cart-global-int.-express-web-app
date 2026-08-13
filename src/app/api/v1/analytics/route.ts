@@ -31,12 +31,6 @@ export const GET = createModeratorHandler(async ({ req, user }) => {
     const pastNDays = new Date();
     pastNDays.setDate(now.getDate() - days + 1);
 
-    const pastNMonths = new Date(
-      now.getFullYear(),
-      now.getMonth() - months + 1,
-      1
-    );
-
     let startDate: Date | null = null;
     let endDate: Date | null = null;
     if (startDateParam) startDate = new Date(startDateParam);

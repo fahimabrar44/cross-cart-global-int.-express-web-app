@@ -47,7 +47,6 @@ const couponSchema = new Schema<ICoupon>(
   { timestamps: true }
 );
 
-couponSchema.index({ code: 1 }, { unique: true });
 couponSchema.index({ validUntil: 1, isActive: 1 });
 couponSchema.index({ appliesTo: 1 });
 

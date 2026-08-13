@@ -38,7 +38,7 @@ import {
   Route,
   TrendingUp,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function RateChartsPage() {
@@ -69,7 +69,7 @@ export default function RateChartsPage() {
   });
 
   // Load prices
-  const loadPrices = async () => {
+  const loadPrices = useCallback(async () => {
     try {
       setLoading(true);
       const response = await priceService.getPrices(filters);
@@ -93,11 +93,11 @@ export default function RateChartsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     loadPrices();
-  }, [filters]);
+  }, [loadPrices]);
 
   // CRUD handlers (unchanged; they call your priceService)
   {/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
@@ -201,7 +201,9 @@ export default function RateChartsPage() {
   };
 
   const handleCalculateClick = (price: PriceChart) => {
-    toast.info("Price calculator coming soon!");
+    if (price) {
+      toast.info("Price calculator coming soon!");
+    }
   };
 
   const handleSearch = (searchTerm: string) => {

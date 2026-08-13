@@ -66,8 +66,6 @@ const countrySchema = new Schema<ICountry>(
 );
 
 // Index for fast lookup
-countrySchema.index({ name: 1 });
-countrySchema.index({ code: 1 });
 countrySchema.index({ zone: 1 }); // optional zone index for faster filtering
 
 // Export model

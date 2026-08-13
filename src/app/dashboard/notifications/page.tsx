@@ -1,11 +1,11 @@
 ﻿"use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DataTable } from "@/components/Dashboard/DataTable";
 import { RoleGuard } from "@/middleware/roleGuard";
 import { NotificationService } from "@/services/dashboardService";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -27,8 +27,6 @@ import {
   Mail,
   MessageSquare,
   Smartphone,
-  Calendar,
-  User,
   X
 } from "lucide-react";
 import { toast } from "sonner";
@@ -94,15 +92,7 @@ export default function NotificationsPage() {
     },
   });
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  useEffect(() => {
-    filterNotifications();
-  }, [notifications, searchTerm, typeFilter, categoryFilter, activeTab]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const response = await NotificationService.getNotifications({ limit: 100 });
@@ -116,7 +106,11 @@ export default function NotificationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -125,7 +119,7 @@ export default function NotificationsPage() {
     toast.success("Notifications refreshed");
   };
 
-  const filterNotifications = () => {
+  const filterNotifications = useCallback(() => {
     let filtered = [...notifications];
     
     // Filter by tab
@@ -156,7 +150,11 @@ export default function NotificationsPage() {
     }
     
     setFilteredNotifications(filtered);
-  };
+  }, [notifications, activeTab, searchTerm, typeFilter, categoryFilter]);
+
+  useEffect(() => {
+    filterNotifications();
+  }, [filterNotifications]);
 
   const handleCreate = () => {
     reset();

@@ -45,7 +45,7 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 // Updated Track interface to match the API response
@@ -242,7 +242,7 @@ export default function ParcelTrackingPage() {
   const canDeleteTrack = hasPermission(user?.role || "user","tracks","delete");
 
   // Load tracks
-  const loadTracks = async () => {
+  const loadTracks = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
@@ -275,11 +275,11 @@ export default function ParcelTrackingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     loadTracks();
-  }, [filters]);
+  }, [loadTracks]);
 
   // Handle view track
   const handleViewTrack = (track: Track) => {

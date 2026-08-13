@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { getTrackings } from "@/server/services/trackingMoreService";

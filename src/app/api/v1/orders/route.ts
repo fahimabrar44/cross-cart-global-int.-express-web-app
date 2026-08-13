@@ -1,5 +1,5 @@
 import connectDB from "@/config/db";
-import { createPublicHandler, createAuthHandler, createModeratorHandler } from "@/server/common/apiWrapper";
+import { createPublicHandler, createAuthHandler } from "@/server/common/apiWrapper";
 import { errorResponse, successResponse } from "@/server/common/response";
 import { Order } from "@/server/models/Order.model";
 import { Track } from "@/server/models/Track.model";

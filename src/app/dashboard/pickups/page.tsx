@@ -47,7 +47,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface Pickup {
@@ -102,14 +102,7 @@ export default function PickupsPage() {
     notes: "",
   });
 
-  useEffect(() => {
-    fetchPickups();
-    if (user) {
-      fetchAddresses();
-    }
-  }, [user]);
-
-  const fetchPickups = async () => {
+  const fetchPickups = useCallback(async () => {
     try {
       setLoading(true);
       const response = await PickupService.getPickups({ limit: 100 });
@@ -127,9 +120,9 @@ export default function PickupsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchAddresses = async () => {
+  const fetchAddresses = useCallback(async () => {
     try {
       if (!user?.phone) return;
       const response = await UserService.getUserAddresses(user.phone);
@@ -141,7 +134,14 @@ export default function PickupsPage() {
     } catch (error) {
       console.error("Failed to fetch addresses:", error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchPickups();
+    if (user) {
+      fetchAddresses();
+    }
+  }, [user, fetchAddresses, fetchPickups]);
 
   const handleCreatePickup = async () => {
     try {

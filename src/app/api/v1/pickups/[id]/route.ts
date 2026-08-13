@@ -1,5 +1,5 @@
 import connectDB from "@/config/db";
-import { createAuthHandler, createModeratorHandler, createAdminHandler } from "@/server/common/apiWrapper";
+import { createAuthHandler, createAdminHandler } from "@/server/common/apiWrapper";
 import { errorResponse, successResponse } from "@/server/common/response";
 import { Pickup } from "@/server/models/Pickup.model";
 import { Types } from "mongoose";

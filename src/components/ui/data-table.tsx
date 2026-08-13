@@ -71,7 +71,6 @@ export function DataTable<TData, TValue>({
   data,
   loading = false,
   searchPlaceholder = "Search...",
-  searchKey,
   onSearch,
   onRefresh,
   onExport,

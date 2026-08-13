@@ -15,7 +15,7 @@ import {
   TrendingUp,
   Users
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function AddressBookPage() {
@@ -40,7 +40,7 @@ export default function AddressBookPage() {
   });
 
   // Load addresses
-  const loadAddresses = async () => {
+  const loadAddresses = useCallback(async () => {
     try {
       setLoading(true);
       const response = await addressService.getAllAddresses(filters);
@@ -65,11 +65,11 @@ export default function AddressBookPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     loadAddresses();
-  }, [filters]);
+  }, [loadAddresses]);
 
   // Event handlers
   

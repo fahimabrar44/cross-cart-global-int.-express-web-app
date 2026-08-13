@@ -1,28 +1,24 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/AuthContext";
 import { userService, UserFilters } from "@/services/userService";
 import { User, hasPermission } from "@/types";
 import { DataTable } from "@/components/ui/data-table";
 import { createUserColumns } from "@/components/users/UserColumns";
 import { UserForm } from "@/components/users/UserForm";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
   Loader2, 
   Users, 
   UserCheck, 
-  UserX, 
   Shield, 
   ShieldCheck,
-  TrendingUp,
-  Clock
+  TrendingUp
 } from "lucide-react";
 
 interface UserStats {
@@ -51,7 +47,7 @@ export default function UsersPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
+  const [, setIsPermissionsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   
   // Filter and pagination
@@ -69,7 +65,7 @@ export default function UsersPage() {
   });
 
   // Load users and stats
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await userService.getUsers(filters);
@@ -91,9 +87,9 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const response = await userService.getUserStats();
       if (response.success && response.data) {
@@ -102,14 +98,14 @@ export default function UsersPage() {
     } catch (error) {
       console.error("Failed to load stats:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadUsers();
     if (currentUser?.role === "admin" || currentUser?.role === "moderator") {
       loadStats();
     }
-  }, [filters, currentUser?.role]);
+  }, [filters, currentUser?.role, loadUsers, loadStats]);
 
   // CRUD handlers
   {/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}

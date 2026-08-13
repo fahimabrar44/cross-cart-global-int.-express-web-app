@@ -60,20 +60,8 @@ import {
   RefreshCw,
   TrendingUp,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-
-interface OrderStats {
-  total: number;
-  pending: number;
-  processing: number;
-  shipped: number;
-  delivered: number;
-  cancelled: number;
-  todayOrders: number;
-  weeklyOrders: number;
-  monthlyOrders: number;
-}
 
 interface PaymentData {
   pType: string;
@@ -98,7 +86,6 @@ export default function OrdersPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [paymentTab, setPaymentTab] = useState("update");
 
   // Payment form state
   const [paymentData, setPaymentData] = useState<PaymentData>({
@@ -153,7 +140,7 @@ export default function OrdersPage() {
   const canProcessPayment = hasPermission(user?.role, "orders", "update");
 
   // Load orders and stats
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
       const response = await orderService.getOrders(filters);
@@ -177,11 +164,11 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     loadOrders();
-  }, [filters, user?.role]);
+  }, [loadOrders]);
 
   // CRUD handlers
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -337,7 +324,6 @@ export default function OrdersPage() {
       return;
     }
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const token = localStorage.getItem("accessToken");
       const response = await fetch(
         `/api/v1/orders/${selectedOrder._id}/assignment`,

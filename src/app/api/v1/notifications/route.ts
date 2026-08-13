@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import connectDB from "@/config/db";
 import { Notification } from "@/server/models/Notification.model";
 import { createAuthHandler } from "@/server/common/apiWrapper";

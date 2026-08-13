@@ -9,19 +9,12 @@ import { useEffect, useState } from "react";
 
 export default function ContentsPage() {
   const [blogCount, setBlogCount] = useState(0);
-  const [reviewCount, setReviewCount] = useState(0);
 
   useEffect(() => {
     const load = async () => {
       try {
         const blogs = await ContentService.getBlogs({ limit: 1 });
         if (blogs.success) setBlogCount(blogs.meta?.total || 0);
-      } catch {
-        /* noop */
-      }
-      try {
-        const reviews = await ContentService.getReviews({ limit: 1 });
-        if (reviews.success) setReviewCount(reviews.meta?.total || 0);
       } catch {
         /* noop */
       }

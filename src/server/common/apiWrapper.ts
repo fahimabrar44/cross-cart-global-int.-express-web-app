@@ -144,11 +144,6 @@ export function createApiHandler(
 
       response = await handler(context);
 
-      // Extract success info from response
-      const responseBody = await response
-        .clone()
-        .json()
-        .catch(() => ({}));
       success = response.status >= 200 && response.status < 300;
       statusCode = response.status;
     } catch (error) {

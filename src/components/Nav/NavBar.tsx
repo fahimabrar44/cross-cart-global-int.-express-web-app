@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/hooks/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Logo from "@/utilities/Logo";
+import Image from "next/image";
 import {
   BadgeCheck,
   Building2,
@@ -289,8 +290,10 @@ const NavBar = () => {
                       </ListItem>
                     ))}
                     <li className=" rounded-lg overflow-hidden ">
-                      <img
+                      <Image
                         src={"/logistic.png"}
+                        width={380}
+                        height={160}
                         className="w-[380px] h-[160px] object-cover"
                         alt="logistic-image"
                       />
@@ -316,8 +319,10 @@ const NavBar = () => {
                     ))}
 
                     <li className=" rounded-lg overflow-hidden ">
-                      <img
+                      <Image
                         src={"/solutions.png"}
+                        width={380}
+                        height={160}
                         className="w-[380px] h-[160px] rounded-xl object-cover"
                         alt="logistic-image"
                       />

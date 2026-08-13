@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import connectDB from "@/config/db";
 import { Coupon } from "@/server/models/Coupon.model";
 import { successResponse, errorResponse } from "@/server/common/response";

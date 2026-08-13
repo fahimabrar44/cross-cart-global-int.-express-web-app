@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import connectDB from "@/config/db";
 import { Coupon } from "@/server/models/Coupon.model";
 import { successResponse, errorResponse } from "@/server/common/response";
-import { createAuthHandler, createModeratorHandler } from "@/server/common/apiWrapper";
+import { createModeratorHandler } from "@/server/common/apiWrapper";
 
 type GetQuery = {
   isActive?: string;

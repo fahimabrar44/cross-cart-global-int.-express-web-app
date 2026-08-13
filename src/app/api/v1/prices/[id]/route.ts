@@ -31,7 +31,7 @@ export async function GET(
   }
 }
 
-export const PUT = createModeratorHandler(async ({ req, user }) => {
+export const PUT = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 
@@ -61,7 +61,7 @@ export const PUT = createModeratorHandler(async ({ req, user }) => {
   }
 });
 
-export const DELETE = createModeratorHandler(async ({ req, user }) => {
+export const DELETE = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 

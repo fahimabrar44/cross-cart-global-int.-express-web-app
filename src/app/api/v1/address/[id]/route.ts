@@ -10,7 +10,7 @@ const extractId = (req: Request): string => {
 };
 
 // GET address by ID
-export const GET = createModeratorHandler(async ({ req, user }) => {
+export const GET = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 
@@ -28,7 +28,7 @@ export const GET = createModeratorHandler(async ({ req, user }) => {
 });
 
 // PUT update address
-export const PUT = createModeratorHandler(async ({ req, user }) => {
+export const PUT = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 
@@ -48,7 +48,7 @@ export const PUT = createModeratorHandler(async ({ req, user }) => {
 });
 
 // DELETE soft delete
-export const DELETE = createModeratorHandler(async ({ req, user }) => {
+export const DELETE = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 

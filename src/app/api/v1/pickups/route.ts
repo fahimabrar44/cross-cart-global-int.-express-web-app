@@ -1,9 +1,7 @@
 import connectDB from "@/config/db";
-import { createPublicHandler, createAuthHandler, createModeratorHandler } from "@/server/common/apiWrapper";
+import { createPublicHandler, createAuthHandler } from "@/server/common/apiWrapper";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { Pickup } from "@/server/models/Pickup.model";
-import { User } from "@/server/models/User.model";
-import { Address } from "@/server/models/Address.model";
 import { Types } from "mongoose";
 
 type GetQuery = {

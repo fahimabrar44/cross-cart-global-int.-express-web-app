@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import connectDB from "@/config/db";
 import { Order } from "@/server/models/Order.model";
 import { Rider } from "@/server/models/Rider.model";

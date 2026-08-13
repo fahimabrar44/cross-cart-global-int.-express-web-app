@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import connectDB from "@/config/db";
 import { FAQ } from "@/server/models/FAQ.model";
 import { successResponse, errorResponse } from "@/server/common/response";

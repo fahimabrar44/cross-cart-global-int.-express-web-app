@@ -5,7 +5,7 @@ import { ApiAccessLog } from "@/server/models/ApiAccessLog.model";
 import { ApiConfig } from "@/server/models/ApiConfig.model";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 
-export const GET = createModeratorHandler(async ({ req, user }) => {
+export const GET = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
     // 1️⃣ API Key Analytics

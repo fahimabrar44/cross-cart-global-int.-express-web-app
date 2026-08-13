@@ -24,7 +24,6 @@ interface AddressColumnsProps {
 }
 
 export const createAddressColumns = ({
-  userRole,
   onView,
   onEdit,
   onDelete,

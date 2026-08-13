@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import connectDB from "@/config/db";
 import { Referral } from "@/server/models/Referral.model";
 import { User } from "@/server/models/User.model";

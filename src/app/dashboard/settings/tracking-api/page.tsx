@@ -78,7 +78,6 @@ export default function TrackingApiSettingsPage() {
 
   useEffect(() => {
     fetchSettings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateValue = (key: string, v: string) =>

@@ -1,8 +1,7 @@
 ﻿"use client";
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard } from "@/components/Dashboard/StatsCard";
-import { DataTable } from "@/components/Dashboard/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderService, UserService } from "@/services/dashboardService";
@@ -10,12 +9,10 @@ import { useAuth } from "@/hooks/AuthContext";
 import { 
   Package, 
   DollarSign, 
-  Clock, 
   CheckCircle, 
   Plus,
   Truck,
   MapPin,
-  Star,
   Bell
 } from "lucide-react";
 import { toast } from "sonner";
@@ -27,13 +24,7 @@ export function UserDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchUserData();
-    }
-  }, [user]);
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -59,12 +50,18 @@ export function UserDashboard() {
           setNotifications(notificationsResponse.data?.slice(0, 5) || []);
         }
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserData();
+    }
+  }, [user, fetchUserData]);
 
   if (loading) {
     return (
@@ -109,42 +106,6 @@ export function UserDashboard() {
       </Badge>
     );
   };
-
-  const orderColumns = [
-    {
-      key: "trackId",
-      label: "Track ID",
-      sortable: true,
-    },
-    {
-      key: "parcel.receiver.name",
-      label: "Recipient",
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      render: (value: string, row: any) => row.parcel?.receiver?.name || "N/A",
-    },
-    {
-      key: "parcel.to",
-      label: "Destination",
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      render: (value: any) => value || "N/A",
-    },
-    {
-      key: "status",
-      label: "Status",
-      render: (value: string) => getStatusBadge(value || "pending"),
-    },
-    {
-      key: "payment.pAmount",
-      label: "Amount",
-      render: (value: number) => `$${value?.toFixed(2) || "0.00"}`,
-    },
-    {
-      key: "orderDate",
-      label: "Date",
-      sortable: true,
-      render: (value: string) => new Date(value).toLocaleDateString(),
-    },
-  ];
 
   return (
     <div className="space-y-6" data-testid="user-dashboard">

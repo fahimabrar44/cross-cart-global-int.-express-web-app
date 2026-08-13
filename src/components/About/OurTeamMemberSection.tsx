@@ -1,4 +1,5 @@
-﻿import {
+﻿import Image from "next/image";
+import {
   Award,
   Briefcase,
   Heart,
@@ -168,9 +169,11 @@ const OurTeamMemberSection = () => {
                 className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
               >
                 <div className="aspect-square">
-                  <img
+                  <Image
                     src={leader.image}
                     alt={leader.name}
+                    width={400}
+                    height={400}
                     className="w-full h-full object-cover"
                   />
                 </div>

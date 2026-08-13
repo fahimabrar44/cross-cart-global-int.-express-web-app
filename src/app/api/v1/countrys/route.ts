@@ -103,7 +103,7 @@ export async function GET(req: NextRequest) {
  * POST - create a new country
  * Body fields: name (required), code (required), phoneCode?, flagUrl?, timezone?, zone?, isActive?
  */
-export const POST = createModeratorHandler(async ({ req, user }) => {
+export const POST = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 
