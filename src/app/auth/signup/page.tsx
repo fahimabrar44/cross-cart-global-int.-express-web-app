@@ -206,7 +206,7 @@ export default function SignupPage() {
             Create your account
           </CardTitle>
           <CardDescription className="text-center">
-            Join CrossCart Global Int Express for international courier services
+            Join Cross Cart Global International Express for international courier services
           </CardDescription>
         </CardHeader>
         <CardContent>

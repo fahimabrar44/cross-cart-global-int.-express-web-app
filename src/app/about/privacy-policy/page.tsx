@@ -21,7 +21,7 @@ const PrivacyPolicy = () => {
               </div>
             </div>
             <p className="text-gray-700 leading-relaxed">
-              Welcome to <span className="italic">CrossCart Global Int Express</span> ({"'"}we,{"'"} {"'"}our,{"'"} or {"'"}us{"'"}). Your privacy is important to us. This Privacy Policy explains how we collect, use, disclose, and protect your information when you use our website, mobile application, and courier services (collectively, the {"'"}Services{"'"}).
+              Welcome to <span className="italic">Cross Cart Global International Express</span> ({"'"}we,{"'"} {"'"}our,{"'"} or {"'"}us{"'"}). Your privacy is important to us. This Privacy Policy explains how we collect, use, disclose, and protect your information when you use our website, mobile application, and courier services (collectively, the {"'"}Services{"'"}).
             </p>
             <p className="text-gray-700 leading-relaxed mt-4">
               By using our Services, you agree to the collection and use of information in accordance with this policy.
@@ -141,9 +141,9 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-gray-800 border-b pb-2 border-gray-200">10. Contact Us</h2>
               <p className="text-gray-700 mb-3">If you have questions about this Privacy Policy or your data, please contact:</p>
-              <p className="text-gray-700 font-semibold">CrossCart Global Int Express</p>
+              <p className="text-gray-700 font-semibold">Cross Cart Global International Express</p>
               <p className="text-gray-700">
-                Email: <a href="mailto:crosscartglobal@gmail.com" className="text-primary hover:underline">crosscartglobal@gmail.com</a>
+                Email: <a href="mailto:cross.cart.bd@gmail.com" className="text-primary hover:underline">cross.cart.bd@gmail.com</a>
               </p>
             </section>
           </div>

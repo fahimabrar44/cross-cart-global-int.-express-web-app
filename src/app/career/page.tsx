@@ -61,7 +61,7 @@ const Career = () => {
               Build Your Future With Us
             </h2>
             <p className="text-lg text-gray-600">
-              Join CrossCart Global Int Express and help us connect people,
+              Join Cross Cart Global International Express and help us connect people,
               parcels and possibilities across the globe. We are always looking
               for passionate individuals who want to make shipping simple.
             </p>

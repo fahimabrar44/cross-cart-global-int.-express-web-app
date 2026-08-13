@@ -122,7 +122,7 @@ const OurTeamMemberSection = () => {
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
               Behind every successful delivery is a dedicated team of
               professionals who are passionate about connecting Bangladesh with
-              the world. Get to know the people who make CrossCart Global Int Express possible.
+              the world. Get to know the people who make Cross Cart Global International Express possible.
             </p>
           </div>
 
@@ -156,7 +156,7 @@ const OurTeamMemberSection = () => {
               Our Marque Associates
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Meet the dedicated associates who represent CrossCart Global Int Express on the ground
+              Meet the dedicated associates who represent Cross Cart Global International Express on the ground
               and ensure smooth operations every day.
             </p>
           </div>

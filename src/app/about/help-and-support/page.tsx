@@ -16,7 +16,7 @@ const HelpAndSupport = () => {
                             Help & Support
                         </h1>
                         <p className="text-lg text-gray-700 leading-relaxed mb-8 text-center">
-                            At <span className="italic">CrossCart Global Int Express</span>, we{"'"}re here to make your international and local shipping smooth, secure, and stress-free.
+                            At <span className="italic">Cross Cart Global International Express</span>, we{"'"}re here to make your international and local shipping smooth, secure, and stress-free.
                             Our <span className="italic">Help & Support Team</span> is always ready to assist you with bookings, tracking, and delivery questions.
                         </p>
                     </div>
@@ -49,7 +49,7 @@ const HelpAndSupport = () => {
                                     <Mail className="w-5 h-5 text-[#12352A]" />
                                     <div>
                                         <p className="font-medium text-gray-800">Email</p>
-                                        <a href="mailto:support@crosscartglobal.com" className="text-primary hover:underline">support@crosscartglobal.com</a>
+                                        <a href="mailto:cross.cart.bd@gmail.com" className="text-primary hover:underline">cross.cart.bd@gmail.com</a>
                                     </div>
                                 </div>
                                 
@@ -57,7 +57,7 @@ const HelpAndSupport = () => {
                                     <Phone className="w-5 h-5 text-[#12352A]" />
                                     <div>
                                         <p className="font-medium text-gray-800">Hotline</p>
-                                        <a href="tel:+880XXXXXXXXXX" className="text-primary hover:underline">+880-XXX-XXXXXXX</a>
+                                        <a href="tel:+8801410144466" className="text-primary hover:underline">+88 0141-0144466</a>
                                     </div>
                                 </div>
                                 
@@ -107,7 +107,7 @@ const HelpAndSupport = () => {
                             </div>
                             <p className="text-gray-700 mb-4">
                                 If your issue is not resolved promptly, you can escalate it to our <span className="italic">Trust & Safety Team</span> at 
-                                <a href="mailto:trust@crosscartglobal.com" className="text-primary hover:underline ml-1">trust@crosscartglobal.com</a>.
+                                <a href="mailto:cross.cart.bd@gmail.com" className="text-primary hover:underline ml-1">cross.cart.bd@gmail.com</a>.
                             </p>
                             <div className="flex items-start gap-2 p-3 bg-blue-50 rounded">
                                 <ThumbsUp className="w-5 h-5 text-[#12352A] mt-0.5" />
@@ -118,9 +118,9 @@ const HelpAndSupport = () => {
                         </section>
 
                         <section className="bg-[#12352A] text-white rounded-lg p-6 shadow-sm">
-                            <h2 className="text-2xl font-semibold mb-4 text-center">CrossCart Global Int Express Promise</h2>
+                            <h2 className="text-2xl font-semibold mb-4 text-center">Cross Cart Global International Express Promise</h2>
                             <blockquote className="text-center text-lg italic">
-                                {'"'}Fast support, fair solutions, and friendly service — that{"'"}s the CrossCart Global Int Express way.{'"'}
+                                {'"'}Fast support, fair solutions, and friendly service — that{"'"}s the Cross Cart Global International Express way.{'"'}
                             </blockquote>
                         </section>
                     </div>

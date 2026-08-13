@@ -155,9 +155,9 @@ export default function SigninPage() {
                 className="flex flex-col items-center gap-2 font-medium"
               >
                 <div className="flex size-50 items-center justify-center rounded-md">
-                  <Logo width={100} height={120} isFooter={true} />
+                  <Logo width={200} height={80} isFooter={true} />
                 </div>
-                <span className="sr-only">CrossCart Global Int Express</span>
+                <span className="sr-only">Cross Cart Global International Express</span>
               </div>
             </div>
             Sign in

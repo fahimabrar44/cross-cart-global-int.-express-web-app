@@ -5,31 +5,31 @@ const processStep = [
     img: "/Choose Shipment.png",
     title: "Get a Quote",
     details:
-      "With CrossCart Global Int Express, you can instantly get clear and affordable shipping quotes for 220+ countries. Our system ensures you always find the most cost-effective and reliable option tailored to your needs.",
+      "With Cross Cart Global International Express, you can instantly get clear and affordable shipping quotes for 220+ countries. Our system ensures you always find the most cost-effective and reliable option tailored to your needs.",
   },
   {
     img: "/pickup.png",
     title: "Pick",
     details:
-      "CrossCart Global Int Express offers hassle-free doorstep pickup from anywhere in Bangladesh. Our professional team ensures timely collection and safe handling of your shipments right from your home or office.",
+      "Cross Cart Global International Express offers hassle-free doorstep pickup from anywhere in Bangladesh. Our professional team ensures timely collection and safe handling of your shipments right from your home or office.",
   },
   {
     img: "/pack.png",
     title: "Pack",
     details:
-      "At CrossCart Global Int Express, we follow international packaging standards to keep your parcels safe. Whether fragile goods, important documents, or bulk items, CrossCart Global Int Express ensures everything is packed securely for global transit.",
+      "At Cross Cart Global International Express, we follow international packaging standards to keep your parcels safe. Whether fragile goods, important documents, or bulk items, Cross Cart Global International Express ensures everything is packed securely for global transit.",
   },
   {
     img: "/Pack and ship.png",
     title: "Ship",
     details:
-      "Your shipments are shipped smoothly through CrossCart Global Int Express's trusted global network, including DHL, FedEx, UPS, and Aramex. CrossCart Global Int Express guarantees fast, stress-free, and reliable shipping every time.",
+      "Your shipments are shipped smoothly through Cross Cart Global International Express's trusted global network, including DHL, FedEx, UPS, and Aramex. Cross Cart Global International Express guarantees fast, stress-free, and reliable shipping every time.",
   },
   {
     img: "/Track.png",
     title: "Track",
     details:
-      "Stay connected with CrossCart Global Int Express's advanced real-time tracking system. From pickup to delivery, CrossCart Global Int Express keeps you informed at every stage, giving you complete peace of mind.",
+      "Stay connected with Cross Cart Global International Express's advanced real-time tracking system. From pickup to delivery, Cross Cart Global International Express keeps you informed at every stage, giving you complete peace of mind.",
   },
 ];
 
@@ -39,63 +39,63 @@ const featuresData = [
     title: "Global Reach",
     icon: "/1.png",
     details:
-      "CrossCart Global Int Express connects Bangladesh to 220+ destinations worldwide through DHL, FedEx, UPS, Aramex, and DPD. Customers enjoy affordable rates, fast delivery, and reliable services for parcels, cargo, and documents with complete confidence.",
+      "Cross Cart Global International Express connects Bangladesh to 220+ destinations worldwide through DHL, FedEx, UPS, Aramex, and DPD. Customers enjoy affordable rates, fast delivery, and reliable services for parcels, cargo, and documents with complete confidence.",
   },
   {
     id: 265553,
     title: "All-in-One",
     icon: "/2.png",
     details:
-      "CrossCart Global Int Express offers courier, freight, and customs clearance under one roof. With advanced systems and global tie-ups, we ensure smooth, affordable, and secure logistics for individuals and businesses across Bangladesh.",
+      "Cross Cart Global International Express offers courier, freight, and customs clearance under one roof. With advanced systems and global tie-ups, we ensure smooth, affordable, and secure logistics for individuals and businesses across Bangladesh.",
   },
   {
     id: 3363432,
     title: "24/7 Support",
     icon: "/3.png",
     details:
-      "CrossCart Global Int Express's customer care team provides instant help with booking, tracking, and customs queries. Our customer-first approach ensures every shipment is handled smoothly and professionally from start to finish.",
+      "Cross Cart Global International Express's customer care team provides instant help with booking, tracking, and customs queries. Our customer-first approach ensures every shipment is handled smoothly and professionally from start to finish.",
   },
   {
     id: 443536,
     title: "Smart Shipping",
     icon: "/4.png",
     details:
-      "CrossCart Global Int Express makes logistics easy with transparent pricing, clear timelines, and flexible shipping options. Customers save time and cost by letting our experts handle transportation efficiently and reliably.",
+      "Cross Cart Global International Express makes logistics easy with transparent pricing, clear timelines, and flexible shipping options. Customers save time and cost by letting our experts handle transportation efficiently and reliably.",
   },
   {
     id: 5435362,
     title: "Premium Quality",
     icon: "/5.png",
     details:
-      "From pickup to delivery, CrossCart Global Int Express maintains global standards. Businesses and individuals trust us for secure, timely, and high-quality shipping solutions that continuously evolve with modern technology.",
+      "From pickup to delivery, Cross Cart Global International Express maintains global standards. Businesses and individuals trust us for secure, timely, and high-quality shipping solutions that continuously evolve with modern technology.",
   },
   {
     id: 645645756,
     title: "Safe Delivery",
     icon: "/6.png",
     details:
-      "CrossCart Global Int Express ensures complete safety with quality packaging, trusted partners, and careful handling. Fragile, valuable, or important shipments are always protected against risks throughout the journey.",
+      "Cross Cart Global International Express ensures complete safety with quality packaging, trusted partners, and careful handling. Fragile, valuable, or important shipments are always protected against risks throughout the journey.",
   },
   {
     id: 75464654,
     title: "Pro Team",
     icon: "/7.png",
     details:
-      "CrossCart Global Int Express's expert staff specialize in courier, freight, and customs. Their knowledge of global regulations ensures every shipment is handled smoothly, offering clients stress-free logistics support.",
+      "Cross Cart Global International Express's expert staff specialize in courier, freight, and customs. Their knowledge of global regulations ensures every shipment is handled smoothly, offering clients stress-free logistics support.",
   },
   {
     id: 8436456,
     title: "Global Partners",
     icon: "/8.png",
     details:
-      "CrossCart Global Int Express partners with DHL, FedEx, UPS, Aramex, and DPD to deliver fast, reliable, and cost-effective shipping. These tie-ups combine world-class networks with CrossCart Global Int Express's local support.",
+      "Cross Cart Global International Express partners with DHL, FedEx, UPS, Aramex, and DPD to deliver fast, reliable, and cost-effective shipping. These tie-ups combine world-class networks with Cross Cart Global International Express's local support.",
   },
   {
     id: 956464,
     title: "Clear Process",
     icon: "/9.png",
     details:
-      "CrossCart Global Int Express values transparency with honest pricing, accurate timelines, and trustworthy updates. Our ethical operations ensure customers experience safe, reliable, and hassle-free international shipping.",
+      "Cross Cart Global International Express values transparency with honest pricing, accurate timelines, and trustworthy updates. Our ethical operations ensure customers experience safe, reliable, and hassle-free international shipping.",
   },
 ];
 
@@ -104,7 +104,7 @@ const OurWorkProcessSection = () => {
     <section className="w-full h-auto p-4">
       <div className="container py-22 m-auto">
         <h1 className="text-2xl md:text-4xl sm:text-3xl lg:text-5xl text-center font-bold">
-          Easy & Stress-Free Shipping with CrossCart Global Int Express
+          Easy & Stress-Free Shipping with Cross Cart Global International Express
         </h1>
 
         <div className="w-full h-auto p-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 items-center align-top justify-start py-10 pt-16">
@@ -138,7 +138,7 @@ const OurWorkProcessSection = () => {
               CROSSCART ADVANTAGES
             </h1>
             <p className="md:w-[600px] w-full px-8 h-auto flex justify-center align-middle items-center text-base">
-              Your needs drive our strategies—CrossCart Global Int Express designs solutions that make
+              Your needs drive our strategies—Cross Cart Global International Express designs solutions that make
               global shipping easier, faster, and more reliable.
             </p>
           </div>

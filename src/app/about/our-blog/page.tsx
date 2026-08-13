@@ -15,7 +15,7 @@ const OurBlog = () => {
     },
     {
       id: 2,
-      title: "Behind the Scenes: How CrossCart Global Int Express Partners with Global Couriers",
+      title: "Behind the Scenes: How Cross Cart Global International Express Partners with Global Couriers",
       excerpt:
         "Learn about our partnerships with DHL, FedEx, UPS, and more to deliver reliable shipping solutions.",
       icon: <Globe className="w-6 h-6 text-[#12352A]" />,
@@ -60,12 +60,12 @@ const OurBlog = () => {
               Our Blog
             </h1>
             <p className="text-lg text-gray-700 leading-relaxed mb-8 text-center max-w-4xl mx-auto">
-              Welcome to the <span className="italic">CrossCart Global Int Express Blog</span> — your
+              Welcome to the <span className="italic">Cross Cart Global International Express Blog</span> — your
               destination for delivery insights, eCommerce tips, and global
               shipping updates.
             </p>
             <p className="text-lg text-gray-700 leading-relaxed text-center max-w-4xl mx-auto">
-              At CrossCart Global Int Express, we believe knowledge empowers small businesses. Our blog
+              At Cross Cart Global International Express, we believe knowledge empowers small businesses. Our blog
               shares helpful guides, stories, and updates to help{" "}
               <span className="italic">Bangladeshi sellers grow globally</span>{" "}
               — from packaging tips to courier comparisons and success stories
@@ -133,14 +133,14 @@ const OurBlog = () => {
             <div className="flex items-center justify-center">
               <Mail className="w-5 h-5 text-[#F5C400] mr-2" />
               <a
-                href="mailto:crosscartglobal@gmail.com"
+                href="mailto:cross.cart.bd@gmail.com"
                 className="text-[#F5C400] hover:underline font-medium"
               >
-                crosscartglobal@gmail.com
+                cross.cart.bd@gmail.com
               </a>
             </div>
             <p className="text-gray-300 mt-2">
-              to get featured on the CrossCart Global Int Express Blog.
+              to get featured on the Cross Cart Global International Express Blog.
             </p>
           </div>
 
@@ -149,7 +149,7 @@ const OurBlog = () => {
               Subscribe to Our Newsletter
             </h3>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Get the latest shipping tips, industry insights, and CrossCart Global Int Express updates
+              Get the latest shipping tips, industry insights, and Cross Cart Global International Express updates
               delivered to your inbox.
             </p>
             <div className="max-w-md mx-auto flex flex-col sm:flex-row gap-3">

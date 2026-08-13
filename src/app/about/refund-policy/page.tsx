@@ -11,11 +11,11 @@ const RefundPolicy = () => {
     <div className="w-full bg-white py-12 px-4 md:px-8 lg:px-16">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center text-gray-800">
-          Refund Policy – CrossCart Global Int Express Bangladesh
+          Refund Policy – Cross Cart Global International Express Bangladesh
         </h1>
         
         <p className="text-lg mb-8 text-gray-600 leading-relaxed">
-          At <span className="italic">CrossCart Global Int Express</span>, we value your trust. Our goal is to make every international and local shipment fast, safe, and affordable.
+          At <span className="italic">Cross Cart Global International Express</span>, we value your trust. Our goal is to make every international and local shipment fast, safe, and affordable.
           However, if something doesn{"'"}t go as planned, our refund policy ensures a fair and transparent process.
         </p>
 
@@ -26,9 +26,9 @@ const RefundPolicy = () => {
             </h2>
             <p className="mb-4 text-gray-600">You may be eligible for a refund if:</p>
             <ul className="list-disc pl-6 space-y-2 text-gray-600">
-              <li>Your shipment is <span className="italic">not picked up or processed</span> due to a technical or operational issue from CrossCart Global Int Express{"'"}s side.</li>
+              <li>Your shipment is <span className="italic">not picked up or processed</span> due to a technical or operational issue from Cross Cart Global International Express{"'"}s side.</li>
               <li>You have <span className="italic">cancelled your shipment</span> before it has been handed over to the courier partner.</li>
-              <li>Your shipment has been <span className="italic">lost or undelivered</span> due to a verified fault by CrossCart Global Int Express or its courier partner.</li>
+              <li>Your shipment has been <span className="italic">lost or undelivered</span> due to a verified fault by Cross Cart Global International Express or its courier partner.</li>
               <li>You have <span className="italic">accidentally made double payment</span> for the same order or transaction.</li>
             </ul>
           </section>
@@ -75,14 +75,14 @@ const RefundPolicy = () => {
               5. Policy Updates
             </h2>
             <p className="text-gray-600">
-              CrossCart Global Int Express reserves the right to update this policy at any time to ensure compliance with courier partner and regulatory standards.
+              Cross Cart Global International Express reserves the right to update this policy at any time to ensure compliance with courier partner and regulatory standards.
             </p>
           </section>
         </div>
 
         <div className="mt-12 pt-8 border-t border-gray-200 text-center">
           <p className="text-xl font-semibold text-gray-800 mb-2">
-            CrossCart Global Int Express – Direct Costs More. CrossCart Global Int Express Saves You.
+            Cross Cart Global International Express – Direct Costs More. Cross Cart Global International Express Saves You.
           </p>
           <p className="text-gray-600">
             Smarter shipping, trusted service, better value. 🚀

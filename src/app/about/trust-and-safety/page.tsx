@@ -12,10 +12,10 @@ const TrustAndSafety = () => {
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-6 text-center text-gray-800">
-              Trust & Safety at CrossCart Global Int Express
+              Trust & Safety at Cross Cart Global International Express
             </h1>
             <p className="text-lg text-gray-700 leading-relaxed mb-8 text-center">
-              At <span className="italic">CrossCart Global Int Express</span>, your trust is our top priority. We are committed to ensuring every delivery is handled with care, transparency, and complete security — from booking to final delivery.
+              At <span className="italic">Cross Cart Global International Express</span>, your trust is our top priority. We are committed to ensuring every delivery is handled with care, transparency, and complete security — from booking to final delivery.
             </p>
           </div>
 
@@ -79,7 +79,7 @@ const TrustAndSafety = () => {
                 We are always available for assistance through our <span className="italic">dedicated support team</span>.
               </p>
               <p className="text-gray-700 mb-4">
-                If any issue arises during shipment, CrossCart Global Int Express ensures prompt investigation and fair resolution.
+                If any issue arises during shipment, Cross Cart Global International Express ensures prompt investigation and fair resolution.
               </p>
               <p className="text-gray-700">
                 You can reach our <span className="italic">Trust & Safety team</span> anytime at:
@@ -87,7 +87,7 @@ const TrustAndSafety = () => {
               <div className="mt-4 flex flex-col sm:flex-row gap-4">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">ðŸ“§</span>
-                  <a href="mailto:crosscartglobal@gmail.com" className="text-primary hover:underline">crosscartglobal@gmail.com</a>
+                  <a href="mailto:cross.cart.bd@gmail.com" className="text-primary hover:underline">cross.cart.bd@gmail.com</a>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg">ðŸ“ž</span>
@@ -99,7 +99,7 @@ const TrustAndSafety = () => {
             <section className="bg-[#12352A] text-white rounded-lg p-6 shadow-sm">
               <h2 className="text-2xl font-semibold mb-4 text-center">6. Our Promise</h2>
               <blockquote className="text-center text-lg italic">
-                {'"'}Every parcel you send through CrossCart Global Int Express carries our promise of honesty, care, and reliability.{'"'}
+                {'"'}Every parcel you send through Cross Cart Global International Express carries our promise of honesty, care, and reliability.{'"'}
               </blockquote>
             </section>
           </div>

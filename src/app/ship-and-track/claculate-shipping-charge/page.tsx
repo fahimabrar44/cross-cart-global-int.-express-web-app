@@ -22,7 +22,7 @@ const CalculateShippingCharge = () => {
     {
       name: "Local Partner",
       logo: "/logo.png",
-      deliveryTime: "1-3 business days",
+      deliveryTime: "8-10 business days",
     },
   ];
 

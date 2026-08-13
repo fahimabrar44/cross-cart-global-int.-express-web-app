@@ -79,8 +79,8 @@ export default function FQAPage() {
                 Frequently Asked Questions
               </h1>
               <p className="text-muted-foreground mt-3">
-                Everything you need to know about shipping with CrossCart Global
-                Int Express. Can&apos;t find an answer?{" "}
+                Everything you need to know about shipping with Cross Cart Global
+                International Express. Can&apos;t find an answer?{" "}
                 <Link href="/contact" className="text-primary hover:underline">
                   Contact our team
                 </Link>

@@ -20,7 +20,7 @@ const OurStorySection = () => {
           </div>
           <div className="w-full h-auto p-6">
             <p className="font-semibold text-xl">
-              CrossCart Global Int Express was founded with a clear vision: to make international
+              Cross Cart Global International Express was founded with a clear vision: to make international
               courier services more affordable, reliable, and accessible in
               Bangladesh.
             </p>
@@ -28,7 +28,7 @@ const OurStorySection = () => {
             <p className="font-medium text-base">
               We noticed that many people were paying high fees for global
               shipping without realizing that smarter, cost-saving options
-              existed. With this in mind, CrossCart Global Int Express began as a home-office model,
+              existed. With this in mind, Cross Cart Global International Express began as a home-office model,
               built on trust, dedication, and customer convenience.
             </p>
             <br />
@@ -43,12 +43,12 @@ const OurStorySection = () => {
               From the very beginning, our focus has been on customer-first
               solutions: offering doorstep pickup, seamless processing, and safe
               delivery to the right courier hub. Whether it’s important
-              documents, personal gifts, or commercial shipments, CrossCart Global Int Express ensures
+              documents, personal gifts, or commercial shipments, Cross Cart Global International Express ensures
               every package is handled with care.
             </p>
             <br />
             <p className="font-semibold text-lg">
-              Today, CrossCart Global Int Express continues to grow — but our foundation remains the
+              Today, Cross Cart Global International Express continues to grow — but our foundation remains the
               same: a commitment to connecting Bangladesh with the world, one
               parcel at a time.
             </p>

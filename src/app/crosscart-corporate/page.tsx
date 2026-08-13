@@ -99,7 +99,7 @@ const CrossCartCorporate = () => {
               Leading International Courier Solutions
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              CrossCart Global Int Express is Bangladesh{"'"}s trusted partner for international logistics solutions. 
+              Cross Cart Global International Express is Bangladesh{"'"}s trusted partner for international logistics solutions. 
               We connect businesses and individuals with the world through our comprehensive 
               courier and shipping services, backed by strategic partnerships with global leaders.
             </p>
@@ -121,10 +121,10 @@ const CrossCartCorporate = () => {
           {/* About Section */}
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-3xl font-bold text-[#12352A] mb-6">About CrossCart Global Int Express</h3>
+              <h3 className="text-3xl font-bold text-[#12352A] mb-6">About Cross Cart Global International Express</h3>
               <p className="text-gray-600 mb-6">
                 Founded with a clear vision to make international courier services more affordable, 
-                reliable, and accessible in Bangladesh, CrossCart Global Int Express has grown from a home-office model 
+                reliable, and accessible in Bangladesh, Cross Cart Global International Express has grown from a home-office model 
                 to become one of the country{"'"}s leading logistics providers.
               </p>
               <p className="text-gray-600 mb-6">
@@ -236,7 +236,7 @@ const CrossCartCorporate = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">Our Journey</h2>
             <p className="text-gray-300 max-w-2xl mx-auto">
-              Key milestones in CrossCart Global Int Express{"'"}s growth from startup to Bangladesh{"'"}s leading logistics provider
+              Key milestones in Cross Cart Global International Express{"'"}s growth from startup to Bangladesh{"'"}s leading logistics provider
             </p>
           </div>
           
@@ -298,7 +298,7 @@ const CrossCartCorporate = () => {
             <div>
               <h2 className="text-3xl font-bold text-foreground mb-6">Get in Touch</h2>
               <p className="text-muted-foreground mb-8">
-                Ready to partner with CrossCart Global Int Express for your corporate logistics needs? 
+                Ready to partner with Cross Cart Global International Express for your corporate logistics needs? 
                 Contact our team to discuss customized solutions for your business.
               </p>
               
