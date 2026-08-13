@@ -150,9 +150,12 @@ private renderTemplate(template: string | null, data: Record<string, any>): stri
 
   let rendered = template;
 
+  const publicUrl = (p: string) =>
+    `${(process.env.PUBLIC_APP_URL || "").replace(/\/+$/, "")}${p}`;
+
   // Ensure logo is included dynamically
   if (!data.logoUrl) {
-    data.logoUrl = `${process.env.PUBLIC_APP_URL}/logo.png`; // your logo path
+    data.logoUrl = publicUrl("/logo.png");
   }
   if (!data.year) {
     data.year = String(new Date().getFullYear());
@@ -183,6 +186,17 @@ private renderTemplate(template: string | null, data: Record<string, any>): stri
 async sendTransactionalEmail(data: TransactionalEmailData): Promise<boolean> {
   try {
     const template = this.templates.get(data.template) || this.templates.get("base")!;
+
+    // Inline the logo as a CID attachment so it renders even when email
+    // clients block remote images (falls back to public URL).
+    const cid = "crosscart-logo";
+    const logoPath = path.join(process.cwd(), "public/logo.png");
+    let logoAttachment: { filename: string; path: string; cid: string } | null = null;
+    if (fs.existsSync(logoPath)) {
+      logoAttachment = { filename: "logo.png", path: logoPath, cid };
+      data.data.logoUrl = `cid:${cid}`;
+    }
+
     const html = this.renderTemplate(template.html, data.data);
     const text = this.renderTemplate(template.text, data.data);
 
@@ -192,6 +206,7 @@ async sendTransactionalEmail(data: TransactionalEmailData): Promise<boolean> {
       subject: data.subject || template.subject,
       html,
       text,
+      attachments: logoAttachment ? [logoAttachment] : [],
     });
 
     return true;
@@ -205,7 +220,8 @@ async sendTransactionalEmail(data: TransactionalEmailData): Promise<boolean> {
  * Send verification email
  */
 async sendVerificationEmail(userData: { email: string; name: string; code: string }): Promise<boolean> {
-  const verificationUrl = `${process.env.PUBLIC_APP_URL}/auth/email-verify?email=${userData.email}&code=${userData.code}`;
+  const base = (process.env.PUBLIC_APP_URL || "").replace(/\/+$/, "");
+  const verificationUrl = `${base}/auth/email-verify?email=${userData.email}&code=${userData.code}`;
   return this.sendTransactionalEmail({
     to: userData.email,
     subject: "Verify Your Cross Cart Global International Express Account",
@@ -217,7 +233,6 @@ async sendVerificationEmail(userData: { email: string; name: string; code: strin
       actionUrl: verificationUrl,
       actionText: "Verify Account",
       verificationCode: userData.code,
-      logoUrl: `${process.env.PUBLIC_APP_URL}/logo.png`,
     },
   });
 }
@@ -226,9 +241,10 @@ async sendVerificationEmail(userData: { email: string; name: string; code: strin
  * Send welcome email
  */
 async sendWelcomeEmail(userData: { email: string; name: string; verificationCode?: string }): Promise<boolean> {
+  const base = (process.env.PUBLIC_APP_URL || "").replace(/\/+$/, "");
   const verificationUrl = userData.verificationCode
-    ? `${process.env.PUBLIC_APP_URL}/auth/verify?code=${userData.verificationCode}`
-    : `${process.env.PUBLIC_APP_URL}/dashboard`;
+    ? `${base}/auth/verify?code=${userData.verificationCode}`
+    : `${base}/dashboard`;
 
   return this.sendTransactionalEmail({
     to: userData.email,
@@ -242,7 +258,6 @@ async sendWelcomeEmail(userData: { email: string; name: string; verificationCode
       actionUrl: verificationUrl,
       actionText: userData.verificationCode ? "Verify Your Account" : "Get Started",
       verificationCode: userData.verificationCode,
-      logoUrl: `${process.env.PUBLIC_APP_URL}/logo.png`,
     },
   });
 }
