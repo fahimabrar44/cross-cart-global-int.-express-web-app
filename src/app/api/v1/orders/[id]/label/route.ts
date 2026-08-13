@@ -54,7 +54,9 @@ export async function GET(
       ? new Date(order.orderDate).toLocaleDateString("en-GB")
       : "";
 
-    const barcode = awb || trackId;
+    // AWB number (barcode value) = the tracking number. Never show anything else.
+    const awbNumber = awb || trackId;
+    const trackingUrl = `${(process.env.PUBLIC_APP_URL || "").replace(/\/+$/, "")}/ship-and-track/track-shipment?trackId=${encodeURIComponent(trackId)}`;
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -63,29 +65,36 @@ export async function GET(
   <title>Shipping Label ${trackId}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Courier New', monospace; background: #fff; color: #000; width: 4in; }
-    .label { border: 2px solid #000; padding: 12px; width: 4in; min-height: 6in; }
-    .top { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; }
-    .brand { font-size: 18px; font-weight: 800; color: #006B45; letter-spacing: 1px; }
-    .tagline { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: #555; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #000; width: 4in; }
+    .label { border: 2px solid #006B45; padding: 14px; width: 4in; min-height: 6in; }
+    .top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #006B45; padding-bottom: 10px; }
+    .brand { font-size: 22px; font-weight: 900; color: #006B45; letter-spacing: 0.5px; line-height: 1; }
+    .tagline { font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase; color: #777; margin-top: 3px; }
     .awb { text-align: right; }
-    .awb .num { font-size: 20px; font-weight: 700; letter-spacing: 2px; }
-    .awb .lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #555; }
-    .sections { display: flex; gap: 10px; margin-top: 10px; }
+    .awb .lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: #777; }
+    .awb .num { font-size: 22px; font-weight: 800; letter-spacing: 2px; color: #006B45; }
+    .sections { display: flex; gap: 12px; margin-top: 12px; }
     .section { flex: 1; }
-    .section h4 { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #999; padding-bottom: 3px; margin-bottom: 4px; }
-    .section p { font-size: 11px; line-height: 1.5; }
-    .route { text-align: center; margin: 12px 0; }
-    .route .line { font-size: 22px; font-weight: 800; letter-spacing: 2px; }
-    .route .sub { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #555; }
-    .meta { display: flex; justify-content: space-between; font-size: 10px; border-top: 1px solid #999; border-bottom: 1px solid #999; padding: 6px 0; margin-top: 10px; }
-    .meta span b { display: block; font-size: 9px; text-transform: uppercase; color: #555; }
-    .barcode { text-align: center; margin-top: 12px; }
-    .bars { display: flex; justify-content: center; gap: 1px; margin-bottom: 4px; }
-    .bars i { display: inline-block; height: 42px; background: #000; }
-    .barcode .num { font-size: 14px; letter-spacing: 4px; font-weight: 700; }
-    .footer { margin-top: 8px; font-size: 8px; text-align: center; color: #555; text-transform: uppercase; letter-spacing: 1px; }
-    .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 18px; background: #006B45; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-family: Arial, sans-serif; }
+    .section h4 { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; background: #EAF3EE; color: #006B45; padding: 4px 6px; border-left: 3px solid #F5C400; margin-bottom: 5px; }
+    .section p { font-size: 11px; line-height: 1.5; color: #222; }
+    .route { text-align: center; margin: 14px 0; padding: 10px 0; border-top: 1px dashed #006B45; border-bottom: 1px dashed #006B45; }
+    .route .line { font-size: 24px; font-weight: 800; letter-spacing: 2px; color: #006B45; }
+    .route .sub { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #777; }
+    .meta { display: flex; justify-content: space-between; font-size: 10px; padding: 8px 0; }
+    .meta span { text-align: center; }
+    .meta b { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #777; margin-bottom: 2px; }
+    .meta .val { font-weight: 700; font-size: 12px; color: #222; }
+    .barcode-area { text-align: center; margin-top: 8px; border-top: 1px solid #E4EEEA; padding-top: 10px; }
+    .barcode-area .lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: #777; margin-bottom: 6px; }
+    .bars svg, .bars img { max-width: 100%; height: 42px; }
+    .barcode .num { font-size: 15px; letter-spacing: 4px; font-weight: 700; color: #006B45; }
+    .qr-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #E4EEEA; }
+    .qr-cell svg { width: 78px; height: 78px; }
+    .qr-cell .lbl { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #777; text-align: center; margin-top: 4px; }
+    .qr-hint { font-size: 10px; color: #555; line-height: 1.5; width: 66%; }
+    .qr-hint b { color: #006B45; }
+    .footer { margin-top: 12px; font-size: 8px; text-align: center; color: #777; text-transform: uppercase; letter-spacing: 1.5px; }
+    .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 18px; background: #006B45; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
     @media print {
       .print-btn { display: none; }
       body { width: 4in; }
@@ -99,11 +108,11 @@ export async function GET(
     <div class="top">
       <div>
         <div class="brand">CROSSCART</div>
-        <div class="tagline">Global Int Express</div>
+        <div class="tagline">Global International Express</div>
       </div>
       <div class="awb">
         <div class="lbl">AWB No.</div>
-        <div class="num">${barcode}</div>
+        <div class="num">${awbNumber}</div>
       </div>
     </div>
 
@@ -124,23 +133,52 @@ export async function GET(
     </div>
 
     <div class="meta">
-      <span><b>Track ID</b>${trackId}</span>
-      <span><b>Weight</b>${weight} KG</span>
-      <span><b>Priority</b>${priority}</span>
-      <span><b>Date</b>${orderDate}</span>
+      <span><b>Track ID</b><span class="val">${trackId}</span></span>
+      <span><b>Weight</b><span class="val">${weight} KG</span></span>
+      <span><b>Priority</b><span class="val">${priority}</span></span>
+      <span><b>Date</b><span class="val">${orderDate}</span></span>
     </div>
 
-    <div class="barcode">
-      <div class="bars">
-        ${Array.from({ length: 48 })
-          .map(() => `<i style="width:${(Number(barcode.length) % 2) + 1}px"></i><span style="width:2px;display:inline-block"></span>`)
-          .join("")}
+    <div class="barcode-area">
+      <div class="lbl">Tracking Number (Barcode)</div>
+      <div class="bars"><svg id="barcode"></svg></div>
+    </div>
+
+    <div class="qr-row">
+      <div class="qr-cell">
+        <div id="qrcode"></div>
+        <div class="lbl">Scan to Track</div>
       </div>
-      <div class="num">${barcode}</div>
+      <div class="qr-hint">
+        <b>Scan the QR code</b> to view live tracking status for this shipment.
+        <br />Or track online at <b>crosscartglobal.com</b>.
+      </div>
     </div>
 
-    <div class="footer">CrossCart Global Int Express • Pickup: Dhaka, BD • crosscartglobal.com</div>
+    <div class="footer">CrossCart Global International Express • Pickup: Dhaka, BD • crosscartglobal.com</div>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script>
+    (function () {
+      try {
+        JsBarcode("#barcode", ${JSON.stringify(awbNumber)}, {
+          format: "CODE128",
+          width: 2,
+          height: 42,
+          displayValue: true,
+          fontSize: 14,
+          font: "monospace",
+          margin: 4,
+        });
+      } catch (e) { document.getElementById("barcode").outerHTML = '<div style="font-size:16px;font-weight:700;color:#006B45;letter-spacing:3px;">' + ${JSON.stringify(awbNumber)} + '</div>'; }
+
+      try {
+        new QRCode(document.getElementById("qrcode"), ${JSON.stringify(trackingUrl)});
+      } catch (e) { document.getElementById("qrcode").outerHTML = '<div style="font-size:9px;color:#555;">Tracking: ' + ${JSON.stringify(trackId)} + '</div>'; }
+    })();
+  </script>
   <script>window.addEventListener("load", () => { if (!window.__printed) window.print(); });</script>
 </body>
 </html>`;
