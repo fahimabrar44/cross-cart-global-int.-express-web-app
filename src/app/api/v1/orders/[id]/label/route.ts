@@ -68,11 +68,11 @@ export async function GET(
     body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #000; width: 4in; }
     .label { border: 2px solid #006B45; padding: 14px; width: 4in; min-height: 6in; }
     .top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #006B45; padding-bottom: 10px; }
-    .brand { font-size: 22px; font-weight: 900; color: #006B45; letter-spacing: 0.5px; line-height: 1; }
+    .brand { font-size: 18px; font-weight: 900; color: #006B45; letter-spacing: 0.5px; line-height: 1; }
     .tagline { font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase; color: #777; margin-top: 3px; }
     .awb { text-align: right; }
     .awb .lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: #777; }
-    .awb .num { font-size: 22px; font-weight: 800; letter-spacing: 2px; color: #006B45; }
+    .awb .num { font-size: 18px; font-weight: 800; letter-spacing: 2px; color: #006B45; }
     .sections { display: flex; gap: 12px; margin-top: 12px; }
     .section { flex: 1; }
     .section h4 { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; background: #EAF3EE; color: #006B45; padding: 4px 6px; border-left: 3px solid #F5C400; margin-bottom: 5px; }
@@ -89,7 +89,7 @@ export async function GET(
     .bars svg, .bars img { max-width: 100%; height: 42px; }
     .barcode .num { font-size: 15px; letter-spacing: 4px; font-weight: 700; color: #006B45; }
     .qr-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #E4EEEA; }
-    .qr-cell svg { width: 78px; height: 78px; }
+    .qr-cell svg { width: 55px; height: 55px; }
     .qr-cell .lbl { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #777; text-align: center; margin-top: 4px; }
     .qr-hint { font-size: 10px; color: #555; line-height: 1.5; width: 66%; }
     .qr-hint b { color: #006B45; }
@@ -107,7 +107,7 @@ export async function GET(
   <div class="label">
     <div class="top">
       <div>
-        <div class="brand">CROSSCART</div>
+        <div class="brand">CROSS CART</div>
         <div class="tagline">Global International Express</div>
       </div>
       <div class="awb">
@@ -155,7 +155,7 @@ export async function GET(
       </div>
     </div>
 
-    <div class="footer">CrossCart Global International Express • Pickup: Dhaka, BD • crosscartglobal.com</div>
+    <div class="footer">Cross Cart Global International Express • Pickup: Dhaka, BD • crosscartglobal.com</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
