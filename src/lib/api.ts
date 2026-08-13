@@ -34,6 +34,53 @@ export class ApiError extends Error {
   }
 }
 
+// Refresh access token using the stored refresh token.
+// Shared promise prevents concurrent 401s from racing the rotation.
+let refreshPromise: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = localStorage.getItem("refreshToken");
+      if (!refreshToken) return null;
+
+      const response = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) return null;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data: any = await response.json();
+      if (!data || !data.data || !data.data.accessToken) return null;
+
+      localStorage.setItem("accessToken", data.data.accessToken);
+      if (data.data.refreshToken) {
+        localStorage.setItem("refreshToken", data.data.refreshToken);
+      }
+      if (data.data.user) {
+        localStorage.setItem("authUser", JSON.stringify(data.data.user));
+      }
+
+      return data.data.accessToken as string;
+    } catch {
+      return null;
+    } finally {
+      setTimeout(() => {
+        refreshPromise = null;
+      }, 0);
+    }
+  })();
+
+  return refreshPromise;
+}
+
 // Generic API request handler
 async function apiRequest<T>(
   endpoint: string,
@@ -50,7 +97,23 @@ async function apiRequest<T>(
       },
     };
 
-    const response = await fetch(url, config);
+    let response = await fetch(url, config);
+
+    // Access token may be stale (15min TTL) right after a page load.
+    // Refresh once and retry the request before giving up.
+    if (response.status === 401) {
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        const retryConfig: RequestInit = {
+          ...options,
+          headers: {
+            ...getAuthHeaders(),
+            ...options.headers,
+          },
+        };
+        response = await fetch(url, retryConfig);
+      }
+    }
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
