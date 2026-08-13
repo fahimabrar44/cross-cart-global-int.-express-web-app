@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/config/db";
-import { Order } from "@/server/models/Order.model";
 import { verifyAuth } from "@/middleware/auth";
+import { Order } from "@/server/models/Order.model";
 import { Types } from "mongoose";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/v1/orders/[id]/label
@@ -11,7 +11,7 @@ import { Types } from "mongoose";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
     await connectDB();
@@ -78,7 +78,7 @@ export async function GET(
     .section h4 { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; background: #EAF3EE; color: #006B45; padding: 4px 6px; border-left: 3px solid #F5C400; margin-bottom: 5px; }
     .section p { font-size: 11px; line-height: 1.5; color: #222; }
     .route { text-align: center; margin: 14px 0; padding: 10px 0; border-top: 1px dashed #006B45; border-bottom: 1px dashed #006B45; }
-    .route .line { font-size: 24px; font-weight: 800; letter-spacing: 2px; color: #006B45; }
+    .route .line { font-size: 20px; font-weight: 800; letter-spacing: 1px; color: #006B45; }
     .route .sub { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #777; }
     .meta { display: flex; justify-content: space-between; font-size: 10px; padding: 8px 0; }
     .meta span { text-align: center; }
@@ -86,10 +86,10 @@ export async function GET(
     .meta .val { font-weight: 700; font-size: 12px; color: #222; }
     .barcode-area { text-align: center; margin-top: 8px; border-top: 1px solid #E4EEEA; padding-top: 10px; }
     .barcode-area .lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: #777; margin-bottom: 6px; }
-    .bars svg, .bars img { max-width: 100%; height: 42px; }
-    .barcode .num { font-size: 15px; letter-spacing: 4px; font-weight: 700; color: #006B45; }
+    .bars svg, .bars img { max-width: 100%; height: 50px; }
+    .barcode .num { font-size: 18px; letter-spacing: 4px; font-weight: 700; color: #006B45; }
     .qr-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #E4EEEA; }
-    .qr-cell svg { width: 55px; height: 55px; }
+    .qr-cell svg { width: 40px; height: 40px; }
     .qr-cell .lbl { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #777; text-align: center; margin-top: 4px; }
     .qr-hint { font-size: 10px; color: #555; line-height: 1.5; width: 66%; }
     .qr-hint b { color: #006B45; }
@@ -108,7 +108,7 @@ export async function GET(
     <div class="top">
       <div>
         <div class="brand">CROSS CART</div>
-        <div class="tagline">Global International Express</div>
+        <div class="tagline">Global Int. Express</div>
       </div>
       <div class="awb">
         <div class="lbl">AWB No.</div>
@@ -188,7 +188,8 @@ export async function GET(
       headers: { "Content-Type": "text/html; charset=utf-8" },
     });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Failed to generate label";
+    const msg =
+      error instanceof Error ? error.message : "Failed to generate label";
     return new NextResponse(`<pre>${msg}</pre>`, { status: 500 });
   }
 }
