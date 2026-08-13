@@ -16,11 +16,11 @@ const PageHeader = ({
 }: PageHeaderProps) => {
   return (
     <div className="container m-auto h-auto bg-soft-green relative overflow-hidden border-b border-border">
-      <div className="flex flex-col py-32 sm:py-28 px-4 z-[20] container m-auto">
-        <h1 className="text-4xl sm:text-6xl font-extrabold text-foreground z-[20]">
+      <div className="flex flex-col py-20 sm:py-28 px-4 z-[20] container m-auto">
+        <h1 className="text-3xl sm:text-6xl font-extrabold text-foreground z-[20]">
           {subtitle}
         </h1>
-        <div className="flex items-center gap-2 text-base sm:text-lg font-bold text-muted-foreground mt-4 z-[20]">
+        <div className="flex items-center gap-1 text-sm sm:text-lg font-bold text-muted-foreground mt-3 z-[20]">
           <Link href="/" className="hover:text-primary transition-colors">HOME</Link>
           <span className="text-primary">/</span>
           <Link href={mainLink} className="hover:text-primary transition-colors">{title}</Link>

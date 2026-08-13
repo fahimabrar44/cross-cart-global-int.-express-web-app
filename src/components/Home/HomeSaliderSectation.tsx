@@ -1,5 +1,4 @@
 "use client";
-import React from 'react'
 
 import {
   Carousel,
@@ -12,26 +11,20 @@ import {
 import { useEffect, useState } from "react";
 
 const slider_image = [
-  { id: 135, src: "/slider.jpg" },
-  { id: 2345, src: "/slider.jpg" },
-  { id: 123, src: "/slider.jpg" },
-  { id: 234, src: "/slider.jpg" },
-  { id: 156, src: "/slider.jpg" },
-  { id: 278, src: "/slider.jpg" },
-  
-  { id: 1535, src: "/slider.jpg" },
-  { id: 267, src: "/slider.jpg" },
-  { id: 165, src: "/slider.jpg" },
-  { id: 243, src: "/slider.jpg" },
-  { id: 121, src: "/slider.jpg" },
-  { id: 23456, src: "/slider.jpg" },
+  { id: 135, src: "/cover-1.png" },
+  { id: 2345, src: "/cover-2.png" },
+  { id: 123, src: "/cover-3.png" },
+  { id: 234, src: "/cover-4.png" },
+  { id: 156, src: "/cover-5.png" },
+  { id: 278, src: "/cover-6.png" },
 
-
-
-
+  { id: 1535, src: "/cover-7.png" },
+  { id: 267, src: "/cover-8.png" },
+  { id: 165, src: "/cover-9.png" },
+  { id: 243, src: "/cover-1.png" },
+  { id: 121, src: "/cover-2.png" },
+  { id: 23456, src: "/cover-3.png" },
 ];
- 
-
 
 const HomeSaliderSectation = () => {
   const [api, setApi] = useState<CarouselApi | null>(null);
@@ -47,14 +40,14 @@ const HomeSaliderSectation = () => {
   }, [api]);
 
   return (
-    <div className="w-full h-auto py-12 pt-16 pb-4 bg-[#12352A] px-5">
+    <div className="w-full h-auto py-8 pb-4 bg-[#12352A] px-5">
       <div className="container h-auto m-auto p-10">
         <Carousel setApi={setApi}>
           <CarouselContent>
             {slider_image.map((item) => (
               <CarouselItem key={item.id}>
                 <div
-                  className="w-full h-[230px] md:h-[480px] p-2 bg-cover rounded-lg bg-no-repeat bg-center"
+                  className="w-full h-[150px] md:h-[450px] p-2 bg-cover rounded-lg bg-no-repeat bg-center"
                   style={{ backgroundImage: `url(${item.src})` }}
                 ></div>
               </CarouselItem>
@@ -66,8 +59,6 @@ const HomeSaliderSectation = () => {
       </div>
     </div>
   );
-}
+};
 
-
-
-export default HomeSaliderSectation
+export default HomeSaliderSectation;

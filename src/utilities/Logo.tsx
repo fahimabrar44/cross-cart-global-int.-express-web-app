@@ -9,12 +9,12 @@ interface LogoProps {
 }
 
 const Logo: React.FC<LogoProps> = ({isFooter = false, width, height}) => {
-  const imgWidth = width ?? 65;
+  const imgWidth = width ?? 160;
   const imgHeight = height ?? 75;
   return (
     <Link href={"/"}>
       <Image
-        src="/logo.png"
+        src="/full-logo.png"
         alt="CrossCart Logo"
         width={imgWidth}
         height={imgHeight}

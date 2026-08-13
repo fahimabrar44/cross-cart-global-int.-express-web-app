@@ -38,7 +38,7 @@ export default function SiteLayout({
     return (
       <>
         <NavBar />
-        <div className="w-full h-[99px]"></div>
+        <div className="w-full h-[70px]"></div>
         {children}
         <FooterBar />
         <WhatsAppButton />

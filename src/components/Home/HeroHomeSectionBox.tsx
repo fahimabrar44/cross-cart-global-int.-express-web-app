@@ -20,7 +20,7 @@ const HeroHomeSectionBox = () => {
         <div className=" w-full h-auto p-3 border-b border-soft-green mb-2">
           <div className=" border-primary border-2 rounded-xl mb-3 overflow-hidden">
             <Input
-              className=" outline-0 border-none p-5 text-lg md:text-lg "
+              className=" outline-0 border-none p-5 py-6 text-lg md:text-lg "
               placeholder="Enter Tracking Number"
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}

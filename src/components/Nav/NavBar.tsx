@@ -437,7 +437,7 @@ const NavBar = () => {
           {!isAuthenticated && (
             <Link
               href={"/auth/signin"}
-              className="bg-primary text-white font-semibold  hover:bg-[#087F4F] px-6 py-3 rounded-xl transition-colors"
+              className="bg-primary text-white font-semibold  hover:bg-[#087F4F] px-4 py-3 sm:px-5 rounded-xl transition-colors"
             >
               Sign In
             </Link>
@@ -451,7 +451,7 @@ const NavBar = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    className=" px-6 py-6  text-foreground hover:bg-primary hover:text-white border-border cursor-pointer"
+                    className=" sm:px-5.5 px-5 py-6 text-foreground hover:bg-primary hover:text-white border-border cursor-pointer"
                   >
                     <Menu className="size-6" />
                   </Button>

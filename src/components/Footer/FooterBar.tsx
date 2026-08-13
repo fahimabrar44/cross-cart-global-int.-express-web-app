@@ -134,8 +134,8 @@ const FooterBar = () => {
         <div className="w-full h-auto p-2 py-6">
           <div className="w-full h-auto grid md:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-5">
             <div className="lg:border-r border-white/10 border-dashed">
-              <div className={"flex gap-4 pb-4"}>
-                <Logo isFooter={true} width={100} height={120} />
+              <div className={"flex gap-2 pb-2"}>
+                <Logo isFooter={true} width={220} height={80} />
               </div>
 
               <div className="text-sm font-medium pr-2 text-[#B7C9C0] py-1">CrossCart Global Int Express connects Bangladesh to the world through trusted global courier partners — DHL, FedEx, UPS, Aramex, and leading local carriers.
