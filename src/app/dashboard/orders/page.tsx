@@ -437,13 +437,14 @@ export default function OrdersPage() {
   // Helper function to format address
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const formatAddress = (address: any) => {
+    if (!address) return "—";
     const parts = [
       address.address,
       address.city,
       address.zipcode,
       address.country?.name,
     ].filter(Boolean);
-    return parts.join(", ");
+    return parts.join(", ") || "—";
   };
 
   // Calculate total quantity and value for packing list
@@ -617,7 +618,7 @@ export default function OrdersPage() {
               {selectedOrder && (
                 <div className="flex flex-wrap items-center gap-4">
                   <a
-                    href={`/api/v1/orders/${selectedOrder._id}/invoice`}
+                    href={`/api/v1/orders/${selectedOrder._id}/invoice?track=${selectedOrder.trackId}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline"
@@ -626,7 +627,7 @@ export default function OrdersPage() {
                     View / Print Invoice (PDF)
                   </a>
                   <a
-                    href={`/api/v1/orders/${selectedOrder._id}/label`}
+                    href={`/api/v1/orders/${selectedOrder._id}/label?track=${selectedOrder.trackId}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline"

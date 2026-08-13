@@ -22,7 +22,9 @@ export class EmailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: process.env.EMAIL_HOST || "smtp.gmail.com",
+      port: Number(process.env.EMAIL_PORT) || 587,
+      secure: Number(process.env.EMAIL_PORT) === 465,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -33,15 +35,16 @@ export class EmailService {
   }
 
   /**
-   * Load email templates from file system
+   * Load email templates from file system (synchronous so templates are
+   * guaranteed ready before the first email is sent).
    */
-  private async loadEmailTemplates(): Promise<void> {
+  private loadEmailTemplates(): void {
     try {
       const templatesPath = path.join(process.cwd(), "src/templates/email");
 
       // Base template
-      const baseHtml = (await this.loadTemplate(templatesPath, "base.html")) || this.fallbackHtml();
-      const baseText = (await this.loadTemplate(templatesPath, "base.txt")) || this.fallbackText();
+      const baseHtml = this.loadTemplate(templatesPath, "base.html") || this.fallbackHtml();
+      const baseText = this.loadTemplate(templatesPath, "base.txt") || this.fallbackText();
 
       const templateNames = [
         "welcome",
@@ -54,8 +57,8 @@ export class EmailService {
       ];
 
       for (const name of templateNames) {
-        const html = (await this.loadTemplate(templatesPath, `${name}.html`)) || baseHtml;
-        const text = (await this.loadTemplate(templatesPath, `${name}.txt`)) || baseText;
+        const html = this.loadTemplate(templatesPath, `${name}.html`) || baseHtml;
+        const text = this.loadTemplate(templatesPath, `${name}.txt`) || baseText;
 
         const subject = `CrossCart Global Int Express - ${name.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())}`;
 
@@ -63,13 +66,13 @@ export class EmailService {
       }
 
       // Always set base as fallback
-      this.templates.set("base", { subject: "CrossCart Global Int Express Notification", html: baseHtml, text: baseText });
+      this.templates.set("base", { subject: "Cross Cart Global International Express Notification", html: baseHtml, text: baseText });
     } catch (err) {
       console.error("Failed to load email templates:", err);
     }
   }
 
-  private async loadTemplate(basePath: string, fileName: string): Promise<string | null> {
+  private loadTemplate(basePath: string, fileName: string): string | null {
     try {
       const filePath = path.join(basePath, fileName);
       return fs.readFileSync(filePath, "utf-8");
@@ -104,7 +107,7 @@ private fallbackHtml(): string {
     <div class="container">
       <!-- Header -->
       <div class="header">
-        <img src="{{logoUrl}}" alt="CrossCart Logo" />
+        <img src="{{logoUrl}}" alt="Cross Cart Logo" />
       </div>
 
       <!-- Content -->
@@ -118,8 +121,8 @@ private fallbackHtml(): string {
 
       <!-- Footer -->
       <div class="footer">
-        &copy; ${new Date().getFullYear()} CrossCart Global Int Express International Courier. All rights reserved.<br/>
-        24/7 Support: <a href="mailto:support@crosscartglobal.com">support@crosscartglobal.com</a>
+        &copy; ${new Date().getFullYear()} Cross Cart Global International Express International Courier. All rights reserved.<br/>
+        24/7 Support: <a href="mailto:support@crosscartbd.com">support@crosscartbd.com</a>
       </div>
     </div>
   </body>
@@ -177,7 +180,7 @@ async sendTransactionalEmail(data: TransactionalEmailData): Promise<boolean> {
     const text = this.renderTemplate(template.text, data.data);
 
     await this.transporter.sendMail({
-      from: `"CrossCart Global Int Express Courier" <${process.env.EMAIL_USER}>`,
+      from: `"Cross Cart Global International Express Courier" <${process.env.EMAIL_USER}>`,
       to: data.to,
       subject: data.subject || template.subject,
       html,
@@ -198,7 +201,7 @@ async sendVerificationEmail(userData: { email: string; name: string; code: strin
   const verificationUrl = `${process.env.PUBLIC_APP_URL}/auth/email-verify?email=${userData.email}&code=${userData.code}`;
   return this.sendTransactionalEmail({
     to: userData.email,
-    subject: "Verify Your CrossCart Global Int Express Account",
+    subject: "Verify Your Cross Cart Global International Express Account",
     template: "verification",
     data: {
       name: userData.name,
@@ -222,13 +225,13 @@ async sendWelcomeEmail(userData: { email: string; name: string; verificationCode
 
   return this.sendTransactionalEmail({
     to: userData.email,
-    subject: "Welcome to CrossCart Global Int Express International Courier!",
+    subject: "Welcome to Cross Cart Global International Express International Courier!",
     template: "welcome",
     data: {
       name: userData.name,
-      title: `Welcome to CrossCart Global Int Express, ${userData.name}!`,
+      title: `Welcome to Cross Cart Global International Express, ${userData.name}!`,
       message:
-        "Thank you for joining CrossCart Global Int Express International Courier. Your account is ready to start shipping worldwide.",
+        "Thank you for joining Cross Cart Global International Express International Courier. Your account is ready to start shipping worldwide.",
       actionUrl: verificationUrl,
       actionText: userData.verificationCode ? "Verify Your Account" : "Get Started",
       verificationCode: userData.verificationCode,
