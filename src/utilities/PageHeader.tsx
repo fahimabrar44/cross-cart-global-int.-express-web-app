@@ -1,0 +1,47 @@
+import Globe from "@/components/ui/globe";
+import Link from "next/link";
+
+interface PageHeaderProps {
+  title: string;
+  subtitle: string;
+  mainLink?: string;
+  subLink?: string;
+}
+
+const PageHeader = ({
+  title,
+  subtitle,
+  mainLink = "/",
+  subLink = "/",
+}: PageHeaderProps) => {
+  return (
+    <div className="container m-auto h-auto bg-soft-green relative overflow-hidden border-b border-border">
+      <div className="flex flex-col py-32 sm:py-28 px-4 z-[20] container m-auto">
+        <h1 className="text-4xl sm:text-6xl font-extrabold text-foreground z-[20]">
+          {subtitle}
+        </h1>
+        <div className="flex items-center gap-2 text-base sm:text-lg font-bold text-muted-foreground mt-4 z-[20]">
+          <Link href="/" className="hover:text-primary transition-colors">HOME</Link>
+          <span className="text-primary">/</span>
+          <Link href={mainLink} className="hover:text-primary transition-colors">{title}</Link>
+          {subtitle !== title ? <>
+            <span className="text-primary">/</span>
+            <Link href={subLink} className="text-primary">{subtitle}</Link>
+          </> : null}
+        </div>
+      </div>
+      <Globe
+        theta={0.2}
+        dark={0}
+        scale={1.2}
+        diffuse={1.5}
+        baseColor="#087F4F"
+        markerColor="#F5C400"
+        glowColor="#087F4F"
+        className={` container left-0 absolute -bottom-[65%] sm:-bottom-[120%] md:-bottom-[160%] lg:-bottom-[240%] xl:-bottom-[310%] 2xl:-bottom-[390%] m-auto opacity-30`}
+      />
+    </div>
+  );
+};
+
+export default PageHeader;

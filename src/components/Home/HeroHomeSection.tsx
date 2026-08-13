@@ -1,0 +1,33 @@
+import Globe from "../ui/globe";
+import HeroHomeSectionBox from "./HeroHomeSectionBox";
+
+const HeroHomeSection = () => {
+  return (
+    <div className="w-full h-auto bg-soft-green">
+      <div className="container m-auto p-4 relative overflow-hidden">
+        <Globe
+          theta={0.2}
+          dark={0}
+          scale={1.2}
+          diffuse={1.5}
+          baseColor="#087F4F"
+          markerColor="#F5C400"
+          glowColor="#087F4F"
+          className={` container left-0 absolute -bottom-[30%] sm:-bottom-[60%] md:-bottom-[80%] lg:-bottom-[110%] xl:-bottom-[200%] m-auto opacity-25`}
+        />
+
+        <div className="w-full h-auto pt-10 sm:pt-20 pb-6 z-[10] relative flex justify-center text-center align-middle items-center flex-col">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-foreground overflow-hidden z-[10]">
+            CROSS CART GLOBAL INT. EXPRESS
+          </h1>
+          <h3 className="text-base sm:text-2xl md:text-3xl font-semibold text-primary z-[10]">
+            ZIP IT SHIP IT CROSSCART
+          </h3>
+        </div>
+        <HeroHomeSectionBox />
+      </div>
+    </div>
+  );
+};
+
+export default HeroHomeSection;
