@@ -145,35 +145,35 @@ We make international delivery smarter, faster, and more affordable by offering 
 
               <div className="flex justify-start align-middle items-center gap-3 py-2">
                 <Link
-                  href={"#"}
+                  href={"https://www.facebook.com/crosscart"}
                   target="_blank"
                   className="w-10 h-10 p-1 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 flex justify-center align-middle items-center transition-colors"
                 >
                   <FaFacebook className="w-5 h-5 text-white" />
                 </Link>
                 <Link
-                  href={"#"}
+                  href={"https://www.instagram.com/crosscart.global/"}
                   target="_blank"
                   className="w-10 h-10 p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 flex justify-center align-middle items-center transition-colors"
                 >
                   <LuInstagram className="w-5 h-5 text-white" />
                 </Link>
                 <Link
-                  href={"#"}
+                  href={"https://x.com/CrossCartGlobal"}
                   target="_blank"
                   className="w-10 h-10 p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 flex justify-center align-middle items-center transition-colors"
                 >
                   <FaTwitter className="w-5 h-5 text-white" />
                 </Link>
                 <Link
-                  href={"#"}
+                  href={"https://www.linkedin.com/company/cross-cart-global/"}
                   target="_blank"
                   className="w-10 h-10 p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 flex justify-center align-middle items-center transition-colors"
                 >
                   <IoLogoLinkedin className="w-5 h-5 text-white" />
                 </Link>
                 <Link
-                  href={"#"}
+                  href={"https://www.youtube.com/@crosscart.global"}
                   target="_blank"
                   className="w-10 h-10 p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 flex justify-center align-middle items-center transition-colors"
                 >
