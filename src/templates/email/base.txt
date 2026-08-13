@@ -1,0 +1,17 @@
+{{title}}
+============================================================
+
+{{message}}
+
+Your verification code is: {{verificationCode}}
+
+This code expires in 15 minutes. If you didn't request it, you can safely ignore this email.
+
+{{#actionUrl}}Verify now: {{actionUrl}}{{/actionUrl}}
+
+Need help? Contact support@crosscartglobal.com or call +8801622541719
+
+--
+CROSSCART GLOBAL INTERNATIONAL EXPRESS
+1 Eagle St, Dhaka, Bangladesh
+(c) {{year}} CrossCart Global International Express. All rights reserved.

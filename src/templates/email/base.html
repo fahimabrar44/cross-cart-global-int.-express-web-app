@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{title}} | CrossCart Global International Express</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #EAF3EE; }
+    .wrapper { width: 100%; background-color: #EAF3EE; padding: 32px 12px; }
+    .container { max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 28px rgba(0, 107, 69, 0.12); border: 1px solid #DCEBE3; }
+    .header { background: linear-gradient(135deg, #006B45 0%, #0B7A52 60%, #0F8A5F 100%); padding: 28px 32px; text-align: center; }
+    .header img { width: 170px; max-width: 80%; }
+    .header .tagline { color: #F5C400; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; font-weight: 600; margin-top: 8px; }
+    .badge { display: inline-block; margin-top: 14px; background: rgba(245, 196, 0, 0.16); border: 1px solid rgba(245, 196, 0, 0.6); color: #F5C400; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; padding: 6px 14px; border-radius: 999px; font-weight: 700; }
+    .content { padding: 36px 36px 24px; }
+    .content h2 { margin: 0 0 14px; font-size: 24px; line-height: 1.35; color: #12352A; font-weight: 800; }
+    .content p { margin: 0 0 16px; font-size: 15px; line-height: 1.7; color: #3D4F49; }
+    .divider { border: none; border-top: 1px solid #E4EEEA; margin: 24px 0; }
+    .button { display: inline-block; background: #12352A; color: #F5C400 !important; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 32px; border-radius: 10px; }
+    .code-box { background: #F5FBF8; border: 2px dashed #0F8A5F; border-radius: 12px; text-align: center; padding: 20px; margin: 22px 0; }
+    .code-box .code { font-size: 34px; letter-spacing: 10px; font-weight: 800; color: #006B45; }
+    .code-box .lbl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #0F8A5F; margin-bottom: 8px; }
+    .note { font-size: 12px; color: #74857D; line-height: 1.6; margin: 8px 0 0 !important; }
+    .contact-row { background: #F5FBF8; padding: 18px 36px; border-top: 1px solid #E4EEEA; text-align: center; }
+    .contact-row a { color: #006B45; text-decoration: none; font-weight: 600; }
+    .footer { background: #12352A; padding: 22px 32px; text-align: center; }
+    .footer p { margin: 4px 0; font-size: 12px; color: #9FB5AB; line-height: 1.6; }
+    .footer .brand-ft { color: #F5C400; font-weight: 700; font-size: 14px; letter-spacing: 1px; }
+    a { color: #0F8A5F; }
+    @media only screen and (max-width: 480px) {
+      .content { padding: 24px 20px; }
+      .code-box .code { font-size: 26px; letter-spacing: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="header">
+        <img src="{{logoUrl}}" alt="CrossCart Global International Express" />
+        <div class="tagline">Global International Express</div>
+      </div>
+
+      <div class="content">
+        <h2>{{title}}</h2>
+        {{#message}}
+        <p>{{message}}</p>
+        {{/message}}
+
+        {{#verificationCode}}
+        <div class="code-box">
+          <div class="lbl">Your Verification Code</div>
+          <div class="code">{{verificationCode}}</div>
+        </div>
+        <p class="note">This code expires in 15 minutes. If you didn&rsquo;t request it, you can safely ignore this email.</p>
+        {{/verificationCode}}
+
+        {{#actionUrl}}
+        <div style="text-align:center;margin-top:26px;">
+          <a href="{{actionUrl}}" class="button">{{actionText}}</a>
+        </div>
+        {{/actionUrl}}
+      </div>
+
+      <div class="contact-row">
+        Need help? <a href="mailto:support@crosscartglobal.com">support@crosscartglobal.com</a>
+        &nbsp;&bull;&nbsp; +8801622541719
+      </div>
+
+      <div class="footer">
+        <p class="brand-ft">CROSSCART GLOBAL INTERNATIONAL EXPRESS</p>
+        <p>1 Eagle St, Dhaka, Bangladesh</p>
+        <p>&copy; {{year}} CrossCart Global International Express. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

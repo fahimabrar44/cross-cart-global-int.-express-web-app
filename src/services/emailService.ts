@@ -154,6 +154,9 @@ private renderTemplate(template: string | null, data: Record<string, any>): stri
   if (!data.logoUrl) {
     data.logoUrl = `${process.env.PUBLIC_APP_URL}/logo.png`; // your logo path
   }
+  if (!data.year) {
+    data.year = String(new Date().getFullYear());
+  }
 
   // Replace variables {{variable}}
   Object.entries(data).forEach(([key, value]) => {
@@ -166,6 +169,10 @@ private renderTemplate(template: string | null, data: Record<string, any>): stri
     const blockRegex = new RegExp(`\\{\\{#${key}\\}\\}([\\s\\S]*?)\\{\\{\\/${key}\\}\\}`, "g");
     rendered = value ? rendered.replace(blockRegex, "$1") : rendered.replace(blockRegex, "");
   });
+
+  // Strip any leftover placeholder blocks/tags from data that wasn't provided
+  rendered = rendered.replace(/\{\{#[\w.]+[\s\S]*?\{\{\/[\w.]+\}\}\}/g, "");
+  rendered = rendered.replace(/\{\{[\w.]+\}\}/g, "");
 
   return rendered;
 }
