@@ -21,8 +21,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email });
+    // Find user by email (explicitly include the select:false code field)
+    const user = await User.findOne({ email }).select(
+      "+emailVerification.code +emailVerification.expires"
+    );
     if (!user) {
       return errorResponse({
         status: 404,

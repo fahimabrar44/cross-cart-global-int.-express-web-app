@@ -215,14 +215,16 @@ export const POST = createRateLimitedHandler(
         }
       }
 
-      // Send email & notification asynchronously
-      emailService
-        .sendVerificationEmail({
+      // Send email & notification — awaited so serverless doesn't drop it
+      try {
+        await emailService.sendVerificationEmail({
           email: newUser.email,
           name: newUser.name,
           code: verificationCode,
-        })
-        .catch((err) => console.error("Email send error:", err));
+        });
+      } catch (err) {
+        console.error("Email send error:", err);
+      }
 
       notificationService
         .sendAuthNotification(

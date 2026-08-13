@@ -71,13 +71,16 @@ export async function POST(req: NextRequest) {
     const verificationCode = user.generateVerificationCode();
     await user.save();
 
-    emailService
-      .sendVerificationEmail({
+    // Await so serverless doesn't drop the email
+    try {
+      await emailService.sendVerificationEmail({
         email: user.email,
         name: user.name,
         code: verificationCode,
-      })
-      .catch((err: Error) => console.error("Resend email error:", err));
+      });
+    } catch (err) {
+      console.error("Resend email error:", err);
+    }
 
     resentAttempts.set(rateKey, now);
 
