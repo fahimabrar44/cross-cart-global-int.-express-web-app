@@ -2,7 +2,12 @@ import { Document, Schema, Types, model, models } from "mongoose";
 
 // Review Interface
 export interface IReview extends Document {
-  user: Types.ObjectId; // User reference
+  user?: Types.ObjectId; // User reference (logged-in users)
+  name?: string; // Guest customer name
+  phone?: string; // Guest customer phone
+  email?: string; // Guest customer email
+  order?: Types.ObjectId; // Associated order
+  trackId?: string; // Associated tracking number
   rating: number; // 1-5 rating
   comment: string; // Review comment/body
   isVerified: boolean; // Verified purchase or not
@@ -16,7 +21,12 @@ export interface IReview extends Document {
 // Review Schema
 const reviewSchema = new Schema<IReview>(
   {
-    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    user: { type: Schema.Types.ObjectId, ref: "User", required: false },
+    name: { type: String, default: "" },
+    phone: { type: String, default: "" },
+    email: { type: String, default: "" },
+    order: { type: Schema.Types.ObjectId, ref: "Order", default: null },
+    trackId: { type: String, default: "" },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true, default: "" },
     isVerified: { type: Boolean, default: false },
@@ -33,6 +43,7 @@ const reviewSchema = new Schema<IReview>(
 
 // Indexes
 reviewSchema.index({ user: 1 });
+reviewSchema.index({ trackId: 1 });
 reviewSchema.index({ rating: -1, createdAt: -1 });
 reviewSchema.index({ status: 1 });
 

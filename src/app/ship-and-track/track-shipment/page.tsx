@@ -12,11 +12,14 @@ import {
   Plane,
   RefreshCw,
   Search,
+  Star,
   Truck,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 interface TrackingStep {
   status: string;
@@ -49,6 +52,17 @@ const TrackShipmentContent = () => {
   const [notifyLoading, setNotifyLoading] = useState(false);
   const [notifyMessage, setNotifyMessage] = useState("");
   const [notifyError, setNotifyError] = useState("");
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    rating: 0,
+    comment: "",
+  });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState("");
+  const [reviewError, setReviewError] = useState("");
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -268,6 +282,55 @@ const TrackShipmentContent = () => {
     win.document.close();
     win.focus();
     setTimeout(() => win.print(), 300);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!trackingData) return;
+    setReviewMessage("");
+    setReviewError("");
+
+    if (!reviewForm.name.trim()) {
+      setReviewError("Please enter your name");
+      return;
+    }
+    if (reviewForm.rating < 1) {
+      setReviewError("Please select a star rating");
+      return;
+    }
+    if (!reviewForm.comment.trim()) {
+      setReviewError("Please write your review details");
+      return;
+    }
+
+    setReviewSubmitting(true);
+    try {
+      const response = await postRequestSend<
+        { name: string; phone: string; email: string; rating: number; comment: string },
+        { message: string }
+      >(`${ROOT_API}tracks/${trackingData.trackId}/review`, undefined, {
+        name: reviewForm.name,
+        phone: reviewForm.phone,
+        email: reviewForm.email,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment,
+      });
+      if (response.status === 201 || response.status === 200) {
+        setReviewMessage(
+          response.data?.message ||
+            "Review submitted successfully. Thank you for your feedback!"
+        );
+        setIsReviewOpen(false);
+        setReviewForm({ name: "", phone: "", email: "", rating: 0, comment: "" });
+      } else {
+        setReviewError(
+          response.message || "Failed to submit review. Please try again."
+        );
+      }
+    } catch {
+      setReviewError("Failed to submit review. Please try again.");
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -612,6 +675,12 @@ const TrackShipmentContent = () => {
                         <p className="text-red-700">{notifyError}</p>
                       </div>
                     )}
+                    {reviewMessage && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 flex items-start">
+                        <CheckCircle className="w-5 h-5 text-green-500 mr-2 flex-shrink-0" />
+                        <p className="text-green-700">{reviewMessage}</p>
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-4">
                       <button
                         onClick={handleNotify}
@@ -628,10 +697,181 @@ const TrackShipmentContent = () => {
                       >
                         Download Receipt
                       </button>
-                      <button className="border-2 border-gray-300 text-gray-700 py-2 px-6 rounded-lg hover:bg-section transition-colors font-semibold">
-                        Contact Support
-                      </button>
+                      {trackingData.currentStatus === "delivered" ? (
+                        <button
+                          onClick={() => {
+                            setReviewMessage("");
+                            setReviewError("");
+                            setIsReviewOpen(true);
+                          }}
+                          className="bg-[#F5C400] text-[#12352A] py-2 px-6 rounded-lg hover:bg-[#FFD93D] transition-colors font-semibold inline-flex items-center gap-2"
+                        >
+                          <Star className="w-4 h-4" strokeWidth={1.5} />
+                          Give Review
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          title="Reviews are available after your shipment is delivered"
+                          className="border-2 border-gray-300 text-gray-400 py-2 px-6 rounded-lg font-semibold cursor-not-allowed inline-flex items-center gap-2"
+                        >
+                          <Star className="w-4 h-4" strokeWidth={1.5} />
+                          Give Review
+                        </button>
+                      )}
+                      <Link href="/contact">
+                        <button className="border-2 border-gray-300 text-gray-700 py-2 px-6 rounded-lg hover:bg-section transition-colors font-semibold">
+                          Contact Support
+                        </button>
+                      </Link>
                     </div>
+                    {trackingData.currentStatus !== "delivered" && (
+                      <p className="text-sm text-gray-500 mt-3">
+                        You can review this shipment after it has been delivered.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Review Modal */}
+          {isReviewOpen && (
+            <div
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+              onClick={() => setIsReviewOpen(false)}
+            >
+              <div
+                className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-[#12352A]">
+                    Give Your Review
+                  </h3>
+                  <button
+                    onClick={() => setIsReviewOpen(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Track #:{" "}
+                  <strong className="text-[#12352A]">{trackingData?.trackId}</strong>
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Your Rating *
+                    </label>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() =>
+                            setReviewForm({ ...reviewForm, rating: star })
+                          }
+                          className="focus:outline-none"
+                        >
+                          <Star
+                            className={`w-8 h-8 ${
+                              star <= reviewForm.rating
+                                ? "text-[#F5C400] fill-[#F5C400]"
+                                : "text-gray-300"
+                            }`}
+                            strokeWidth={1.5}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Your Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={reviewForm.name}
+                      onChange={(e) =>
+                        setReviewForm({ ...reviewForm, name: e.target.value })
+                      }
+                      placeholder="Enter your name"
+                      className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Phone
+                      </label>
+                      <input
+                        type="tel"
+                        value={reviewForm.phone}
+                        onChange={(e) =>
+                          setReviewForm({ ...reviewForm, phone: e.target.value })
+                        }
+                        placeholder="Phone number"
+                        className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={reviewForm.email}
+                        onChange={(e) =>
+                          setReviewForm({ ...reviewForm, email: e.target.value })
+                        }
+                        placeholder="Email address"
+                        className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Review Details *
+                    </label>
+                    <textarea
+                      value={reviewForm.comment}
+                      onChange={(e) =>
+                        setReviewForm({ ...reviewForm, comment: e.target.value })
+                      }
+                      placeholder="Share your experience with this shipment..."
+                      rows={4}
+                      className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
+                    />
+                  </div>
+
+                  {reviewError && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start">
+                      <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
+                      <p className="text-red-700 text-sm">{reviewError}</p>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3">
+                    <button
+                      onClick={() => setIsReviewOpen(false)}
+                      className="border-2 border-gray-300 text-gray-700 py-2 px-6 rounded-lg hover:bg-section transition-colors font-semibold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSubmitReview}
+                      disabled={reviewSubmitting}
+                      className="bg-primary text-white py-2 px-6 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {reviewSubmitting ? "Submitting..." : "Submit Review"}
+                    </button>
                   </div>
                 </div>
               </div>
