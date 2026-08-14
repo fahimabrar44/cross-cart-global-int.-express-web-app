@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import createGlobe from "cobe";
 import { cn } from "@/lib/utils";
+import createGlobe from "cobe";
+import { useEffect, useRef, useState } from "react";
 
 interface GlobeProps {
   className?: string;
@@ -60,7 +60,7 @@ const hexToRgb = (hex: string): [number, number, number] => {
 
 const resolveRgb = (
   color?: [number, number, number] | string,
-  fallback: [number, number, number] = [0.4, 0.65, 1]
+  fallback: [number, number, number] = [0.4, 0.65, 1],
 ): [number, number, number] => {
   if (typeof color === "string") return hexToRgb(color);
   if (Array.isArray(color) && color.length === 3) return color;
@@ -71,9 +71,18 @@ const resolveRgb = (
 // WebGL (cobe) globe - the original 3D look. Fully guarded: if WebGL is
 // unavailable OR cobe throws for any reason, we fall back to Canvas 2D.
 // ---------------------------------------------------------------------------
-const CobeGlobe: React.FC<
-  GlobeProps & { onFallback: () => void }
-> = ({ theta, dark, scale, diffuse, mapSamples, mapBrightness, baseColor, markerColor, glowColor, onFallback }) => {
+const CobeGlobe: React.FC<GlobeProps & { onFallback: () => void }> = ({
+  theta,
+  dark,
+  scale,
+  diffuse,
+  mapSamples,
+  mapBrightness,
+  baseColor,
+  markerColor,
+  glowColor,
+  onFallback,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const globeRef = useRef<any>(null);
@@ -136,7 +145,7 @@ const CobeGlobe: React.FC<
       phiRef.current += e.movementX * speed;
       thetaRef.current = Math.max(
         -Math.PI / 2,
-        Math.min(Math.PI / 2, thetaRef.current - e.movementY * speed)
+        Math.min(Math.PI / 2, thetaRef.current - e.movementY * speed),
       );
     };
     const stopDrag = () => {
@@ -279,12 +288,22 @@ const CanvasGlobe: React.FC<GlobeProps> = ({
     const [mR, mG, mB] = resolveRgb(markerColor, [1, 0, 0]);
     const [gR, gG, gB] = resolveRgb(glowColor, [1, 1, 1]);
 
-    const rotY = (x: number, y: number, z: number, phi: number): [number, number, number] => [
+    const rotY = (
+      x: number,
+      y: number,
+      z: number,
+      phi: number,
+    ): [number, number, number] => [
       x * Math.cos(phi) + z * Math.sin(phi),
       y,
       -x * Math.sin(phi) + z * Math.cos(phi),
     ];
-    const rotX = (x: number, y: number, z: number, t: number): [number, number, number] => [
+    const rotX = (
+      x: number,
+      y: number,
+      z: number,
+      t: number,
+    ): [number, number, number] => [
       x,
       y * Math.cos(t) - z * Math.sin(t),
       y * Math.sin(t) + z * Math.cos(t),
@@ -310,10 +329,23 @@ const CanvasGlobe: React.FC<GlobeProps> = ({
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, w, h);
 
-      const sphere = ctx.createRadialGradient(cx - R * 0.38, cy - R * 0.42, R * 0.1, cx, cy, R);
-      sphere.addColorStop(0, `rgba(${Math.min(255, bR * 255 + 70)},${Math.min(255, bG * 255 + 70)},${Math.min(255, bB * 255 + 70)},1)`);
+      const sphere = ctx.createRadialGradient(
+        cx - R * 0.38,
+        cy - R * 0.42,
+        R * 0.1,
+        cx,
+        cy,
+        R,
+      );
+      sphere.addColorStop(
+        0,
+        `rgba(${Math.min(255, bR * 255 + 70)},${Math.min(255, bG * 255 + 70)},${Math.min(255, bB * 255 + 70)},1)`,
+      );
       sphere.addColorStop(0.45, `rgb(${bR * 255},${bG * 255},${bB * 255})`);
-      sphere.addColorStop(1, `rgb(${Math.max(0, (bR - darkAmt * 0.6) * 220)},${Math.max(0, (bG - darkAmt * 0.6) * 220)},${Math.max(0, (bB - darkAmt * 0.6) * 220)})`);
+      sphere.addColorStop(
+        1,
+        `rgb(${Math.max(0, (bR - darkAmt * 0.6) * 220)},${Math.max(0, (bG - darkAmt * 0.6) * 220)},${Math.max(0, (bB - darkAmt * 0.6) * 220)})`,
+      );
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
       ctx.fillStyle = sphere;
@@ -327,7 +359,12 @@ const CanvasGlobe: React.FC<GlobeProps> = ({
         let started = false;
         for (let s = 0; s <= STEP; s++) {
           const beta = (Math.PI * 2 * s) / STEP;
-          const [x, y, z] = rotY(line.cos * Math.cos(beta), line.y, line.cos * Math.sin(beta), phi);
+          const [x, y, z] = rotY(
+            line.cos * Math.cos(beta),
+            line.y,
+            line.cos * Math.sin(beta),
+            phi,
+          );
           const [, , zz] = rotX(x, y, z, theta);
           if (zz <= 0) {
             started = false;
@@ -350,7 +387,12 @@ const CanvasGlobe: React.FC<GlobeProps> = ({
         let started = false;
         for (let s = 0; s <= STEP; s++) {
           const u = (Math.PI * s) / STEP;
-          const [x, y, z] = rotY(Math.sin(u) * line.cos, Math.cos(u), Math.sin(u) * line.sin, phi);
+          const [x, y, z] = rotY(
+            Math.sin(u) * line.cos,
+            Math.cos(u),
+            Math.sin(u) * line.sin,
+            phi,
+          );
           const [, , zz] = rotX(x, y, z, theta);
           if (zz <= 0) {
             started = false;
@@ -373,7 +415,7 @@ const CanvasGlobe: React.FC<GlobeProps> = ({
           R * cosLat * Math.cos(m.lon),
           R * Math.sin(m.lat),
           R * cosLat * Math.sin(m.lon),
-          phi
+          phi,
         );
         const [, , z2] = rotX(x1, y1, z1, theta);
         if (z2 <= 0) continue;
@@ -412,7 +454,10 @@ const CanvasGlobe: React.FC<GlobeProps> = ({
   }, []);
 
   return (
-    <div ref={wrapRef} className="flex items-center justify-center w-full h-full">
+    <div
+      ref={wrapRef}
+      className="flex items-center justify-center w-full h-full"
+    >
       <canvas ref={canvasRef} />
     </div>
   );
@@ -442,13 +487,34 @@ const Globe: React.FC<GlobeProps> = (props) => {
   return (
     <div
       aria-hidden="true"
-      className={cn("pointer-events-none select-none flex items-center justify-center overflow-hidden", className)}
-      style={{ width: "100%", height: "100%" }}
+      className={cn(
+        "pointer-events-none select-none flex items-center justify-center overflow-hidden",
+        className,
+      )}
+      style={{
+        width: "100%",
+        height: "1500px", // Container takes full viewport height
+        display: "flex", // Ensure flexbox properties are active for centering
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden", // Prevent scrollbars if content overflows
+      }}
     >
       {mode === "webgl" ? (
         <CobeGlobe {...props} onFallback={() => setMode("canvas2d")} />
       ) : (
-        <CanvasGlobe {...props} />
+        <CanvasGlobe
+          {...props}
+          style={{
+            width: "100%", // Canvas takes full width of its parent (which is constrained)
+            height: "1500px", // Canvas takes full height of its parent (which is constrained)
+            maxWidth: "auto", // Limit max width to viewport height to ensure square aspect in landscape
+            maxHeight: "auto", // Limit max height to viewport width to ensure square aspect in portrait
+            aspectRatio: "1", // Force a 1:1 aspect ratio for the canvas element
+            display: "block", // Ensure canvas behaves as a block element
+            cursor: "grab", // Default cursor
+          }}
+        />
       )}
     </div>
   );
