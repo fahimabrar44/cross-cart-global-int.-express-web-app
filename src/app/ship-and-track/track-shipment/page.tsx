@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { getRequestSend } from "@/components/ApiCall/methord";
+import { getRequestSend, postRequestSend } from "@/components/ApiCall/methord";
 import { ROOT_API } from "@/components/ApiCall/url";
 import PageHeader from "@/utilities/PageHeader";
 import {
@@ -46,6 +46,9 @@ const TrackShipmentContent = () => {
   const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notifyLoading, setNotifyLoading] = useState(false);
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [notifyError, setNotifyError] = useState("");
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -86,6 +89,34 @@ const TrackShipmentContent = () => {
       setTrackingData(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleNotify = async () => {
+    if (!trackingData) return;
+    setNotifyLoading(true);
+    setNotifyMessage("");
+    setNotifyError("");
+
+    try {
+      const response = await postRequestSend<
+        never,
+        { message: string }
+      >(`${ROOT_API}tracks/${trackingData.trackId}/notify`);
+      if (response.status === 200) {
+        setNotifyMessage(
+          response.data?.message ||
+            "Shipment update email sent to sender and receiver"
+        );
+      } else {
+        setNotifyError(
+          response.message || "Failed to send update. Please try again."
+        );
+      }
+    } catch {
+      setNotifyError("Failed to send update. Please try again.");
+    } finally {
+      setNotifyLoading(false);
     }
   };
 
@@ -419,9 +450,27 @@ const TrackShipmentContent = () => {
 
                   {/* Actions */}
                   <div className="mt-8 pt-6 border-t border-gray-200">
+                    {notifyMessage && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 flex items-start">
+                        <CheckCircle className="w-5 h-5 text-green-500 mr-2 flex-shrink-0" />
+                        <p className="text-green-700">{notifyMessage}</p>
+                      </div>
+                    )}
+                    {notifyError && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-start">
+                        <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0" />
+                        <p className="text-red-700">{notifyError}</p>
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-4">
-                      <button className="bg-primary text-white py-2 px-6 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold">
-                        Get SMS Updates
+                      <button
+                        onClick={handleNotify}
+                        disabled={notifyLoading}
+                        className="bg-primary text-white py-2 px-6 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {notifyLoading
+                          ? "Sending..."
+                          : "Get Shipment Update by Email"}
                       </button>
                       <button className="border-2 border-[#12352A] text-[#12352A] py-2 px-6 rounded-lg hover:bg-[#12352A] hover:text-white transition-colors font-semibold">
                         Download Receipt
