@@ -489,7 +489,7 @@ export function inferStatusFromText(description?: string): string {
   }
   // Out for delivery
   if (
-    /out for delivery|out with courier|with courier for delivery|on vehicle for delivery|out for shipment|scheduled for delivery|for delivery|ready for pickup|available for pickup|available for collection|delivery champion|doorstep|out on delivery|on the way to the customer|soon with .*customer/.test(
+    /out for delivery|out with courier|with courier for delivery|on vehicle for delivery|out for shipment|scheduled for delivery|for delivery|ready for pickup|available for pickup|available for collection|delivery champion|doorstep|out on delivery|on the way to the customer|soon with .*customer|loaded on .*vehicle|loaded for delivery|loaded for depart/.test(
       t
     )
   ) {
