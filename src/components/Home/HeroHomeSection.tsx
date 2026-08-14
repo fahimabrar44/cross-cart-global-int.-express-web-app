@@ -13,7 +13,7 @@ const HeroHomeSection = () => {
           baseColor="#087F4F"
           markerColor="#F5C400"
           glowColor="#087F4F"
-          className={` container left-0 absolute -bottom-[110%] sm:-bottom-[110%] md:-bottom-[110%] lg:-bottom-[140%] xl:-bottom-[180%] m-auto  opacity-20`}
+          className={` container left-0 absolute -bottom-[110%] sm:-bottom-[120%] md:-bottom-[120%] lg:-bottom-[150%] xl:-bottom-[190%] m-auto  opacity-50`}
         />
 
         <div className="w-full h-auto pt-6 sm:pt-15 pb-6 z-[10] relative flex justify-center text-center align-middle items-center flex-col">
