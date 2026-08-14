@@ -16,7 +16,7 @@ const PageHeader = ({
 }: PageHeaderProps) => {
   return (
     <div className="container m-auto h-auto bg-soft-green relative overflow-hidden border-b border-border">
-      <div className="flex flex-col py-20 sm:py-28 px-4 z-[20] container m-auto">
+      <div className="flex flex-col py-24 sm:py-28 px-4 z-[20] container m-auto">
         <h1 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold text-foreground z-[20]">
           {subtitle}
         </h1>
@@ -49,7 +49,7 @@ const PageHeader = ({
         baseColor="#087F4F"
         markerColor="#F5C400"
         glowColor="#087F4F"
-        className={` container left-0 absolute -bottom-[120%] sm:-bottom-[140%] md:-bottom-[160%] lg:-bottom-[180%] xl:-bottom-[210%] 2xl:-bottom-[200%] m-auto`}
+        className={` container left-0 absolute -bottom-[110%] sm:-bottom-[130%] md:-bottom-[150%] lg:-bottom-[170%] xl:-bottom-[180%] 2xl:-bottom-[190%] m-auto opacity-50`}
       />
     </div>
   );

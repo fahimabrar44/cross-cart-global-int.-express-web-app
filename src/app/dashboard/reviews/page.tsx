@@ -32,7 +32,7 @@ function ReviewsContent() {
       const params: any = { limit: 50 };
 
       const response = await ContentService.getReviews(params);
-      if (response.success) {
+      if (response.status == 200) {
         let filteredReviews = response.data || [];
 
         // Apply status filter if present
@@ -72,7 +72,7 @@ function ReviewsContent() {
         status: "approved",
       });
 
-      if (response.success) {
+      if (response.status == 200) {
         toast.success("Review approved successfully");
         fetchReviews();
       } else {
@@ -90,7 +90,7 @@ function ReviewsContent() {
         status: "rejected",
       });
 
-      if (response.success) {
+      if (response.status == 200) {
         toast.success("Review rejected successfully");
         fetchReviews();
       } else {
@@ -108,7 +108,7 @@ function ReviewsContent() {
 
     try {
       const response = await ContentService.deleteReview(review._id);
-      if (response.success) {
+      if (response.status == 200) {
         toast.success("Review deleted successfully");
         fetchReviews();
       } else {
@@ -171,10 +171,14 @@ function ReviewsContent() {
     {
       key: "user",
       label: "Reviewer",// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      render: (value: any) => (
+      render: (value: any, row: any) => (
         <div>
-          <p className="font-medium">{value?.name || "Anonymous"}</p>
-          <p className="text-sm text-gray-500">{value?.email || "No email"}</p>
+          <p className="font-medium">
+            {row?.name || value?.name || "Anonymous"}
+          </p>
+          <p className="text-sm text-gray-500">
+            {row?.email || value?.email || "No email"}
+          </p>
         </div>
       ),
     },
@@ -211,10 +215,11 @@ function ReviewsContent() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label className="text-sm font-medium text-gray-500">Reviewer</Label>
-          <p className="font-medium">{review.user?.name || "Anonymous"}</p>
-          {review.user?.email && (
-            <p className="text-sm text-gray-500">{review.user.email}</p>
+          <p className="font-medium">{review.name || review.user?.name || "Anonymous"}</p>
+          {(review.email || review.user?.email) && (
+            <p className="text-sm text-gray-500">{review.email || review.user?.email}</p>
           )}
+          {review.phone && <p className="text-sm text-gray-500">{review.phone}</p>}
         </div>
 
         <div>
@@ -222,7 +227,9 @@ function ReviewsContent() {
             Service/Product
           </Label>
           <p className="font-medium">
-            {review.service || review.product || "General"}
+            {review.trackId
+              ? `Shipment ${review.trackId}`
+              : review.service || review.product || "General"}
           </p>
         </div>
 
