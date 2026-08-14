@@ -52,6 +52,23 @@ const lookupExternalTracking = async (
 ): Promise<NextResponse | null> => {
   if (!trackingNumber || !(await isTrackingMoreConfigured())) return null;
 
+  // Optional special-field values from the UI (e.g. ?tracking_postal_code=10115&
+  // tracking_destination_country=DE) for couriers like DPD that require them.
+  const EXTRAS_ALLOWED = [
+    "tracking_postal_code",
+    "tracking_destination_country",
+    "tracking_ship_date",
+    "tracking_departure_country",
+    "tracking_phone",
+    "tracking_email",
+    "order_number",
+  ];
+  const extras: Record<string, string> = {};
+  for (const key of EXTRAS_ALLOWED) {
+    const v = req.nextUrl.searchParams.get(key);
+    if (v && v.trim()) extras[key] = v.trim();
+  }
+
   try {
     // detect may return several matches (e.g. "dpd" and "dpd-de" for DPD
     // Germany) — try each until one produces a tracking result.
@@ -70,6 +87,7 @@ const lookupExternalTracking = async (
     let courierCode = "";
     let tm: Awaited<ReturnType<typeof getTrackings>>[number] | undefined;
     let lastCreateError = "";
+    let lastCreateErrorCode = 0;
 
     for (const code of couriers.length ? couriers : [""]) {
       courierCode = code;
@@ -94,6 +112,7 @@ const lookupExternalTracking = async (
         const created = await createTracking({
           tracking_number: trackingNumber,
           courier_code: code || undefined,
+          ...extras,
         });
         if (created?.tracking_number) {
           tmTrackings = await getTrackings([created.tracking_number], {
@@ -104,6 +123,9 @@ const lookupExternalTracking = async (
         }
       } catch (error) {
         lastCreateError = error instanceof Error ? error.message : String(error);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const c = (error as any)?.code;
+        if (typeof c === "number") lastCreateErrorCode = c;
       }
     }
 
@@ -116,22 +138,58 @@ const lookupExternalTracking = async (
         message: lastCreateError || "No courier produced a tracking result",
       });
 
-      // 4050 is the empty-create marker from createTracking (account-level
-      // issue); 4122/4124 are courier-required-field problems. Show a precise,
-      // customer-friendly reason instead of a bare "Track not found".
+      // 4050 = empty-create marker (account-level issue); 4122/4124 = courier
+      // required-field / format problems. Surface a precise, customer-friendly
+      // reason instead of a bare "Track not found".
       if (lastCreateError) {
         const marker =
-          typeof lastCreateError === "string" && lastCreateError.includes("no tracking object")
-            ? 4050
-            : lastCreateError.includes("required") || lastCreateError.includes("format")
-              ? 4122
+          lastCreateErrorCode === 4122 || lastCreateErrorCode === 4124
+            ? lastCreateErrorCode
+            : typeof lastCreateError === "string" &&
+                lastCreateError.includes("no tracking object")
+              ? 4050
               : 0;
         if (marker) {
+          if (marker === 4122) {
+            // Tell the UI exactly which special fields to collect from the user.
+            const { getCouriersCached, requiredFieldMeta } = await import(
+              "@/server/services/trackingMoreService"
+            );
+            let requiredFields: string[] = [];
+            try {
+              const all = await getCouriersCached();
+              const metaCourier = all.find(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (c: any) => c?.courier_code === courierCode
+              );
+              requiredFields = (metaCourier?.tracking_required_fields || []) as string[];
+            } catch {
+              /* keep defaults */
+            }
+            if (!requiredFields.length) {
+              requiredFields = [
+                "tracking_postal_code",
+                "tracking_destination_country",
+              ];
+            }
+            return errorResponse({
+              status: 200,
+              message: lastCreateError,
+              req,
+              meta: {
+                needsFields: true,
+                needsFieldsCourier: courierCode,
+                trackingNumber,
+                requiredFields: requiredFieldMeta(requiredFields),
+              },
+            });
+          }
           return errorResponse({
             status: 404,
-            message: marker === 4050
-              ? "Carrier lookup is temporarily unavailable for this number."
-              : lastCreateError,
+            message:
+              marker === 4050
+                ? "Carrier lookup is temporarily unavailable for this number."
+                : lastCreateError,
             req,
           });
         }

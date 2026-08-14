@@ -75,6 +75,13 @@ export const POST = createModeratorHandler(async ({ req }) => {
         message:
           `${msg} This courier requires the receiver postal code. Pass orderId (auto-filled from the order receiver), or send tracking_postal_code and tracking_destination_country explicitly.`,
         req,
+        meta: {
+          needsFields: true,
+          requiredFields: [
+            { name: "tracking_postal_code", label: "Receiver ZIP / Postal Code", placeholder: "e.g. 10115" },
+            { name: "tracking_destination_country", label: "Destination Country code (2 letters)", placeholder: "e.g. DE" },
+          ],
+        },
       });
     }
     if (code === 4124) {

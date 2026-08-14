@@ -256,7 +256,7 @@ const COURIERS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 let couriersCache: TMCourier[] | null = null;
 let couriersCacheLoadedAt = 0;
 
-async function getCouriersCached(): Promise<TMCourier[]> {
+export async function getCouriersCached(): Promise<TMCourier[]> {
   if (
     couriersCache &&
     Date.now() - couriersCacheLoadedAt < COURIERS_CACHE_TTL_MS
@@ -273,6 +273,41 @@ async function getCouriersCached(): Promise<TMCourier[]> {
     // keep using any existing cache; never block courier resolution
   }
   return couriersCache || [];
+}
+
+// Human-friendly metadata for TrackingMore special required fields so the UI
+// can render an input for each missing field.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function requiredFieldMeta(fields: string[]): any[] {
+  const known: Record<string, { label: string; placeholder: string }> = {
+    tracking_postal_code: {
+      label: "Receiver ZIP / Postal Code",
+      placeholder: "e.g. 10115",
+    },
+    tracking_destination_country: {
+      label: "Destination Country code (2 letters)",
+      placeholder: "e.g. DE",
+    },
+    tracking_ship_date: {
+      label: "Shipment date (YYYY-MM-DD)",
+      placeholder: "e.g. 2026-08-15",
+    },
+    tracking_phone: {
+      label: "Receiver phone",
+      placeholder: "e.g. +49...",
+    },
+    tracking_email: {
+      label: "Receiver email",
+      placeholder: "e.g. name@email.com",
+    },
+    order_number: {
+      label: "Order number",
+      placeholder: "e.g. CCG-12345",
+    },
+  };
+  return (fields || [])
+    .filter((f) => known[f])
+    .map((f) => ({ name: f, ...known[f] }));
 }
 
 /**

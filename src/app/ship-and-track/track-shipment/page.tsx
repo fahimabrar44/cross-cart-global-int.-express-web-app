@@ -44,11 +44,21 @@ interface TrackingData {
   updatedAt: string;
 }
 
+interface RequiredField {
+  name: string;
+  label: string;
+  placeholder: string;
+}
+
 const TrackShipmentContent = () => {
   const [trackingNumber, setTrackingNumber] = useState("");
   const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [neededFields, setNeededFields] = useState<RequiredField[] | null>(null);
+  const [neededFieldValues, setNeededFieldValues] = useState<
+    Record<string, string>
+  >({});
   const [notifyLoading, setNotifyLoading] = useState(false);
   const [notifyMessage, setNotifyMessage] = useState("");
   const [notifyError, setNotifyError] = useState("");
@@ -84,6 +94,7 @@ const TrackShipmentContent = () => {
 
     setLoading(true);
     setError("");
+    setNeededFields(null);
 
     try {
       const response = await getRequestSend<TrackingData>(
@@ -93,6 +104,17 @@ const TrackShipmentContent = () => {
       if (response.status === 200 && response.data) {
         setTrackingData(response.data);
         setError("");
+      } else if (
+        response.meta?.needsFields &&
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (response.meta.requiredFields as any[])?.length
+      ) {
+        // Courier requires extra info (e.g. DPD receiver postal code) — show
+        // inputs for the missing special fields instead of a raw error.
+        setTrackingData(null);
+        setNeededFieldValues({});
+        setNeededFields(response.meta.requiredFields);
+        setError("");
       } else {
         setError(response.message || "Tracking number not found");
         setTrackingData(null);
@@ -101,6 +123,57 @@ const TrackShipmentContent = () => {
     } catch (err) {
       setError("Failed to fetch tracking information. Please try again.");
       setTrackingData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTrackPackageWithFields = async () => {
+    if (!neededFields || !neededFields.length) return;
+
+    setLoading(true);
+    setError("");
+    setTrackingData(null);
+
+    try {
+      // Send the entered special-field values back so the courier can create
+      // the tracking (e.g. ?tracking_postal_code=10115&tracking_destination_country=DE).
+      const query = new URLSearchParams();
+      for (const field of neededFields) {
+        const value = (neededFieldValues[field.name] || "").trim();
+        if (value) query.set(field.name, value);
+      }
+      if (!query.toString()) {
+        setError(
+          "Please fill in the required fields to continue tracking this package"
+        );
+        return;
+      }
+
+      const response = await getRequestSend<TrackingData>(
+        `${ROOT_API}tracks/${trackingNumber.trim()}?${query.toString()}`
+      );
+
+      if (response.status === 200 && response.data) {
+        setTrackingData(response.data);
+        setError("");
+        setNeededFields(null);
+        setNeededFieldValues({});
+      } else if (
+        response.meta?.needsFields &&
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (response.meta.requiredFields as any[])?.length
+      ) {
+        setNeededFields(response.meta.requiredFields as RequiredField[]);
+        setNeededFieldValues({});
+        setError("");
+      } else {
+        setError(response.message || "Tracking number not found");
+        setNeededFields(null);
+      }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
+      setError("Failed to fetch tracking information. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -502,6 +575,52 @@ const TrackShipmentContent = () => {
                     <div className="flex items-center">
                       <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
                       <p className="text-red-700">{error}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Required Fields Form */}
+                {neededFields && neededFields.length > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-5">
+                    <div className="flex items-start mb-4">
+                      <AlertCircle className="w-5 h-5 text-amber-500 mr-2 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-amber-800 font-semibold">
+                          Additional information required
+                        </p>
+                        <p className="text-amber-700 text-sm mt-1">
+                          This carrier needs a little more information to look
+                          up your shipment.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      {neededFields.map((field) => (
+                        <div key={field.name}>
+                          <label className="block text-sm font-medium text-amber-900 mb-1">
+                            {field.label}
+                          </label>
+                          <input
+                            type="text"
+                            value={neededFieldValues[field.name] || ""}
+                            onChange={(e) =>
+                              setNeededFieldValues({
+                                ...neededFieldValues,
+                                [field.name]: e.target.value,
+                              })
+                            }
+                            placeholder={field.placeholder}
+                            className="w-full p-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-white"
+                          />
+                        </div>
+                      ))}
+                      <button
+                        onClick={handleTrackPackageWithFields}
+                        disabled={loading}
+                        className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {loading ? "Tracking..." : "Continue Tracking"}
+                      </button>
                     </div>
                   </div>
                 )}
