@@ -11,7 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Trash2, PackageSearch } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
@@ -22,6 +22,7 @@ interface OrderColumnsProps {
   onEdit: (order: Order) => void;
   onDelete: (order: Order) => void;
   onUpdateStatus: (order: Order, status: Order["status"]) => void;
+  onTrackingUpdate: (order: Order) => void;
 }
 
 export const createOrderColumns = ({
@@ -29,6 +30,7 @@ export const createOrderColumns = ({
   onView,
   onEdit,
   onDelete,
+  onTrackingUpdate,
 }: OrderColumnsProps): ColumnDef<Order>[] => [
   {
     id: "select",
@@ -192,6 +194,14 @@ export const createOrderColumns = ({
             >
               <Edit className="mr-2 h-4 w-4" />
               Edit Order
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => onTrackingUpdate(order)}
+              data-testid={`tracking-update-${order._id}`}
+            >
+              <PackageSearch className="mr-2 h-4 w-4" />
+              Tracking Update
             </DropdownMenuItem>
             
             

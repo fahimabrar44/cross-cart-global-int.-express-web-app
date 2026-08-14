@@ -178,6 +178,12 @@ export interface OrderAssignment {
   assignedAt: string | null;
 }
 
+export interface OrderHandover {
+  company: string;
+  tracking: string;
+  payment: number;
+}
+
 export interface Order {
   _id: string;
   trackId: string;
@@ -186,6 +192,7 @@ export interface Order {
   parcel: Parcel;
   payment: Payment;
   assignment?: OrderAssignment;
+  handover_by?: OrderHandover;
   status:
     | "pending"
     | "confirmed"

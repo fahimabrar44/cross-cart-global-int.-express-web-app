@@ -58,6 +58,7 @@ import {
   Loader2,
   Lock,
   RefreshCw,
+  PackageSearch,
   TrendingUp,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -86,6 +87,11 @@ export default function OrdersPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // Courier tracking update state
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [trackingCompany, setTrackingCompany] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
 
   // Payment form state
   const [paymentData, setPaymentData] = useState<PaymentData>({
@@ -243,6 +249,60 @@ export default function OrdersPage() {
     } catch (error) {
       console.error("Failed to update order status:", error);
       toast.error("Failed to update order status");
+    }
+  };
+
+  // Courier tracking update handlers
+  const handleTrackingClick = (order: Order) => {
+    setSelectedOrder(order);
+    setTrackingCompany(order.handover_by?.company || "");
+    setTrackingNumber(order.handover_by?.tracking || "");
+    setIsTrackingModalOpen(true);
+  };
+
+  const handleSaveTrackingUpdate = async () => {
+    if (!selectedOrder) return;
+
+    if (!trackingNumber.trim()) {
+      toast.error("Enter the courier tracking number");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(
+        `/api/v1/orders/${selectedOrder._id}/tracking-update`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            company: trackingCompany.trim(),
+            tracking: trackingNumber.trim(),
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success(
+          result.data?.syncMessage || "Tracking update saved successfully"
+        );
+        setIsTrackingModalOpen(false);
+        setSelectedOrder(null);
+        loadOrders();
+      } else {
+        toast.error(result.message || "Failed to save tracking update");
+      }
+    } catch (error) {
+      console.error("Failed to update tracking:", error);
+      toast.error("Failed to update tracking");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -430,6 +490,7 @@ export default function OrdersPage() {
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
     onPayment: handlePaymentClick,
+    onTrackingUpdate: handleTrackingClick,
   });
 
   if (!user) return null;
@@ -603,6 +664,79 @@ export default function OrdersPage() {
               }}
               loading={actionLoading}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Tracking Update Modal */}
+      <Dialog open={isTrackingModalOpen} onOpenChange={setIsTrackingModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle data-testid="tracking-update-modal-title">
+              Courier Tracking Update
+            </DialogTitle>
+            <DialogDescription>
+              Add the carrier{"'"}s tracking number so the tracking page pulls
+              the courier{"'"}s live timeline for this shipment.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4">
+              <div>
+                <Label>Order / Track ID</Label>
+                <div className="mt-1 rounded-md border bg-muted px-3 py-2 text-sm font-medium">
+                  {selectedOrder.trackId}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tracking-company">Courier Company</Label>
+                <Input
+                  id="tracking-company"
+                  value={trackingCompany}
+                  onChange={(e) => setTrackingCompany(e.target.value)}
+                  placeholder="e.g., DHL, FedEx, Aramex, Steadfast"
+                  data-testid="tracking-company-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tracking-number">
+                  Courier Tracking Number *
+                </Label>
+                <Input
+                  id="tracking-number"
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  placeholder="e.g., 132-12345678"
+                  data-testid="tracking-number-input"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsTrackingModalOpen(false)}
+                  data-testid="cancel-tracking-update"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveTrackingUpdate}
+                  disabled={actionLoading}
+                  data-testid="save-tracking-update"
+                >
+                  {actionLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Syncing...
+                    </>
+                  ) : (
+                    <>
+                      <PackageSearch className="mr-2 h-4 w-4" />
+                      Save & Sync
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
