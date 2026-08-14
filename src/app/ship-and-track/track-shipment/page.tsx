@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { getRequestSend, postRequestSend } from "@/components/ApiCall/methord";
 import { ROOT_API } from "@/components/ApiCall/url";
@@ -643,7 +643,7 @@ const TrackShipmentContent = () => {
                               {(step.location.city ||
                                 step.location.country) && (
                                 <p className="text-xs text-gray-600">
-                                  ðŸ“ {step.location.city}{" "}
+                                  ““ {step.location.city}{" "}
                                   {normalizeCountryName(step.location.country)}
                                 </p>
                               )}

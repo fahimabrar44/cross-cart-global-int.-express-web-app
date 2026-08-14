@@ -1,4 +1,4 @@
-﻿import PageHeader from "@/utilities/PageHeader";
+import PageHeader from "@/utilities/PageHeader";
 import React from 'react';
 
 const TrustAndSafety = () => {
@@ -86,11 +86,11 @@ const TrustAndSafety = () => {
               </p>
               <div className="mt-4 flex flex-col sm:flex-row gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">ðŸ“§</span>
+                  <span className="text-lg">““§</span>
                   <a href="mailto:cross.cart.bd@gmail.com" className="text-primary hover:underline">cross.cart.bd@gmail.com</a>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">ðŸ“ž</span>
+                  <span className="text-lg">““ž</span>
                   <a href="tel:+8801622541719" className="text-primary hover:underline">+880 1622-541719</a>
                 </div>
               </div>

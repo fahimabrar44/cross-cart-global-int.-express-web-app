@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { getRequestSend, postRequestSend } from "@/components/ApiCall/methord";
 import { ROOT_API } from "@/components/ApiCall/url";
@@ -175,14 +175,14 @@ const CreateShipment = () => {
       value: "standard",
       label: "Standard Delivery",
       time: "3-5 days",
-      icon: "ðŸ“¦",
+      icon: "““¦",
       priority: "express" as const,
     },
     {
       value: "economy",
       label: "Economy Delivery",
       time: "5-7 days",
-      icon: "ðŸš›",
+      icon: "“š›",
       priority: "normal" as const,
     },
   ];
