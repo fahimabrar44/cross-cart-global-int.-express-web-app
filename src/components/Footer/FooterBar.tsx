@@ -117,11 +117,6 @@ const ourCompany = [
     link: "/faq",
   },
   {
-    id: 565343467,
-    title: "Cancellation & COD Policy",
-    link: "/policy/cancellation-and-cod",
-  },
-  {
     id: 565434654,
     title: "Trust & Safety",
     link: "/about/trust-and-safety/",
