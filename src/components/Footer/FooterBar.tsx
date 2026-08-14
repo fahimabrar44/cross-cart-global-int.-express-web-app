@@ -75,6 +75,12 @@ const ourCompany = [
   },
 
   {
+    id: 12342451,
+    title: "Coverage Area",
+    link: "/about/coverage-area",
+  },
+
+  {
     id: 1234513886,
     title: "Our Team",
     link: "/about/our-team",
