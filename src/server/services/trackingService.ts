@@ -4,6 +4,7 @@
 // TRACKING_API_URL, TRACKING_API_KEY, TRACKING_PROVIDER (greenweb-style / generic json)
 import { Track } from "@/server/models/Track.model";
 import { Order } from "@/server/models/Order.model";
+import { TrackSyncLog } from "@/server/models/TrackSyncLog.model";
 import { getSettingString } from "@/server/services/settingsService";
 
 export const TRACK_STATUSES = [
@@ -202,6 +203,187 @@ interface CarrierResponse {
   estimatedDelivery?: Date | string;
 }
 
+// Statuses that are still "live" — auto-sync should keep polling these.
+const ACTIVE_TRACK_STATUSES = [
+  "created",
+  "pickup-pending",
+  "picked-up",
+  "in-transit",
+  "arrived-at-hub",
+  "customs-clearance",
+  "out-for-delivery",
+  "failed",
+];
+
+export function isActiveTrackStatus(status?: string): boolean {
+  return Boolean(status && ACTIVE_TRACK_STATUSES.includes(status));
+}
+
+/**
+ * Merge carrier events into a Track timeline, update current status and
+ * estimated delivery, mirror the final status to the linked Order, and send
+ * status-change notifications when new events arrived.
+ */
+export async function mergeCarrierEventsInto(input: {
+  track: unknown;
+  events: CarrierEvent[];
+  currentStatus?: string;
+  estimatedDelivery?: Date | string;
+  updatedBy?: string | null;
+}): Promise<{ added: number; track: unknown }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const track = input.track as any;
+  const previousStatus = track.currentStatus;
+
+  let added = 0;
+  for (const ev of input.events || []) {
+    if (!ev.status) continue;
+    const pushed = appendHistory(track, {
+      status: ev.status,
+      description: ev.description || statusDescription(ev.status),
+      location: ev.location,
+      updatedBy: input.updatedBy || null,
+      timestamp: ev.timestamp || new Date(),
+    });
+    if (pushed) added += 1;
+  }
+
+  if (
+    input.currentStatus &&
+    track.currentStatus !== input.currentStatus
+  ) {
+    track.currentStatus = input.currentStatus;
+    if (!(input.events || []).some((e) => e.status === input.currentStatus)) {
+      const pushed = appendHistory(track, {
+        status: input.currentStatus,
+        updatedBy: input.updatedBy || null,
+      });
+      if (pushed) added += 1;
+    }
+  }
+
+  if (input.estimatedDelivery) {
+    track.estimatedDelivery = new Date(input.estimatedDelivery);
+  }
+
+  await track.save();
+
+  // Mirror final status to Order
+  const orderId = track.order?._id ?? track.order;
+  if (orderId) {
+    const orderStatus = orderStatusFromTrack(track.currentStatus);
+    const o = await Order.findById(orderId);
+    if (o && o.status !== orderStatus) {
+      o.status = orderStatus;
+      await o.save();
+    }
+  }
+
+  // Status-change notifications (sender + receiver). Never break the main flow.
+  if (added > 0 && orderId) {
+    notifyTrackUpdate(track, previousStatus).catch(() => {});
+  }
+
+  return { added, track };
+}
+
+/**
+ * Send a status-change notification to the parcel's sender and receiver.
+ * Requires a sender/receiver phone matching an existing user account.
+ */
+async function notifyTrackUpdate(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  track: any,
+  previousStatus?: string
+): Promise<void> {
+  const { notificationService } = await import("@/services/notificationService");
+  if (!track) return;
+
+  const orderId = track.order?._id ?? track.order;
+  if (!orderId) return;
+  const order = await Order.findById(orderId).lean();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const parcel = (order as any)?.parcel;
+  if (!parcel) return;
+
+  const lastStep =
+    Array.isArray(track.history) && track.history.length > 0
+      ? track.history[track.history.length - 1]
+      : null;
+  const isDelivered = track.currentStatus === "delivered";
+  const label = (track.currentStatus || "").replace(/-/g, " ");
+  const message = isDelivered
+    ? `Your parcel ${track.trackId} has been delivered successfully.`
+    : `Your parcel ${track.trackId} is now: ${label}.${
+        lastStep?.description ? ` ${lastStep.description}` : ""
+      }`;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recipients: any[] = [];
+  if (parcel?.sender?.phone) {
+    recipients.push({
+      phone: parcel.sender.phone,
+      email: parcel.sender.email || "",
+      title: `Parcel ${isDelivered ? "Delivered" : "Status Update"} (${track.trackId})`,
+      type: isDelivered ? ("success" as const) : ("info" as const),
+    });
+  }
+  if (parcel?.receiver?.phone) {
+    recipients.push({
+      phone: parcel.receiver.phone,
+      email: parcel.receiver.email || "",
+      title: `Parcel ${isDelivered ? "Delivered" : "Status Update"} (${track.trackId})`,
+      type: isDelivered ? ("success" as const) : ("info" as const),
+    });
+  }
+
+  await Promise.allSettled(
+    recipients.map((r) =>
+      notificationService.sendNotification({
+        phone: r.phone,
+        email: r.email || undefined,
+        title: r.title,
+        message,
+        type: r.type,
+        category: "order",
+        priority: isDelivered ? "high" : "normal",
+        actionUrl: `/tracking/${track.trackId}`,
+        actionText: "View tracking",
+        channels: isDelivered ? ["inapp", "sms", "email"] : ["inapp", "email"],
+        data: { trackId: track.trackId, status: track.currentStatus, previousStatus },
+      })
+    )
+  );
+}
+
+/**
+ * Append a record to the carrier-sync log. Fire-and-forget; never throws.
+ */
+export async function logTrackSyncResult(input: {
+  trackId?: string;
+  trackingNumber?: string;
+  courier?: string;
+  source: "cron" | "webhook" | "manual" | "public";
+  status: "success" | "failed";
+  message?: string;
+  added?: number;
+}): Promise<void> {
+  try {
+    await TrackSyncLog.create({
+      trackId: input.trackId || "",
+      trackingNumber: input.trackingNumber || "",
+      courier: input.courier || "",
+      source: input.source,
+      status: input.status,
+      message: (input.message || "").slice(0, 1000),
+      added: input.added || 0,
+      runAt: new Date(),
+    });
+  } catch (error) {
+    console.error("Failed to write tracking sync log:", error);
+  }
+}
+
 /**
  * Fetch tracking events from the configured carrier tracking API
  * and merge them into the local Track timeline.
@@ -358,50 +540,21 @@ export async function fetchAndStoreTracking(input: {
   }
 
   const events: CarrierEvent[] = Array.isArray(payload.events) ? payload.events : [];
-  let added = 0;
-  for (const ev of events) {
-    if (!ev.status) continue;
-    const pushed = appendHistory(track, {
-      status: ev.status,
-      description: ev.description || statusDescription(ev.status),
-      location: ev.location,
-      updatedBy: input.updatedBy || null,
-      timestamp: ev.timestamp || new Date(),
-    });
-    if (pushed) added += 1;
-  }
-
-  if (payload.currentStatus && track.currentStatus !== payload.currentStatus) {
-    track.currentStatus = payload.currentStatus;
-    if (!events.some((e) => e.status === payload.currentStatus)) {
-      const pushed = appendHistory(track, {
-        status: payload.currentStatus,
-        updatedBy: input.updatedBy || null,
-      });
-      if (pushed) added += 1;
-    }
-  }
-
-  if (payload.estimatedDelivery) {
-    track.estimatedDelivery = new Date(payload.estimatedDelivery);
-  }
-
-  await track.save();
-
-  // Mirror final status to Order
-  if (track.order) {
-    const orderStatus = orderStatusFromTrack(track.currentStatus);
-    const o = await Order.findById(track.order);
-    if (o && o.status !== orderStatus) {
-      o.status = orderStatus;
-      await o.save();
-    }
-  }
+  const merged = await mergeCarrierEventsInto({
+    track,
+    events,
+    currentStatus: payload.currentStatus,
+    estimatedDelivery: payload.estimatedDelivery,
+    updatedBy: input.updatedBy || null,
+  });
 
   return {
     fetched: events.length,
-    added,
-    track,
-    message: added > 0 ? `${added} new tracking event(s) stored` : "Tracking is up to date",
+    added: merged.added,
+    track: merged.track,
+    message:
+      merged.added > 0
+        ? `${merged.added} new tracking event(s) stored`
+        : "Tracking is up to date",
   };
 }

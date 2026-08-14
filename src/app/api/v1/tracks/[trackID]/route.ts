@@ -2,11 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/config/db";
 import { Track } from "@/server/models/Track.model";
 import { Country } from "@/server/models/Country.model";
+import { Order } from "@/server/models/Order.model";
 import { Types } from "mongoose";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { successResponse, errorResponse } from "@/server/common/response";
-import { updateTrackStatus } from "@/server/services/trackingService";
+import {
+  updateTrackStatus,
+  fetchAndStoreTracking,
+  logTrackSyncResult,
+} from "@/server/services/trackingService";
+import {
+  detectCourier,
+  isTrackingMoreConfigured,
+} from "@/server/services/trackingMoreService";
 import { verifyApiKeyIfProvided } from "@/server/common/apiKeyAuth";
+
+// How often the public lookup may poll the carrier (TrackingMore) API.
+const EXTERNAL_SYNC_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 // History locations sometimes store a Country ObjectId as a string;
 // resolve any that look like one into the country name.
@@ -38,6 +50,7 @@ export async function GET(
 
     const { trackID } = await params;
 
+    // 1) Look up the parcel in our own database
     const track = await Track.findOne({ trackId: trackID })
       .populate({
         path: "order",
@@ -52,7 +65,83 @@ export async function GET(
     if (!track) return errorResponse({ status: 404, message: "Track not found", req });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tracked = track as any;
+    let tracked = track as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const order = (tracked.order as any) as { handover_by?: { company?: string; tracking?: string; courier_code?: string }; _id?: Types.ObjectId };
+    const handedOver = Boolean(
+      order?.handover_by?.company || order?.handover_by?.tracking
+    );
+
+    if (handedOver) {
+      try {
+        const trackingNumber =
+          order?.handover_by?.tracking || tracked.trackId;
+        let courierCode = order?.handover_by?.courier_code || "";
+
+        const lastSync = tracked.lastExternalSync
+          ? new Date(tracked.lastExternalSync).getTime()
+          : 0;
+        const shouldPoll =
+          Date.now() - lastSync > EXTERNAL_SYNC_TTL_MS &&
+          tracked.currentStatus !== "delivered";
+
+        if (shouldPoll) {
+          // 2) Resolve the courier (detect if not cached yet)
+          if (!courierCode && (await isTrackingMoreConfigured())) {
+            const detected = await detectCourier(trackingNumber);
+            courierCode = detected?.[0]?.courier_code || "";
+            if (courierCode && order?._id) {
+              await Order.findByIdAndUpdate(order._id, {
+                "handover_by.courier_code": courierCode,
+              });
+            }
+          }
+          // Fallback: use the handover company name as a best-effort code
+          if (!courierCode) courierCode = order?.handover_by?.company || "";
+
+          // 3) Get from TrackingMore (create if not created yet), merge + store
+          await fetchAndStoreTracking({
+            trackId: trackID,
+            carrier: courierCode,
+            trackingNumber,
+          });
+          await Track.updateOne(
+            { trackId: trackID },
+            { $set: { lastExternalSync: new Date() } }
+          );
+        }
+      } catch (error) {
+        // Carrier polling must never break the public page — fall back to stored data
+        console.error("Auto tracking sync failed, showing stored data:", error);
+        await logTrackSyncResult({
+          trackId: trackID,
+          trackingNumber: order?.handover_by?.tracking || trackID,
+          courier: order?.handover_by?.company || "",
+          source: "public",
+          status: "failed",
+          message:
+            error instanceof Error ? error.message : "Carrier sync failed",
+        });
+      }
+
+      // 4) Re-fetch merged data so the user sees the freshest stored history
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fresh: any = await Track.findOne({ trackId: trackID })
+        .populate({
+          path: "order",
+          populate: [
+            { path: "parcel.from" },
+            { path: "parcel.to" },
+            { path: "parcel.sender.address.country" },
+            { path: "parcel.receiver.address.country" },
+          ],
+        })
+        .lean();
+      if (fresh) tracked = fresh;
+    }
+
+    // History locations sometimes store a Country ObjectId as a string;
+    // resolve any that look like one into the country name.
     if (Array.isArray(tracked.history)) {
       tracked.history = await Promise.all(
         tracked.history.map(async (step: { location?: { country?: string } }) => {
@@ -64,7 +153,7 @@ export async function GET(
       );
     }
 
-    return successResponse({ status: 200, message: "Track fetched successfully", data: track, req });
+    return successResponse({ status: 200, message: "Track fetched successfully", data: tracked, req });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Failed to fetch track";
     return errorResponse({ status: 500, message: msg, error, req });

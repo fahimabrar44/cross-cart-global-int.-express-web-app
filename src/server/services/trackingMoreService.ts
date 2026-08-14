@@ -3,10 +3,98 @@
 // Requires: TRACKINGMORE_API_KEY saved in Settings (DB) or env.
 // Optional: TRACKINGMORE_BASE_URL (defaults to production)
 
-import { getSettingString } from "@/server/services/settingsService";
+import { getSettingString, setSetting } from "@/server/services/settingsService";
 
 const TRACKINGMORE_KEY_SETTING = "TRACKINGMORE_API_KEY";
 const TRACKINGMORE_URL_SETTING = "TRACKINGMORE_BASE_URL";
+const TRACKINGMORE_USAGE_KEY = "TRACKINGMORE_USAGE"; // JSON { date, count }
+const TRACKINGMORE_LIMIT_KEY = "TRACKINGMORE_DAILY_LIMIT";
+export const TRACKINGMORE_DEFAULT_DAILY_LIMIT = 500;
+const USAGE_SETTLE_EVERY = 10; // persist counter to DB every N calls
+
+// In-memory daily counter (single-instance deployment). Persisted to Settings
+// periodically so a restart doesn't fully reset the daily budget.
+let usageCache: { date: string; count: number } | null = null;
+
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
+}
+
+async function currentDailyLimit(): Promise<number> {
+  const raw = await getSettingString(
+    TRACKINGMORE_LIMIT_KEY,
+    process.env.TRACKINGMORE_DAILY_LIMIT || String(TRACKINGMORE_DEFAULT_DAILY_LIMIT)
+  );
+  const n = parseInt(raw, 10);
+  return Number.isNaN(n) || n < 1 ? TRACKINGMORE_DEFAULT_DAILY_LIMIT : n;
+}
+
+async function ensureUsageLoaded(): Promise<{ date: string; count: number }> {
+  const today = todayStr();
+  if (!usageCache || usageCache.date !== today) {
+    try {
+      const raw = await getSettingString(TRACKINGMORE_USAGE_KEY, "");
+      const parsed = raw ? JSON.parse(raw) : null;
+      usageCache =
+        parsed && parsed.date === today
+          ? { date: today, count: Number(parsed.count) || 0 }
+          : { date: today, count: 0 };
+    } catch {
+      usageCache = { date: today, count: 0 };
+    }
+  }
+  return usageCache;
+}
+
+async function persistUsage(): Promise<void> {
+  if (!usageCache) return;
+  try {
+    await setSetting(TRACKINGMORE_USAGE_KEY, JSON.stringify(usageCache), {
+      description: "TrackingMore daily usage counter (JSON {date, count})",
+      isSecret: false,
+    });
+  } catch {
+    // best-effort persistence
+  }
+}
+
+/**
+ * Current daily quota usage. Exposed via /api/v1/tracking/usage.
+ */
+export async function getTrackingMoreUsage(): Promise<{
+  date: string;
+  count: number;
+  limit: number;
+  remaining: number;
+}> {
+  const counter = await ensureUsageLoaded();
+  const limit = await currentDailyLimit();
+  return {
+    date: counter.date,
+    count: counter.count,
+    limit,
+    remaining: Math.max(0, limit - counter.count),
+  };
+}
+
+async function assertUnderDailyQuota(): Promise<void> {
+  const counter = await ensureUsageLoaded();
+  const limit = await currentDailyLimit();
+  if (counter.count >= limit) {
+    throw new Error(
+      `TrackingMore daily quota exceeded (${counter.count}/${limit}). Auto-sync will resume tomorrow.`
+    );
+  }
+}
+
+async function recordUsage(): Promise<void> {
+  const counter = await ensureUsageLoaded();
+  counter.count += 1;
+  if (counter.count % USAGE_SETTLE_EVERY === 0) await persistUsage();
+}
 
 export interface TMCourier {
   courier_name?: string;
@@ -93,6 +181,8 @@ async function request<T>(
     );
   }
 
+  await assertUnderDailyQuota();
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20000);
 
@@ -122,6 +212,7 @@ async function request<T>(
     return json;
   } finally {
     clearTimeout(timeout);
+    await recordUsage();
   }
 }
 

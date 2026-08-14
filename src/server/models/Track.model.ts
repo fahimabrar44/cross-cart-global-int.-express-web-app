@@ -38,6 +38,7 @@ export interface ITrack extends Document {
   currentStatus: string; // latest status
   history: (typeof trackingStepSchema)[];
   estimatedDelivery?: Date;
+  lastExternalSync?: Date; // last time carrier (TrackingMore) was polled
   createdAt: Date;
   updatedAt: Date;
 }
@@ -65,6 +66,7 @@ const trackSchema = new Schema<ITrack>(
     },
     history: { type: [trackingStepSchema], default: [] },
     estimatedDelivery: { type: Date, default: null },
+    lastExternalSync: { type: Date, default: null },
   },
   { timestamps: true }
 );

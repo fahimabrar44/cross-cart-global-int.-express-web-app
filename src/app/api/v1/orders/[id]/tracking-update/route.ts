@@ -3,7 +3,7 @@ import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { errorResponse, successResponse } from "@/server/common/response";
 import { Order } from "@/server/models/Order.model";
 import { Track } from "@/server/models/Track.model";
-import { fetchAndStoreTracking } from "@/server/services/trackingService";
+import { fetchAndStoreTracking, logTrackSyncResult } from "@/server/services/trackingService";
 import { Types } from "mongoose";
 
 /**
@@ -14,6 +14,8 @@ import { Types } from "mongoose";
  * Body: { company?: string, tracking: string }
  */
 export const POST = createModeratorHandler(async ({ req, user }) => {
+  let company = "";
+  let tracking = "";
   try {
     await connectDB();
 
@@ -28,8 +30,8 @@ export const POST = createModeratorHandler(async ({ req, user }) => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body = (await req.json()) as any;
-    const company = String(body?.company || "").trim();
-    const tracking = String(body?.tracking || "").trim();
+    company = String(body?.company || "").trim();
+    tracking = String(body?.tracking || "").trim();
 
     if (!tracking) {
       return errorResponse({
@@ -84,6 +86,14 @@ export const POST = createModeratorHandler(async ({ req, user }) => {
   } catch (error: unknown) {
     const msg =
       error instanceof Error ? error.message : "Failed to update tracking";
+    await logTrackSyncResult({
+      trackId: tracking || "",
+      trackingNumber: tracking || "",
+      courier: company,
+      source: "manual",
+      status: "failed",
+      message: msg,
+    });
     return errorResponse({ status: 500, message: msg, error, req });
   }
 });

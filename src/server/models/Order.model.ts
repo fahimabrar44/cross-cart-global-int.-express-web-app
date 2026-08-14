@@ -85,6 +85,7 @@ const handoverSchema = new Schema({
   company: { type: String, default: "" },
   tracking: { type: String, default: "" },
   payment: { type: Number, default: 0 },
+  courier_code: { type: String, default: "" }, // detected/matched TrackingMore courier code
 });
 
 // Delivery assignment sub-schema

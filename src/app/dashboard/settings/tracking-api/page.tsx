@@ -1,9 +1,9 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RoleGuard } from "@/middleware/roleGuard";
 import { apiService } from "@/services/apiService";
-import { KeyRound, Radar, RefreshCw, Save } from "lucide-react";
+import { Gauge, KeyRound, Radar, RefreshCw, Save, ScrollText, Webhook } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -29,6 +29,16 @@ const FIELD_META: Record<
     hint: "Defaults to https://api.trackingmore.com/v4",
     type: "text",
   },
+  TRACKINGMORE_DAILY_LIMIT: {
+    label: "TrackingMore Daily Call Limit",
+    hint: "Hard cap on TrackingMore API calls per day (defaults to 500). Sync pauses when reached and resumes the next day.",
+    type: "number",
+  },
+  TRACKINGMORE_WEBHOOK_SECRET: {
+    label: "TrackingMore Webhook Secret",
+    hint: "Optional. When set, webhook pushes must send ?token=<secret> (append to the webhook URL) or a x-webhook-secret header.",
+    type: "password",
+  },
   TRACKING_PROVIDER: {
     label: "Tracking Provider",
     hint: "Which upstream service provides live tracking events",
@@ -47,11 +57,57 @@ const FIELD_META: Record<
   },
 };
 
+// Keys we want to surface even before a first save (so admins see + can set them).
+const ALWAYS_SHOW_KEYS = ["TRACKINGMORE_DAILY_LIMIT", "TRACKINGMORE_WEBHOOK_SECRET"];
+
+interface SyncLogEntry {
+  _id: string;
+  trackId: string;
+  trackingNumber: string;
+  courier: string;
+  source: string;
+  status: string;
+  message: string;
+  added?: number;
+  runAt: string;
+}
+
+interface UsageEntry {
+  date: string;
+  count: number;
+  limit: number;
+  remaining: number;
+}
+
 export default function TrackingApiSettingsPage() {
   const [settings, setSettings] = useState<SettingField[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [usage, setUsage] = useState<UsageEntry | null>(null);
+  const [logs, setLogs] = useState<SyncLogEntry[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+
+  const fetchUsage = async () => {
+    try {
+      const response = await apiService.get("/tracking/usage");
+      if (response.success) setUsage(response.data as UsageEntry);
+    } catch {
+      // non-blocking
+    }
+  };
+
+  const fetchLogs = async () => {
+    setLogsLoading(true);
+    try {
+      const response = await apiService.get("/tracking/sync-logs?limit=30");
+      if (response.success) setLogs(response.data as SyncLogEntry[]);
+    } catch {
+      setLogs([]);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -60,6 +116,12 @@ export default function TrackingApiSettingsPage() {
       if (response.success) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const list = (response.data as any[]) || [];
+        // Surface "always show" keys even if they were never saved yet.
+        for (const key of ALWAYS_SHOW_KEYS) {
+          if (!list.some((s) => s.key === key)) {
+            list.push({ key, value: "", description: "", isSecret: false, masked: false });
+          }
+        }
         setSettings(list);
         const next: Record<string, string> = {};
         for (const s of list) {
@@ -78,6 +140,8 @@ export default function TrackingApiSettingsPage() {
 
   useEffect(() => {
     fetchSettings();
+    fetchUsage();
+    fetchLogs();
   }, []);
 
   const updateValue = (key: string, v: string) =>
@@ -205,6 +269,162 @@ export default function TrackingApiSettingsPage() {
               prints, and public tracking reads work without it — only live carrier
               event sync needs a valid key.
             </p>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Daily usage */}
+          <Card data-testid="tracking-usage-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Gauge className="h-4 w-4 text-primary" />
+                Today{"'"}s TrackingMore Usage
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {usage ? (
+                <div className="space-y-3">
+                  <div className="flex items-end justify-between">
+                    <span className="text-3xl font-bold">
+                      {usage.count}
+                      <span className="text-sm font-normal text-muted-foreground">
+                        {" "}
+                        / {usage.limit}
+                      </span>
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {usage.remaining} calls left today
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        usage.remaining === 0
+                          ? "bg-destructive"
+                          : usage.remaining < usage.limit * 0.2
+                            ? "bg-amber-500"
+                            : "bg-primary"
+                      }`}
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.round((usage.count / usage.limit) * 100)
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Reset automatically on {usage.date} —{" "}
+                    {usage.remaining === 0
+                      ? "sync is paused until tomorrow"
+                      : "auto-sync and polling will pause when the quota is exhausted"}
+                    .
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Usage data unavailable (only visible to admins / moderators).
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Webhook URL */}
+          <Card data-testid="tracking-webhook-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Webhook className="h-4 w-4 text-primary" />
+                TrackingMore Webhook
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Register this URL in TrackingMore (Dashboard →{" "}
+                <code>Webhook Settings</code>) so pushes update tracking instantly
+                instead of waiting for polls:
+              </p>
+              <code className="block break-all rounded-md border border-border bg-muted px-3 py-2 text-xs">
+                {typeof window !== "undefined"
+                  ? `${window.location.origin}/api/v1/tracking/webhook`
+                  : "/api/v1/tracking/webhook"}
+              </code>
+              <p className="text-xs text-muted-foreground">
+                Tip: enable <code>TRACKINGMORE_WEBHOOK_SECRET</code> above and append{" "}
+                <code>?token=&#123;secret&#125;</code> to the URL for verification.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent sync logs */}
+        <Card data-testid="tracking-sync-logs-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ScrollText className="h-4 w-4 text-primary" />
+                Recent Sync Activity
+              </CardTitle>
+              <CardDescription>
+                Latest carrier-sync attempts (cron, webhook, manual sync, public
+                lookups) — useful for diagnosing failed syncs.
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={fetchLogs} disabled={logsLoading}>
+              <RefreshCw className={`mr-2 h-3.5 w-3.5 ${logsLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            {logs.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {logsLoading ? "Loading sync logs..." : "No sync activity recorded yet."}
+              </p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs text-muted-foreground">
+                    <th className="pb-2 pr-3">Status</th>
+                    <th className="pb-2 pr-3">Source</th>
+                    <th className="pb-2 pr-3">Track / Tracking #</th>
+                    <th className="pb-2 pr-3">Message</th>
+                    <th className="pb-2 text-right">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.map((log) => (
+                    <tr key={log._id} className="border-b last:border-0">
+                      <td className="py-2 pr-3">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                            log.status === "success"
+                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                              : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
+                          }`}
+                        >
+                          {log.status === "success" ? "OK" : "FAILED"}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-3 text-xs uppercase text-muted-foreground">
+                        {log.source}
+                      </td>
+                      <td className="py-2 pr-3">
+                        <span className="font-medium">{log.trackId || "—"}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {log.trackingNumber || ""}
+                          {log.courier ? ` · ${log.courier}` : ""}
+                        </span>
+                      </td>
+                      <td className="max-w-xs truncate py-2 pr-3 text-xs" title={log.message}>
+                        {log.message || "—"}
+                      </td>
+                      <td className="py-2 text-right text-xs text-muted-foreground">
+                        {new Date(log.runAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </CardContent>
         </Card>
       </div>

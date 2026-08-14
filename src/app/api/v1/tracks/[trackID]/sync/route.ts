@@ -1,7 +1,10 @@
 import connectDB from "@/config/db";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { successResponse, errorResponse } from "@/server/common/response";
-import { fetchAndStoreTracking } from "@/server/services/trackingService";
+import {
+  fetchAndStoreTracking,
+  logTrackSyncResult,
+} from "@/server/services/trackingService";
 
 /**
  * POST /api/v1/tracks/[trackID]/sync
@@ -10,24 +13,37 @@ import { fetchAndStoreTracking } from "@/server/services/trackingService";
  * Body (optional): { carrier, trackingNumber }
  */
 export const POST = createModeratorHandler(async ({ req, user }) => {
+  let trackID = "";
+  let body: { carrier?: string; trackingNumber?: string } = {};
   try {
     await connectDB();
 
     const url = new URL(req.url);
-    const trackID = url.pathname.split("/").filter(Boolean).pop();
+    trackID = url.pathname.split("/").filter(Boolean).pop() || "";
 
     if (!trackID) {
       return errorResponse({ status: 400, message: "Track ID is required", req });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const body = (await req.json().catch(() => ({}))) as any;
+    const parsed = (await req.json().catch(() => ({}))) as any;
+    body = parsed || {};
 
     const result = await fetchAndStoreTracking({
       trackId: trackID,
       carrier: body?.carrier,
       trackingNumber: body?.trackingNumber,
       updatedBy: user?.id || null,
+    });
+
+    await logTrackSyncResult({
+      trackId: trackID,
+      trackingNumber: body?.trackingNumber || trackID,
+      courier: body?.carrier || "",
+      source: "manual",
+      status: "success",
+      added: result.added,
+      message: result.message,
     });
 
     return successResponse({
@@ -42,6 +58,14 @@ export const POST = createModeratorHandler(async ({ req, user }) => {
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Failed to sync tracking";
+    await logTrackSyncResult({
+      trackId: trackID,
+      trackingNumber: body?.trackingNumber,
+      courier: body?.carrier,
+      source: "manual",
+      status: "failed",
+      message: msg,
+    });
     return errorResponse({ status: 500, message: msg, error, req });
   }
 });

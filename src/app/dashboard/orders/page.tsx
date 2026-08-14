@@ -57,8 +57,9 @@ import {
   CreditCard,
   Loader2,
   Lock,
-  RefreshCw,
   PackageSearch,
+  Radar,
+  RefreshCw,
   TrendingUp,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -92,6 +93,10 @@ export default function OrdersPage() {
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [trackingCompany, setTrackingCompany] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [detectingCourier, setDetectingCourier] = useState(false);
+  const [detectedCouriers, setDetectedCouriers] = useState<
+    { courier_code: string; courier_name: string }[]
+  >([]);
 
   // Payment form state
   const [paymentData, setPaymentData] = useState<PaymentData>({
@@ -303,6 +308,54 @@ export default function OrdersPage() {
       toast.error("Failed to update tracking");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  // Detect the courier automatically from the tracking number
+  const handleDetectCourier = async () => {
+    if (!trackingNumber.trim()) {
+      toast.error("Enter a courier tracking number first");
+      return;
+    }
+    setDetectingCourier(true);
+    setDetectedCouriers([]);
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`/api/v1/tracking/detect`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ tracking_number: trackingNumber.trim() }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const list: any[] = Array.isArray(result.data) ? result.data : [];
+        const mapped = list
+          .filter((c) => c?.courier_code)
+          .map((c) => ({
+            courier_code: String(c.courier_code),
+            courier_name: String(c.courier_name || c.courier_code),
+          }));
+        setDetectedCouriers(mapped);
+        if (mapped.length > 0) {
+          setTrackingCompany(mapped[0].courier_code);
+          toast.success(`Detected: ${mapped[0].courier_name}`);
+        } else {
+          toast.info("No matching courier found for this tracking number");
+        }
+      } else {
+        toast.error(result.message || "Failed to detect courier");
+      }
+    } catch (error) {
+      console.error("Failed to detect courier:", error);
+      toast.error("Failed to detect courier");
+    } finally {
+      setDetectingCourier(false);
     }
   };
 
@@ -702,13 +755,59 @@ export default function OrdersPage() {
                 <Label htmlFor="tracking-number">
                   Courier Tracking Number *
                 </Label>
-                <Input
-                  id="tracking-number"
-                  value={trackingNumber}
-                  onChange={(e) => setTrackingNumber(e.target.value)}
-                  placeholder="e.g., 132-12345678"
-                  data-testid="tracking-number-input"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="tracking-number"
+                    value={trackingNumber}
+                    onChange={(e) => {
+                      setTrackingNumber(e.target.value);
+                      setDetectedCouriers([]);
+                    }}
+                    placeholder="e.g., 132-12345678"
+                    data-testid="tracking-number-input"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleDetectCourier}
+                    disabled={detectingCourier}
+                    data-testid="detect-courier-button"
+                    className="shrink-0"
+                    title="Auto-detect the courier from the tracking number"
+                  >
+                    {detectingCourier ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Radar className="mr-2 h-4 w-4" />
+                    )}
+                    Detect
+                  </Button>
+                </div>
+                {detectedCouriers.length > 0 && (
+                  <div className="space-y-1 pt-1">
+                    <p className="text-xs text-muted-foreground">
+                      Detected couriers — click to select:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {detectedCouriers.map((c) => (
+                        <button
+                          key={c.courier_code}
+                          type="button"
+                          onClick={() => setTrackingCompany(c.courier_code)}
+                          className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                            trackingCompany === c.courier_code
+                              ? "border-primary bg-primary/10 font-medium text-primary"
+                              : "border-border text-muted-foreground hover:bg-muted"
+                          }`}
+                          data-testid="detected-courier-option"
+                        >
+                          {c.courier_name}
+                          <span className="ml-1 opacity-60">({c.courier_code})</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
                 <Button

@@ -1,0 +1,31 @@
+name: Tracking Auto-Sync (cron)
+
+# Runs the carrier auto-sync endpoint on a schedule so live parcel tracking
+# stays fresh even when nobody visits the tracking page.
+#
+# Setup:
+#   - Set repo variable APP_URL  -> https://your-deployed-app.com
+#   - Set repo secret CRON_SECRET -> a long random string (also put the same
+#     value in CRON_SECRET on the server/.env)
+#     GitHub: Settings -> Secrets and variables -> Actions
+
+on:
+  schedule:
+    # every 10 minutes (GitHub Actions minimum interval is 5 min)
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # allow a manual "Run workflow" button
+
+jobs:
+  sync:
+    name: Sync carrier tracking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call tracking sync endpoint
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -fsS -X POST "$APP_URL/api/v1/tracking/sync-all" \
+            -H "x-cron-secret: $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            -d '{}'
