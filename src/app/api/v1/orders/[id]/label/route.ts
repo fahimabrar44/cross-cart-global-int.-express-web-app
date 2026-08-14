@@ -89,7 +89,7 @@ export async function GET(
     .bars svg, .bars img { max-width: 100%; height: 50px; }
     .barcode .num { font-size: 18px; letter-spacing: 4px; font-weight: 700; color: #006B45; }
     .qr-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #E4EEEA; }
-    .qr-cell svg { width: 40px; height: 40px; }
+    .qr-cell svg, .qr-cell img, .qr-cell canvas { width: 100px; height: 100px; }
     .qr-cell .lbl { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #777; text-align: center; margin-top: 4px; }
     .qr-hint { font-size: 10px; color: #555; line-height: 1.5; width: 66%; }
     .qr-hint b { color: #006B45; }
@@ -110,6 +110,7 @@ export async function GET(
         <div class="brand">CROSS CART</div>
         <div class="tagline">Global Int. Express</div>
       </div>
+      
       <div class="awb">
         <div class="lbl">AWB No.</div>
         <div class="num">${awbNumber}</div>
@@ -175,7 +176,12 @@ export async function GET(
       } catch (e) { document.getElementById("barcode").outerHTML = '<div style="font-size:16px;font-weight:700;color:#006B45;letter-spacing:3px;">' + ${JSON.stringify(awbNumber)} + '</div>'; }
 
       try {
-        new QRCode(document.getElementById("qrcode"), ${JSON.stringify(trackingUrl)});
+        new QRCode(document.getElementById("qrcode"), {
+          text: ${JSON.stringify(trackingUrl)},
+          width: 100,
+          height: 100,
+          correctLevel: QRCode.CorrectLevel.M,
+        });
       } catch (e) { document.getElementById("qrcode").outerHTML = '<div style="font-size:9px;color:#555;">Tracking: ' + ${JSON.stringify(trackId)} + '</div>'; }
     })();
   </script>
