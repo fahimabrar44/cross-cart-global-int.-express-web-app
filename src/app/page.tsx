@@ -8,8 +8,8 @@ export default function Home() {
   return (
     <div className="overflow-x-hidden">
       <HeroHomeSection />
-      <HomeSaliderSectation />
       <HomeQuickToolsSection />
+      <HomeSaliderSectation />
       <HomeCustomerServiceSection />
       <HomeCustomerReviewSection />
     </div>
