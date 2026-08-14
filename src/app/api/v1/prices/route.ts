@@ -5,6 +5,7 @@ import { Country } from "@/server/models/Country.model";
 import { Zone } from "@/server/models/Zone.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
+import { AuthMiddleware } from "@/middleware/auth";
 import { Types } from "mongoose";
 
 type GetQuery = {
@@ -64,6 +65,21 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
+    // Admins/moderators (JWT login or their own API key) see the base rates;
+    // everyone else gets rates with profit % + fuel already applied, so the
+    // public rate fields are the final chargeable price.
+    let isInternal = false;
+    const apiKey =
+      req.headers.get("X-API-Key") || req.headers.get("x-api-key");
+    if (apiKey) {
+      const apiAuth = await AuthMiddleware.validateApiKey(req);
+      if (!apiAuth.success && apiAuth.response) return apiAuth.response;
+      isInternal = ["admin", "moderator"].includes(apiAuth.user?.role || "");
+    } else {
+      const authResult = await AuthMiddleware.authenticate(req);
+      isInternal = ["admin", "moderator"].includes(authResult.user?.role || "");
+    }
+
     const url = new URL(req.url);
     const q: GetQuery = Object.fromEntries(url.searchParams.entries());
 
@@ -110,6 +126,30 @@ export async function GET(req: NextRequest) {
   .skip(skip)
   .limit(limit)
   .lean();
+
+    // For public / API-key consumers apply profit % then fuel surcharge onto
+    // every rate field so the returned values are the final chargeable prices.
+    // Admins & moderators keep the base (actual) rates.
+    if (!isInternal) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prices.forEach((doc: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (doc.rate || []).forEach((r: any) => {
+          const profit = Number(r.profitPercentage) || 0;
+          const fuel = Number(r.fuel) || 0;
+          if (r.price && typeof r.price === "object") {
+            Object.keys(r.price).forEach((tier) => {
+              const base = Number(r.price[tier]) || 0;
+              // Match the /prices/calculate formula:
+              //   base * (1 + fuel/100) * (1 + profit%/100)
+              r.price[tier] = Number(
+                (base * (1 + fuel / 100) * (1 + profit / 100)).toFixed(3)
+              );
+            });
+          }
+        });
+      });
+    }
 
     return successResponse({
       status: 200,
