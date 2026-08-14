@@ -4,6 +4,11 @@ import { errorResponse, successResponse } from "@/server/common/response";
 import { Order } from "@/server/models/Order.model";
 import { Track } from "@/server/models/Track.model";
 import { fetchAndStoreTracking, logTrackSyncResult } from "@/server/services/trackingService";
+import {
+  detectCourier,
+  isTrackingMoreConfigured,
+  selectCourier,
+} from "@/server/services/trackingMoreService";
 import { Types } from "mongoose";
 
 /**
@@ -11,10 +16,11 @@ import { Types } from "mongoose";
  * Attach an external courier's tracking number to an order and pull that
  * courier's timeline into the local Track (so the public tracking page shows
  * both our stored order data and the carrier's live tracking events).
- * Body: { company?: string, tracking: string }
+ * Body: { company?: string, courier_code?: string, tracking: string }
  */
 export const POST = createModeratorHandler(async ({ req, user }) => {
   let company = "";
+  let courierCode = "";
   let tracking = "";
   try {
     await connectDB();
@@ -31,6 +37,7 @@ export const POST = createModeratorHandler(async ({ req, user }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const body = (await req.json()) as any;
     company = String(body?.company || "").trim();
+    courierCode = String(body?.courier_code || "").trim();
     tracking = String(body?.tracking || "").trim();
 
     if (!tracking) {
@@ -49,6 +56,19 @@ export const POST = createModeratorHandler(async ({ req, user }) => {
     order.handover_by = order.handover_by || { company: "", tracking: "", payment: 0 };
     order.handover_by.company = company;
     order.handover_by.tracking = tracking;
+
+    // Resolve the REAL TrackingMore courier code when detect is available and
+    // no explicit code was given. detect may return several matches (DPD:
+    // "dpd", "dpd-de", ...) — pick the one matching the destination country or
+    // needing no extra required fields, and persist it so later syncs reuse it.
+    if (!courierCode && (await isTrackingMoreConfigured())) {
+      const detected = await detectCourier(tracking);
+      await order.populate("parcel.to");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const destCountry = (order as any)?.parcel?.to?.code as string | undefined;
+      courierCode = await selectCourier(detected, destCountry);
+    }
+    order.handover_by.courier_code = courierCode;
     await order.save();
 
     // Make sure a Track exists for this order
@@ -61,7 +81,7 @@ export const POST = createModeratorHandler(async ({ req, user }) => {
     // Pull the external courier's timeline and merge it into the local Track
     const result = await fetchAndStoreTracking({
       trackId: order.trackId,
-      carrier: company,
+      carrier: courierCode || company,
       trackingNumber: tracking,
       updatedBy: user?.id || null,
     });
