@@ -6,6 +6,17 @@ type RequestResponse<T> = {
   status: number;
 };
 
+// Server responses carry status as a string ("200"); normalize it to a number
+// so strict comparisons like `response.status === 200` work everywhere.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const normalizeStatus = (data: any): any => {
+  if (data && typeof data === "object" && typeof data.status === "string") {
+    const n = Number(data.status);
+    return { ...data, status: Number.isNaN(n) ? data.status : n };
+  }
+  return data;
+};
+
 export const getRequestSend = async <T>(
   url: string,
   header?: Record<string, string>
@@ -19,7 +30,7 @@ export const getRequestSend = async <T>(
       },
     });
     const data = await response.json();
-    return data;
+    return normalizeStatus(data);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Request failed:", message);
@@ -64,7 +75,7 @@ export const postRequestSend = async <Req, Res>(
       };
     }
     
-    return data;
+    return normalizeStatus(data);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Request failed:", message);
@@ -87,7 +98,7 @@ export const putRequestSend = async <Req, Res>(
       body: JSON.stringify(dataSend),
     });
     const data = await response.json();
-    return data;
+    return normalizeStatus(data);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Request failed:", message);
@@ -108,7 +119,7 @@ export const deleteRequestSend = async <T>(
       },
     });
     const data = await response.json();
-    return data;
+    return normalizeStatus(data);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("Request failed:", message);
