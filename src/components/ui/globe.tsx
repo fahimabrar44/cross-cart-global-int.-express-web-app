@@ -1,6 +1,41 @@
+ /*Ensure you had installed the package
+or read our installation document. (go to lightswind.com/components/Installation)
+npm i lightswind@latest*/
+
 "use client";
-import { useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
+import React, { useEffect, useRef } from "react";
+import createGlobe from "cobe";
+import { cn } from "@/lib/utils"; 
+
+// Utility function to convert a hex color string to a normalized RGB array
+// Handles #RGB and #RRGGBB formats.
+const hexToRgbNormalized = (hex: string): [number, number, number] => {
+  let r = 0,
+    g = 0,
+    b = 0;
+
+  // Remove the # if present
+  const cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
+
+  if (cleanHex.length === 3) {
+    // Handle shorthand hex codes (e.g., #00F -> #0000FF)
+    r = parseInt(cleanHex[0] + cleanHex[0], 16);
+    g = parseInt(cleanHex[1] + cleanHex[1], 16);
+    b = parseInt(cleanHex[2] + cleanHex[2], 16);
+  } else if (cleanHex.length === 6) {
+    // Handle full hex codes (e.g., #RRGGBB)
+    r = parseInt(cleanHex.substring(0, 2), 16);
+    g = parseInt(cleanHex.substring(2, 4), 16);
+    b = parseInt(cleanHex.substring(4, 6), 16);
+  } else {
+    // Fallback for invalid hex (or if you want to throw an error)
+    console.warn(`Invalid hex color: ${hex}. Falling back to black.`);
+    return [0, 0, 0];
+  }
+
+  // Normalize to 0-1 range
+  return [r / 255, g / 255, b / 255];
+};
 
 interface GlobeProps {
   className?: string;
@@ -10,200 +45,216 @@ interface GlobeProps {
   diffuse?: number;
   mapSamples?: number;
   mapBrightness?: number;
+  // Allow color props to be either a hex string or an RGB array
   baseColor?: [number, number, number] | string;
   markerColor?: [number, number, number] | string;
   glowColor?: [number, number, number] | string;
 }
-
-// NOTE: This globe uses Canvas 2D (no WebGL) so it renders everywhere,
-// including headless/VM browsers where WebGL contexts return null.
-
-const toRgb = (color?: [number, number, number] | string): [number, number, number] => {
-  if (typeof color === "string") {
-    const clean = color.replace("#", "");
-    if (clean.length === 3)
-      return [
-        parseInt(clean[0] + clean[0], 16) / 255,
-        parseInt(clean[1] + clean[1], 16) / 255,
-        parseInt(clean[2] + clean[2], 16) / 255,
-      ];
-    if (clean.length === 6)
-      return [
-        parseInt(clean.substring(0, 2), 16) / 255,
-        parseInt(clean.substring(2, 4), 16) / 255,
-        parseInt(clean.substring(4, 6), 16) / 255,
-      ];
-    return [1, 1, 1];
-  }
-  if (Array.isArray(color) && color.length === 3) return color;
-  return [1, 1, 1];
-};
 
 const Globe: React.FC<GlobeProps> = ({
   className,
   theta = 0.25,
   dark = 0,
   scale = 1.1,
+  diffuse = 1.2,
+  mapSamples = 60000,
   mapBrightness = 10,
-  baseColor = "#ffffff",
-  markerColor = "#ff0000",
-  glowColor = "#ffffff",
+  baseColor = "#ffffff", // Removed default here, handled in useEffect
+  markerColor = "#ffffff", // Removed default here
+  glowColor = "#ffffff", // Removed default here
+  
 }) => {
-  const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const globeRef = useRef<any>(null); // To store the cobe globe instance
+
+  // Refs for interactive rotation and dragging state
   const phiRef = useRef(0);
-  const sizeRef = useRef({ w: 600, h: 600 });
-  const darkRef = useRef(dark);
-  darkRef.current = dark;
+  const thetaRef = useRef(theta); // Initialize thetaRef with prop theta
+  const isDragging = useRef(false);
+  const lastMouseX = useRef(0);
+  const lastMouseY = useRef(0);
+  const autoRotateSpeed = 0.003; // Define auto-rotation speed
 
   useEffect(() => {
-    const wrap = wrapRef.current;
     const canvas = canvasRef.current;
-    if (!wrap || !canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!canvas) return;
 
-    const resize = () => {
-      const rect = wrap.getBoundingClientRect();
-      const size = Math.round(Math.max(20, Math.min(rect.width, rect.height)));
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = size * dpr;
-      canvas.height = size * dpr;
-      canvas.style.width = `${size}px`;
-      canvas.style.height = `${size}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      sizeRef.current = { w: size, h: size };
-    };
-    resize();
-    window.addEventListener("resize", resize);
+    // Resolve color props to the [R, G, B] format required by cobe
+    const resolvedBaseColor: [number, number, number] =
+      typeof baseColor === "string"
+        ? hexToRgbNormalized(baseColor)
+        : baseColor || [0.4, 0.6509, 1]; // Default if not provided or invalid hex
 
-    // Deterministic pseudo-random marker positions
-    let seed = 7;
-    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const markers: { lat: number; lon: number; size: number }[] = [];
-    for (let i = 0; i < 40; i++) {
-      markers.push({
-        lat: -Math.PI / 2 + rnd() * Math.PI,
-        lon: -Math.PI + rnd() * 2 * Math.PI,
-        size: 2.4 + rnd() * 2.4,
+    const resolvedMarkerColor: [number, number, number] =
+      typeof markerColor === "string"
+        ? hexToRgbNormalized(markerColor)
+        : markerColor || [1, 0, 0]; // Default if not provided or invalid hex
+
+    const resolvedGlowColor: [number, number, number] =
+      typeof glowColor === "string"
+        ? hexToRgbNormalized(glowColor)
+        : glowColor || [0.2745, 0.5765, 0.898]; // Default if not provided or invalid hex
+
+    const initGlobe = () => {
+      // Destroy existing globe instance if it exists to prevent multiple instances
+      if (globeRef.current) {
+        globeRef.current.destroy();
+        globeRef.current = null;
+      }
+
+      const rect = canvas.getBoundingClientRect();
+      const size = Math.min(rect.width, rect.height);
+      const devicePixelRatio = window.devicePixelRatio || 1;
+      const internalWidth = size * devicePixelRatio;
+      const internalHeight = size * devicePixelRatio;
+
+      canvas.width = internalWidth;
+      canvas.height = internalHeight;
+
+      globeRef.current = createGlobe(canvas, {
+        devicePixelRatio: devicePixelRatio,
+        width: internalWidth,
+        height: internalHeight,
+        phi: phiRef.current,
+        theta: thetaRef.current, // Use thetaRef for initial and interactive theta
+        dark: dark,
+        scale: scale,
+        diffuse: diffuse,
+        mapSamples: mapSamples,
+        mapBrightness: mapBrightness,
+        baseColor: resolvedBaseColor, // Use converted/resolved colors
+        markerColor: resolvedMarkerColor, // Use converted/resolved colors
+        glowColor: resolvedGlowColor, // Use converted/resolved colors
+        opacity: 1,
+        offset: [0, 0],
+        markers: [
+
+        ],
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        onRender: (state: Record<string, any>) => {
+          if (!isDragging.current) {
+            // Only auto-rotate if not currently dragging
+            phiRef.current += autoRotateSpeed;
+          }
+          state.phi = phiRef.current;
+          state.theta = thetaRef.current; // Ensure cobe uses the updated thetaRef
+        },
       });
-    }
-
-    const [bR, bG, bB] = toRgb(baseColor);
-    const [mR, mG, mB] = toRgb(markerColor);
-    const [gR, gG, gB] = toRgb(glowColor);
-
-    let raf = 0;
-    const render = () => {
-      raf = requestAnimationFrame(render);
-      phiRef.current += 0.0035;
-      const phi = phiRef.current;
-      const { w, h } = sizeRef.current;
-      if (w <= 10 || h <= 10) return;
-      ctx.clearRect(0, 0, w, h);
-
-      const cx = w / 2;
-      const cy = h / 2;
-      const R = Math.min(w, h) * 0.46 * scale;
-      const darkAmt = Math.max(0, Math.min(1, darkRef.current));
-
-      // Outer glow
-      const glow = ctx.createRadialGradient(cx, cy, R * 0.6, cx, cy, R * 1.35);
-      glow.addColorStop(0, `rgba(${gR * 255},${gG * 255},${gB * 255},0.28)`);
-      glow.addColorStop(1, `rgba(${gR * 255},${gG * 255},${gB * 255},0)`);
-      ctx.fillStyle = glow;
-      ctx.fillRect(0, 0, w, h);
-
-      // Sphere base with highlight
-      const sphere = ctx.createRadialGradient(
-        cx - R * 0.38,
-        cy - R * 0.42,
-        R * 0.1,
-        cx,
-        cy,
-        R
-      );
-      sphere.addColorStop(0, `rgba(${Math.min(255, bR * 255 + 70)},${Math.min(255, bG * 255 + 70)},${Math.min(255, bB * 255 + 70)},1)`);
-      sphere.addColorStop(0.45, `rgb(${bR * 255},${bG * 255},${bB * 255})`);
-      sphere.addColorStop(1, `rgb(${bR * (1 - darkAmt) * 220},${bG * (1 - darkAmt) * 220},${bB * (1 - darkAmt) * 220})`);
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.fillStyle = sphere;
-      ctx.fill();
-
-      // Latitude + longitude wireframe
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.strokeStyle = `rgba(255,255,255,${0.10 + mapBrightness / 300})`;
-      ctx.lineWidth = 1;
-      for (let i = 1; i < 7; i++) {
-        const y = cy - R + (2 * R * i) / 8;
-        ctx.beginPath();
-        ctx.ellipse(cx, y + R / 8, Math.sqrt(R * R - (y - cy) * (y - cy)) || 1, R / 16, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      for (let i = -5; i <= 5; i++) {
-        const rx = Math.abs(Math.cos((i * Math.PI) / 12)) * R;
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, Math.max(rx, 2), R, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      // Rotating marker dots (Y-axis rotation, front face only)
-      for (const m of markers) {
-        const cosLat = Math.cos(m.lat);
-        const x0 = R * cosLat * Math.cos(m.lon);
-        const z0 = R * cosLat * Math.sin(m.lon);
-        const yRot = R * Math.sin(m.lat);
-        const xr = x0 * Math.cos(phi) - z0 * Math.sin(phi);
-        const zr = x0 * Math.sin(phi) + z0 * Math.cos(phi);
-        if (zr < 0) continue;
-        const shadow = 0.55 + 0.45 * (zr / R);
-        const px = cx + xr;
-        const py = cy + yRot * Math.cos(theta);
-        ctx.beginPath();
-        ctx.arc(px, py, m.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${mR * 255},${mG * 255},${mB * 255},${0.9 * shadow})`;
-        ctx.shadowColor = `rgba(${mR * 255},${mG * 255},${mB * 255},${0.8 * shadow})`;
-        ctx.shadowBlur = m.size * 1.8;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      }
-
-      // Edge shading
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(0,0,0,0.25)";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(cx, cy, R - 2, 0, Math.PI * 2);
-      const edge = ctx.createRadialGradient(cx - R, cy - R, R * 0.2, cx, cy, R);
-      edge.addColorStop(0, "rgba(255,255,255,0)");
-      edge.addColorStop(1, "rgba(0,0,0,0.45)");
-      ctx.fillStyle = edge;
-      ctx.fill();
     };
-    render();
 
+    // --- Mouse Interaction Handlers ---
+    const onMouseDown = (e: MouseEvent) => {
+      isDragging.current = true;
+      lastMouseX.current = e.clientX;
+      lastMouseY.current = e.clientY;
+      canvas.style.cursor = "grabbing"; // Change cursor to indicate dragging
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (isDragging.current) {
+        const deltaX = e.clientX - lastMouseX.current;
+        const deltaY = e.clientY - lastMouseY.current;
+
+        // Adjust rotation sensitivity as needed
+        const rotationSpeed = 0.005;
+
+        // Update phi (horizontal rotation)
+        phiRef.current += deltaX * rotationSpeed;
+        // Update theta (vertical rotation), clamp to prevent flipping
+        // Clamped between -PI/2 and PI/2 to prevent globe from going upside down
+        thetaRef.current = Math.max(
+          -Math.PI / 2,
+          Math.min(Math.PI / 2, thetaRef.current - deltaY * rotationSpeed)
+        );
+
+        lastMouseX.current = e.clientX;
+        lastMouseY.current = e.clientY;
+      }
+    };
+
+    const onMouseUp = () => {
+      isDragging.current = false;
+      canvas.style.cursor = "grab"; // Change cursor back
+    };
+
+    const onMouseLeave = () => {
+      // If mouse leaves canvas while dragging, stop dragging
+      if (isDragging.current) {
+        isDragging.current = false;
+        canvas.style.cursor = "grab";
+      }
+    };
+    // --- End Mouse Interaction Handlers ---
+
+    initGlobe();
+
+    // Attach event listeners for mouse interaction
+    canvas.addEventListener("mousedown", onMouseDown);
+    canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("mouseup", onMouseUp);
+    canvas.addEventListener("mouseleave", onMouseLeave); // Important for when mouse leaves canvas during a drag
+
+    const handleResize = () => {
+      initGlobe();
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup function: destroy the globe instance and remove event listeners when component unmounts
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", handleResize);
+      // Remove mouse event listeners on cleanup
+      if (canvas) {
+        canvas.removeEventListener("mousedown", onMouseDown);
+        canvas.removeEventListener("mousemove", onMouseMove);
+        canvas.removeEventListener("mouseup", onMouseUp);
+        canvas.removeEventListener("mouseleave", onMouseLeave);
+      }
+      if (globeRef.current) {
+        globeRef.current.destroy();
+        globeRef.current = null;
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    theta,
+    dark,
+    scale,
+    diffuse,
+    mapSamples,
+    mapBrightness,
+    baseColor, // Include color props in dependency array so globe re-initializes if they change
+    markerColor,
+    glowColor,
+  ]);
 
   return (
     <div
-      ref={wrapRef}
-      aria-hidden="true"
-      className={cn("pointer-events-none select-none flex items-center justify-center", className)}
-      style={{ width: "100%", height: "100%" }}
+      className={cn(
+        "flex items-center justify-center align-middle z-[10] mx-auto",
+        className
+      )}
+      style={{
+        width: "100%",
+        height: "1500px", // Container takes full viewport height
+        display: "flex", // Ensure flexbox properties are active for centering
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden", // Prevent scrollbars if content overflows
+      }}
     >
-      <canvas ref={canvasRef} />
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: "100%", // Canvas takes full width of its parent (which is constrained)
+          height: "1500px", // Canvas takes full height of its parent (which is constrained)
+          maxWidth: "auto", // Limit max width to viewport height to ensure square aspect in landscape
+          maxHeight: "auto", // Limit max height to viewport width to ensure square aspect in portrait
+          aspectRatio: "1", // Force a 1:1 aspect ratio for the canvas element
+          display: "block", // Ensure canvas behaves as a block element
+          cursor: "grab", // Default cursor
+        }}
+      />
     </div>
   );
 };

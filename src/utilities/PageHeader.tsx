@@ -38,8 +38,9 @@ const PageHeader = ({
         baseColor="#087F4F"
         markerColor="#F5C400"
         glowColor="#087F4F"
-        className={` container left-0 absolute -bottom-[65%] sm:-bottom-[120%] md:-bottom-[160%] lg:-bottom-[240%] xl:-bottom-[310%] 2xl:-bottom-[390%] m-auto opacity-30`}
+        className={` container left-0 absolute -bottom-[65%] sm:-bottom-[120%] md:-bottom-[160%] lg:-bottom-[240%] xl:-bottom-[310%] 2xl:-bottom-[390%] m-auto`}
       />
+
     </div>
   );
 };
