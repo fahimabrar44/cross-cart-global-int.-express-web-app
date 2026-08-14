@@ -210,8 +210,8 @@ const CalculateShippingCharge = () => {
 
       {/* Hero Section */}
       <div className="w-full bg-white">
-        <div className="container mx-auto px-4 py-16">
-          <div className="text-center mb-12">
+        <div className="container mx-auto px-2 py-8">
+          <div className="text-center mb-8">
             <h2 className="text-4xl font-bold text-[#12352A] mb-6">
               Calculate Shipping Charges
             </h2>
@@ -223,8 +223,8 @@ const CalculateShippingCharge = () => {
 
           {/* Calculator Form */}
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-8">
-              <div className="flex items-center mb-6">
+            <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-4">
+              <div className="flex items-center mb-4">
                 <Calculator
                   className="w-8 h-8 text-primary mr-3"
                   strokeWidth={1.5}
