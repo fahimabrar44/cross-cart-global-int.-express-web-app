@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import connectDB from "@/config/db";
 import { Price } from "@/server/models/Price.model";
+import { Country } from "@/server/models/Country.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { Types } from "mongoose";
@@ -8,6 +9,8 @@ import { Types } from "mongoose";
 type GetQuery = {
   from?: string;
   to?: string;
+  fromName?: string;
+  toName?: string;
   rateName?: string;
   page?: string;
   limit?: string;
@@ -15,6 +18,13 @@ type GetQuery = {
   sortOrder?: string;
   search?: string;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolveCountryId(name?: string): Promise<Types.ObjectId | null> {
+  if (!name) return null;
+  const country = await Country.findOne({ name: new RegExp(`^${name.trim()}$`, "i") }).lean();
+  return country ? (country._id as Types.ObjectId) : null;
+}
 
 // Helper: validate rates
 
@@ -50,6 +60,22 @@ export async function GET(req: NextRequest) {
 
     if (q.from && Types.ObjectId.isValid(q.from)) query.from = new Types.ObjectId(q.from);
     if (q.to && Types.ObjectId.isValid(q.to)) query.to = new Types.ObjectId(q.to);
+
+    if (q.fromName) {
+      const countryId = await resolveCountryId(q.fromName);
+      if (!countryId) {
+        return successResponse({ status: 200, message: "Prices fetched successfully", data: [], meta: { page, limit, total: 0, totalPages: 0 }, req });
+      }
+      query.from = countryId;
+    }
+    if (q.toName) {
+      const countryId = await resolveCountryId(q.toName);
+      if (!countryId) {
+        return successResponse({ status: 200, message: "Prices fetched successfully", data: [], meta: { page, limit, total: 0, totalPages: 0 }, req });
+      }
+      query.to = countryId;
+    }
+
     if (q.rateName) query["rate.name"] = { $regex: q.rateName, $options: "i" };
     if (q.search) {
       const s = q.search.trim();
