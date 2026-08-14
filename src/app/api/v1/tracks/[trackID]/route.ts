@@ -79,7 +79,17 @@ const lookupExternalTracking = async (
         });
         if (tmTrackings && tmTrackings.length) {
           tm = tmTrackings[0];
-          break;
+          // Freshly created trackings often need a moment before TrackingMore
+          // populates the trackinfo — one short retry to return events on the
+          // very first search for any courier.
+          if (!extractTimelineEvents(tm).length) {
+            await new Promise((r) => setTimeout(r, 2500));
+            const retry = await getTrackings([trackingNumber], {
+              courierCode: code || undefined,
+            });
+            if (retry && retry.length) tm = retry[0];
+          }
+          if (extractTimelineEvents(tm).length || tm.delivery_status) break;
         }
         const created = await createTracking({
           tracking_number: trackingNumber,
