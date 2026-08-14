@@ -128,7 +128,7 @@ export default function RateChartsPage() {
                     {/* @ts-expect-error */}
       const response = await priceService.updatePrice(selectedPrice._id, data);
 
-      if (response.success) {
+      if (response.status == 200) {
         toast.success("Price chart updated successfully");
         setIsEditModalOpen(false);
         setSelectedPrice(null);
@@ -151,7 +151,7 @@ export default function RateChartsPage() {
                     {/* @ts-expect-error */}
       const response = await priceService.deletePrice(selectedPrice._id);
 
-      if (response.success) {
+      if (response.status == 200) {
         toast.success("Price chart deleted successfully");
         setIsDeleteModalOpen(false);
         setSelectedPrice(null);
@@ -172,7 +172,7 @@ export default function RateChartsPage() {
                     {/* @ts-expect-error */}
       const response = await priceService.togglePriceStatus(price._id,!price.isActive);
 
-      if (response.success) {
+      if (response.status == 200) {
                     {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
                     {/* @ts-expect-error */}
         toast.success(`Price chart ${!price.isActive ? "activated" : "deactivated"} successfully`);

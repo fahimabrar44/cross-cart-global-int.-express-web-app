@@ -70,11 +70,17 @@ interface PriceFormProps {
 
 export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
   const [countries, setCountries] = useState<Country[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const initialFrom = typeof (price as any)?.from === "string" ? (price as any).from : (price as any)?.from?._id ?? "";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const initialTo = typeof (price as any)?.to === "string" ? (price as any).to : (price as any)?.to?._id ?? "";
   const form = useForm<PriceFormData>({
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error  
     resolver: zodResolver(priceFormSchema),
-    defaultValues: (price || { from: "", to: "", rate: []}) as PriceFormData,
+    defaultValues: (price
+      ? { ...price, from: initialFrom, to: initialTo }
+      : { from: "", to: "", rate: [] }) as PriceFormData,
   });
 
   const { fields, append, remove } = useFieldArray({
