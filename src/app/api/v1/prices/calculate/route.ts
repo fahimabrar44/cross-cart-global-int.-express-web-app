@@ -4,6 +4,7 @@ import { Price } from "@/server/models/Price.model";
 import { Country } from "@/server/models/Country.model";
 import { Zone } from "@/server/models/Zone.model";
 import { successResponse, errorResponse } from "@/server/common/response";
+import { verifyApiKeyIfProvided } from "@/server/common/apiKeyAuth";
 import { Types } from "mongoose";
 
 // Flat-rate tiers (grams) applied up to their cap
@@ -71,6 +72,12 @@ function resolveTier(weightGrams: number): { key: string; label: string; perKg: 
 
 export async function POST(req: NextRequest) {
   try {
+    // API-key access when X-API-Key header is supplied; otherwise public
+    const apiAuth = await verifyApiKeyIfProvided(req);
+    if (!apiAuth.success && apiAuth.response) {
+      return apiAuth.response;
+    }
+
     await connectDB();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

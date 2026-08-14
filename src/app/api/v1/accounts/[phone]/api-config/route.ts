@@ -131,10 +131,16 @@ export async function POST(
         console.error("API config creation notification failed:", err)
       );
 
+    // Return the plaintext API key once. It is not stored in a retrievable form afterwards.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const created: any = await ApiConfig.findById(newConfig._id)
+      .select("+apiKey")
+      .lean();
+
     return successResponse({
       status: 201,
       message: "API config created",
-      data: newConfig,
+      data: created,
       req,
     });
   } catch (error: unknown) {

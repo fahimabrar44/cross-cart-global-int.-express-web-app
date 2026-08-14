@@ -88,6 +88,13 @@ export async function POST(
     });
   } catch (error) {
     console.error("POST /accounts/[phone]/upload error:", error);
-    return errorResponse({ status: 500, message: "Internal server error", error, req });
+    const detail =
+      error instanceof Error ? error.message : String(error || "Unknown error");
+    return errorResponse({
+      status: 500,
+      message: "Internal server error",
+      error: { message: detail },
+      req,
+    });
   }
 }

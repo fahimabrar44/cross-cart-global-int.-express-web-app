@@ -95,6 +95,11 @@ const ourCompany = [
     title: "Our Work Process",
     link: "/about/our-work-process",
   },
+  {
+    id: 12342466,
+    title: "API Integration",
+    link: "/api-integration",
+  },
   
   {
     id: 12342457,

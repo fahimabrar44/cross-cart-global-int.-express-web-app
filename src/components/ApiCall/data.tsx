@@ -329,6 +329,7 @@ export const UserData = {
         { title: "Profile", url: "/dashboard/settings" },
         { title: "Address", url: "/dashboard/settings/address" },
         { title: "API Keys", url: "/dashboard/settings/api-keys" },
+        { title: "API Integration", url: "/api-integration" },
         { title: "Login History", url: "/dashboard/settings/login-history" },
       ],
     },

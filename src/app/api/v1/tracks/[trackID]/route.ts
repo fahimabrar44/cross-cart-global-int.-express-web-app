@@ -6,6 +6,7 @@ import { Types } from "mongoose";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { updateTrackStatus } from "@/server/services/trackingService";
+import { verifyApiKeyIfProvided } from "@/server/common/apiKeyAuth";
 
 // History locations sometimes store a Country ObjectId as a string;
 // resolve any that look like one into the country name.
@@ -27,6 +28,12 @@ export async function GET(
   { params }: { params: Promise<{ trackID: string }> }
 ): Promise<NextResponse> {
   try {
+    // API-key access when X-API-Key header is supplied; otherwise public
+    const apiAuth = await verifyApiKeyIfProvided(req);
+    if (!apiAuth.success && apiAuth.response) {
+      return apiAuth.response;
+    }
+
     await connectDB();
 
     const { trackID } = await params;

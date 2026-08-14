@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/AuthContext";
 import { RoleGuard } from "@/middleware/roleGuard";
 import { apiService } from "@/services/apiService";
-import { Copy, KeyRound, Plus, Trash2 } from "lucide-react";
+import { BookOpen, Copy, KeyRound, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -27,6 +28,7 @@ export default function ApiConfigPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
+  const [createdKey, setCreatedKey] = useState<string | null>(null);
 
   const phone = user?.phone || "";
 
@@ -63,6 +65,9 @@ export default function ApiConfigPage() {
         name: name.trim(),
       });
       if (response.success) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const newKey = (response.data as any)?.apiKey;
+        if (newKey) setCreatedKey(newKey);
         toast.success("API config created successfully");
         setIsDialogOpen(false);
         setName("");
@@ -74,6 +79,33 @@ export default function ApiConfigPage() {
       toast.error(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRegenerate = async (config: ApiConfig) => {
+    if (
+      !confirm(
+        `Regenerate the key for "${config.name}"? The previous key will stop working immediately.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const response = await apiService.patch(
+        `/accounts/${phone}/api-config/${config._id}`,
+        {}
+      );
+      if (response.success) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const newKey = (response.data as any)?.apiKey;
+        if (newKey) setCreatedKey(newKey);
+        toast.success("New API key generated");
+        fetchConfigs();
+      } else {
+        toast.error(response.message || "Failed to regenerate API key");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "An error occurred");
     }
   };
 
@@ -116,14 +148,64 @@ export default function ApiConfigPage() {
               Manage API keys and access for your account
             </p>
           </div>
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            className="flex items-center space-x-2"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Create Config</span>
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Link href="/api-integration">
+              <Button variant="outline" className="flex items-center space-x-2">
+                <BookOpen className="h-4 w-4" />
+                <span>API Docs</span>
+              </Button>
+            </Link>
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className="flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create Config</span>
+            </Button>
+          </div>
         </div>
+
+        {createdKey && (
+          <Card className="border-primary">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2 min-w-0">
+                  <p className="text-sm font-semibold text-primary">
+                    Your new API key has been generated
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Copy it now. For security, this key is shown only once and
+                    cannot be retrieved later.
+                  </p>
+                  <code className="block break-all rounded-md bg-muted px-3 py-2 font-mono text-sm">
+                    {createdKey}
+                  </code>
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdKey);
+                      toast.success("API key copied");
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                    <span className="ml-1">Copy</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCreatedKey(null)}
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="ml-1">Dismiss</span>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {loading ? (
           <p className="text-muted-foreground">Loading API configs...</p>
@@ -192,6 +274,14 @@ export default function ApiConfigPage() {
                     >
                       <Copy className="h-4 w-4" />
                       <span>Copy</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex items-center space-x-2"
+                      onClick={() => handleRegenerate(config)}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      <span>Regenerate</span>
                     </Button>
                     <Button
                       variant="outline"
