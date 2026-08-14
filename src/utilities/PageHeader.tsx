@@ -38,7 +38,7 @@ const PageHeader = ({
         baseColor="#087F4F"
         markerColor="#F5C400"
         glowColor="#087F4F"
-        className={` container left-0 absolute -bottom-[65%] sm:-bottom-[120%] md:-bottom-[160%] lg:-bottom-[240%] xl:-bottom-[310%] 2xl:-bottom-[390%] m-auto`}
+        className={` container left-0 absolute -bottom-[10%] sm:-bottom-[20%] md:-bottom-[60%] lg:-bottom-[80%] xl:-bottom-[100%] 2xl:-bottom-[150%] m-auto`}
       />
 
     </div>
