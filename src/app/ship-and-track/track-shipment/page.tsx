@@ -152,12 +152,6 @@ const TrackShipmentContent = () => {
     });
   };
 
-  const quickTrackOptions = [
-    { value: "CCG00000001", label: "CCG00000001", carrier: "CrossCart Global Int Express" },
-    { value: "CCG00000002", label: "CCG00000002", carrier: "CrossCart Global Int Express" },
-    { value: "CCG00000003", label: "CCG00000003", carrier: "CrossCart Global Int Express" },
-  ];
-
   const features = [
     {
       icon: <Clock className="w-6 h-6 text-[#F5C400]" strokeWidth={1.5} />,
@@ -226,7 +220,7 @@ const TrackShipmentContent = () => {
                       type="text"
                       value={trackingNumber}
                       onChange={(e) => setTrackingNumber(e.target.value)}
-                      placeholder="Enter tracking number(e.g.,CCG00000001)"
+                      placeholder="Enter your tracking number"
                       className="flex-1 p-4 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent text-lg"
                       onKeyPress={(e) =>
                         e.key === "Enter" && handleTrackPackage()
@@ -243,32 +237,6 @@ const TrackShipmentContent = () => {
                   <p className="text-sm text-gray-500 mt-2">
                     You can track using tracking ID from your shipment receipt
                   </p>
-                </div>
-
-                {/* Quick Track Options */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Quick Track (Demo)
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {quickTrackOptions.map((option, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          setTrackingNumber(option.value);
-                          handleTrackPackage(option.value);
-                        }}
-                        className="p-3 border border-gray-300 rounded-lg hover:border-primary hover:bg-soft-green transition-colors text-left"
-                      >
-                        <div className="font-semibold text-[#12352A]">
-                          {option.label}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {option.carrier} Package
-                        </div>
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 {/* Error Message */}
@@ -335,6 +303,48 @@ const TrackShipmentContent = () => {
                 </div>
 
                 <div className="p-8">
+                  {/* Parcel Details */}
+                  <div className="mb-8">
+                    <h4 className="text-xl font-semibold text-[#12352A] mb-4">
+                      Parcel Details
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="flex items-start">
+                        <Package className="w-5 h-5 text-primary mr-3 mt-0.5" strokeWidth={1.5} />
+                        <div>
+                          <p className="text-sm text-gray-600 font-medium">
+                            Recipient Name
+                          </p>
+                          <p className="text-lg font-semibold text-[#12352A]">
+                            {typeof trackingData.order === "object" &&
+                            trackingData.order?.parcel?.receiver?.name
+                              ? trackingData.order.parcel.receiver.name
+                              : "N/A"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <MapPin className="w-5 h-5 text-primary mr-3 mt-0.5" strokeWidth={1.5} />
+                        <div>
+                          <p className="text-sm text-gray-600 font-medium">
+                            Destination City
+                          </p>
+                          <p className="text-lg font-semibold text-[#12352A]">
+                            {typeof trackingData.order === "object" &&
+                            trackingData.order?.parcel?.receiver?.address?.city
+                              ? `${trackingData.order.parcel.receiver.address.city}${
+                                  trackingData.order.parcel.receiver.address
+                                    .country
+                                    ? `, ${trackingData.order.parcel.receiver.address.country}`
+                                    : ""
+                                }`
+                              : "N/A"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Tracking Timeline */}
                   <div>
                     <h4 className="text-xl font-semibold text-[#12352A] mb-6">
