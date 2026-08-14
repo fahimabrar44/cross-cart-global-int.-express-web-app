@@ -7,6 +7,7 @@ import { Order } from "@/server/models/Order.model";
 import { Country } from "@/server/models/Country.model";
 import { TrackSyncLog } from "@/server/models/TrackSyncLog.model";
 import { getSettingString } from "@/server/services/settingsService";
+import { Types } from "mongoose";
 
 export const TRACK_STATUSES = [
   "created",
@@ -389,9 +390,10 @@ export async function logTrackSyncResult(input: {
  * Build a TrackingMore create-tracking payload enriched with the receiver's
  * postal code + destination country. Several couriers (DPD Germany, DPD BE,
  * etc.) REQUIRE tracking_postal_code — without it TrackingMore rejects the
- * create with code 4122.
+ * create with code 4122. Callers can override any value by spreading this
+ * result first and their own body afterwards.
  */
-async function buildCreateTrackingPayload(input: {
+export async function buildCreateTrackingPayload(input: {
   trackingNumber: string;
   carrier?: string;
   orderId?: unknown;
@@ -414,18 +416,23 @@ async function buildCreateTrackingPayload(input: {
     const postal = String(address?.zipCode || "").trim();
 
     let countryCode = "";
+    // The country may be an ISO2 string, an ObjectId (ref, populated or not),
+    // or a populated Country document — resolve all of them.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const countryField: any = address?.country || (order as any)?.parcel?.to;
-    if (countryField) {
-      if (typeof countryField === "string" && /^[A-Za-z]{2}$/.test(countryField)) {
-        countryCode = countryField;
-      } else if (countryField?.code) {
-        countryCode = String(countryField.code);
-      } else if (typeof countryField === "string" && countryField.length === 24) {
-        const c = await Country.findById(countryField).select("code").lean();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        countryCode = String((c as any)?.code || "");
-      }
+    const countryStr =
+      typeof countryField === "string"
+        ? countryField
+        : String(countryField?.code || countryField?.toString?.() || "").trim();
+    if (/^[A-Za-z]{2}$/.test(countryStr)) {
+      countryCode = countryStr;
+    } else if (
+      countryStr.length === 24 &&
+      Types.ObjectId.isValid(countryStr)
+    ) {
+      const c = await Country.findById(countryStr).select("code").lean();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      countryCode = String((c as any)?.code || "");
     }
 
     if (postal) payload["tracking_postal_code"] = postal;
