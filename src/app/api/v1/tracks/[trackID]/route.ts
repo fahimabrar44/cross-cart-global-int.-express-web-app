@@ -51,7 +51,10 @@ export async function GET(
     const { trackID } = await params;
 
     // 1) Look up the parcel in our own database
-    const track = await Track.findOne({ trackId: trackID })
+    const lookupQuery: { trackId?: string; order?: Types.ObjectId } = {
+      trackId: trackID,
+    };
+    let track = await Track.findOne(lookupQuery)
       .populate({
         path: "order",
         populate: [
@@ -62,6 +65,28 @@ export async function GET(
         ],
       })
       .lean();
+
+    // 2) Fallback: allow looking up by the COURIER tracking number too
+    //    (orders handed over to a carrier store it in handover_by.tracking)
+    if (!track && trackID) {
+      const orderByCourierTracking = await Order.findOne({
+        "handover_by.tracking": trackID,
+      }).select("_id");
+      if (orderByCourierTracking) {
+        track = await Track.findOne({ order: orderByCourierTracking._id })
+          .populate({
+            path: "order",
+            populate: [
+              { path: "parcel.from" },
+              { path: "parcel.to" },
+              { path: "parcel.sender.address.country" },
+              { path: "parcel.receiver.address.country" },
+            ],
+          })
+          .lean();
+      }
+    }
+
     if (!track) return errorResponse({ status: 404, message: "Track not found", req });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

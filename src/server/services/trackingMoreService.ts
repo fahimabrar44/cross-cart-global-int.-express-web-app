@@ -191,7 +191,7 @@ async function request<T>(
       method: options.method || "GET",
       headers: {
         "Content-Type": "application/json",
-        "Trackingmore-Api-Key": key,
+        "Tracking-Api-Key": key,
       },
       body:
         options.body !== undefined ? JSON.stringify(options.body) : undefined,
