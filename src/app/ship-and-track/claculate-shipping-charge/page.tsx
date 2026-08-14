@@ -85,7 +85,7 @@ const CalculateShippingCharge = () => {
                 </h3>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* From Country */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -149,7 +149,7 @@ const CalculateShippingCharge = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <div
                 key={index}
@@ -181,7 +181,7 @@ const CalculateShippingCharge = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {carriers.map((carrier, index) => (
               <div
                 key={index}

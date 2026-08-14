@@ -41,7 +41,7 @@ const HomeSaliderSectation = () => {
 
   return (
     <div className="w-full h-auto py-8 pb-4 bg-[#12352A] px-5">
-      <div className="container h-auto m-auto p-10">
+      <div className="container h-auto m-auto p-4 sm:p-10">
         <Carousel setApi={setApi}>
           <CarouselContent>
             {slider_image.map((item) => (

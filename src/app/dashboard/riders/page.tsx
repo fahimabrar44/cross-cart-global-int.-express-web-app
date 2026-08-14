@@ -142,14 +142,14 @@ export default function RidersPage() {
   return (
     <RoleGuard allowedRoles={["admin", "moderator"]}>
       <div className="space-y-6" data-testid="riders-page">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Delivery Riders</h1>
             <p className="text-muted-foreground">
               Manage delivery riders and their availability
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               onClick={fetchRiders}
@@ -219,11 +219,11 @@ export default function RidersPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {riders.map((rider) => (
               <Card key={rider._id}>
                 <CardContent className="p-5">
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="flex items-center gap-3">
                       <div className="bg-soft-green rounded-full p-3">
                         <Truck className="h-5 w-5 text-primary" />
@@ -290,7 +290,7 @@ export default function RidersPage() {
         )}
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add Delivery Rider</DialogTitle>
             </DialogHeader>

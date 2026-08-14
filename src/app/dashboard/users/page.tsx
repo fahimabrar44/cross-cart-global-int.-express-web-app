@@ -303,7 +303,7 @@ export default function UsersPage() {
   return (
     <div className="space-y-6" data-testid="users-page">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold" data-testid="users-title">Users</h1>
           <p className="text-muted-foreground">
@@ -409,7 +409,7 @@ export default function UsersPage() {
 
       {/* Create User Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle data-testid="create-user-modal-title">Create New User</DialogTitle>
             <DialogDescription>
@@ -427,7 +427,7 @@ export default function UsersPage() {
 
       {/* Edit User Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle data-testid="edit-user-modal-title">Edit User</DialogTitle>
             <DialogDescription>
@@ -451,7 +451,7 @@ export default function UsersPage() {
 
       {/* View User Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-full max-w-2xl">
           <DialogHeader>
             <DialogTitle data-testid="view-user-modal-title">User Details</DialogTitle>
           </DialogHeader>

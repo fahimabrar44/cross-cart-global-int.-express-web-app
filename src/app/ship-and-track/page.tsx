@@ -106,7 +106,7 @@ const ShipAndTrack = () => {
           </div>
 
           {/* Services Grid */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {services.map((service, index) => (
               <div key={index} className="bg-white border border-gray-200 rounded-lg p-8 shadow-lg hover:shadow-xl transition-shadow">
                 <div className="bg-soft-green rounded-full w-20 h-20 flex items-center justify-center mb-6 mx-auto border border-border">
@@ -147,7 +147,7 @@ const ShipAndTrack = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step, index) => (
               <div key={index} className="text-center">
                 <div className="bg-primary rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
@@ -174,7 +174,7 @@ const ShipAndTrack = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {benefits.map((benefit, index) => (
               <div key={index} className="text-center">
                 <div className="bg-[#12352A] rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
@@ -256,7 +256,7 @@ const ShipAndTrack = () => {
       {/* Stats Section */}
       <div className="w-full bg-gray-100">
         <div className="container mx-auto px-4 py-16">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
             <div>
               <div className="text-4xl font-bold text-[#12352A] mb-2">200+</div>
               <p className="text-gray-600">Countries Served</p>
@@ -287,7 +287,7 @@ const ShipAndTrack = () => {
             Get started with CrossCart Global Int Express{"'"}s reliable shipping services. Calculate rates, 
             create shipments, and track your packages all in one place.
           </p>
-          <div className="space-x-4">
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
             <Link href="/ship-and-track/claculate-shipping-charge">
               <button className="bg-primary text-white py-3 px-8 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold">
                 Calculate Rates

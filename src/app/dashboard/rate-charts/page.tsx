@@ -255,7 +255,7 @@ export default function RateChartsPage() {
   return (
     <div className="space-y-6" data-testid="rate-charts-page">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold" data-testid="rate-charts-title">
             Rate Charts
@@ -358,7 +358,7 @@ export default function RateChartsPage() {
 
       {/* Create Price Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle data-testid="create-price-modal-title">
               Create New Price Chart
@@ -379,7 +379,7 @@ export default function RateChartsPage() {
 
       {/* Edit Price Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle data-testid="edit-price-modal-title">
               Edit Price Chart
@@ -407,7 +407,7 @@ export default function RateChartsPage() {
 
       {/* View Price Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle data-testid="view-price-modal-title">
               Price Chart Details

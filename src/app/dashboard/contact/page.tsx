@@ -150,7 +150,7 @@ export default function ContactPage() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ContactDetails = ({ contact }: { contact: any }) => (
     <div className="space-y-6" data-testid="contact-details">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-semibold">
           {contact.category ? getCategoryLabel(contact.category) : "Contact Message"}
         </h3>
@@ -189,7 +189,7 @@ export default function ContactPage() {
         </div>
       )}
 
-      <div className="flex space-x-2 pt-4 border-t">
+      <div className="flex flex-wrap space-x-2 pt-4 border-t">
         {contact.status !== "resolved" && (
           <Button
             onClick={() => handleMarkAsRead(contact)}
@@ -237,7 +237,7 @@ export default function ContactPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
@@ -339,7 +339,7 @@ export default function ContactPage() {
         />
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Contact Message Details</DialogTitle>
             </DialogHeader>

@@ -51,7 +51,7 @@ const LogisticsSolutions = () => {
   ];
 
   return (
-    <div className="w-full h-auto bg-soft-green">
+    <div className="w-full h-auto bg-soft-green overflow-x-hidden">
       <PageHeader 
         title="LOGISTICS SOLUTIONS" 
         subtitle="LOGISTICS SOLUTIONS" 
@@ -63,7 +63,7 @@ const LogisticsSolutions = () => {
       <div className="w-full bg-white">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-[#12352A] mb-6">
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#12352A] mb-6">
               Comprehensive Logistics Solutions for Every Need
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
@@ -73,7 +73,7 @@ const LogisticsSolutions = () => {
           </div>
 
           {/* Solutions Grid */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
             {solutions.map((solution, index) => (
               <div key={index} className="bg-white border border-gray-200 rounded-lg p-8 shadow-lg hover:shadow-xl transition-shadow">
                 <div className="bg-soft-green rounded-full w-20 h-20 flex items-center justify-center mb-6 mx-auto border border-border">
@@ -114,7 +114,7 @@ const LogisticsSolutions = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {benefits.map((benefit, index) => (
               <div key={index} className="text-center">
                 <div className="bg-[#12352A] rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
@@ -138,7 +138,7 @@ const LogisticsSolutions = () => {
             Get started with CrossCart Global Int Express{"'"}s comprehensive logistics solutions today. 
             Contact our experts for a customized quote.
           </p>
-          <div className="space-x-4">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center align-middle items-center">
             <Link href="/contact">
               <button className="bg-primary text-white py-3 px-8 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold">
                 Get Quote

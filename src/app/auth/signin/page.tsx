@@ -147,7 +147,7 @@ export default function SigninPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-section py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md" data-testid="signin-form">
+      <Card className="w-full max-w-md mx-auto" data-testid="signin-form">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
             <div className="flex flex-col items-center gap-2">

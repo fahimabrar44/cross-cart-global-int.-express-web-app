@@ -22,7 +22,7 @@ const Contact = () => {
   };
 
   return (
-    <div className="w-full h-auto bg-soft-green">
+    <div className="w-full h-auto bg-soft-green overflow-x-hidden">
       <PageHeader
         title="CONTACT US"
         subtitle="CONTACT US"
@@ -31,8 +31,8 @@ const Contact = () => {
       />
 
       <div className="w-full bg-white">
-        <section className="bg-background container m-auto py-32 px-4">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="bg-background container m-auto py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-16">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div className="bg-muted rounded-lg p-6">
               <span className="bg-accent mb-3 flex size-12 flex-col items-center justify-center rounded-full">
                 <Mail className="h-6 w-auto" />

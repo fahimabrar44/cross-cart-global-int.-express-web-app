@@ -49,7 +49,7 @@ export default function ContentsPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {cards.map((card) => (
             <Link key={card.title} href={card.href}>
               <Card className="hover:shadow-lg transition-shadow h-full">

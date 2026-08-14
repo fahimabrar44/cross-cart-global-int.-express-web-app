@@ -63,7 +63,7 @@ const sections = [
 
 export default function CancellationPolicyPage() {
   return (
-    <div className="w-full h-auto bg-soft-green">
+    <div className="w-full h-auto bg-soft-green overflow-x-hidden">
       <PageHeader
         title="CANCELLATION & COD POLICY"
         subtitle="CANCELLATION  &  POLICY"

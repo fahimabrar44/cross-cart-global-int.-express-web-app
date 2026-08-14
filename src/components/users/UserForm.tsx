@@ -369,7 +369,7 @@ export function UserForm({
         </Card>
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-4" data-testid="user-form-actions">
+        <div className="flex flex-wrap justify-end gap-3" data-testid="user-form-actions">
           <Button
             type="button"
             variant="outline"

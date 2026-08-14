@@ -180,7 +180,7 @@ export function CountryForm({
         </Card>
 
         {/* Form Actions */}
-        <div className="flex justify-end space-x-4" data-testid="country-form-actions">
+        <div className="flex flex-wrap justify-end space-x-4" data-testid="country-form-actions">
           <Button
             type="button"
             variant="outline"

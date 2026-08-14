@@ -57,7 +57,7 @@ export default function SupportPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <Card>
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center space-x-3">

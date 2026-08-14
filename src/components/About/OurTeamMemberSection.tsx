@@ -114,10 +114,10 @@ const OurTeamMemberSection = () => {
   return (
     <>
       {/* Hero Section */}
-      <div className="w-full bg-white">
+      <div className="w-full bg-white overflow-x-hidden">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-[#12352A] mb-6">
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#12352A] mb-6">
               Meet Our Amazing Team
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
@@ -128,7 +128,7 @@ const OurTeamMemberSection = () => {
           </div>
 
           {/* Team Stats */}
-          <div className="grid md:grid-cols-4 gap-8 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             <div className="text-center">
               <div className="text-3xl font-bold text-[#12352A] mb-2">20+</div>
               <div className="text-gray-600">Team Members</div>
@@ -150,7 +150,7 @@ const OurTeamMemberSection = () => {
       </div>
 
       {/* Marque Associates - Simplified Version */}
-      <div className="w-full bg-section">
+      <div className="w-full bg-section overflow-x-hidden">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-[#12352A] mb-4">
@@ -162,7 +162,7 @@ const OurTeamMemberSection = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {leadership.map((leader) => (
               <div
                 key={leader.id}
@@ -231,7 +231,7 @@ const OurTeamMemberSection = () => {
       </div>
 
       {/* Department Overview */}
-      <div className="w-full bg-[#12352A]">
+      <div className="w-full bg-[#12352A] overflow-x-hidden">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">
@@ -243,7 +243,7 @@ const OurTeamMemberSection = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {departments.map((dept, index) => (
               <div
                 key={index}
@@ -266,7 +266,7 @@ const OurTeamMemberSection = () => {
       </div>
 
       {/* Our Values */}
-      <div className="w-full bg-section">
+      <div className="w-full bg-section overflow-x-hidden">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-[#12352A] mb-4">
@@ -277,7 +277,7 @@ const OurTeamMemberSection = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
               <div
                 key={index}
@@ -297,7 +297,7 @@ const OurTeamMemberSection = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="w-full bg-[#12352A]">
+      <div className="w-full bg-[#12352A] overflow-x-hidden">
         <div className="container mx-auto px-4 py-16 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             Want to Join Our Team?
@@ -307,7 +307,7 @@ const OurTeamMemberSection = () => {
             passion for connecting Bangladesh with the world. Explore career
             opportunities with us.
           </p>
-          <div className="space-x-4">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center align-middle items-center">
             <a
               href="/career"
               className="inline-block bg-primary text-white py-3 px-8 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold"

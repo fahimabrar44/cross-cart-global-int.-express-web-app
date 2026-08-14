@@ -452,7 +452,7 @@ export default function PickupsPage() {
   return (
     <RoleGuard allowedRoles={["admin", "moderator", "user"]}>
       <div className="space-y-6" data-testid="pickups-page">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
               Pickup Management
@@ -471,7 +471,7 @@ export default function PickupsPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
@@ -579,7 +579,7 @@ export default function PickupsPage() {
 
         {/* Create Pickup Modal */}
         <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-          <DialogContent data-testid="create-pickup-modal">
+          <DialogContent data-testid="create-pickup-modal" className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Schedule a New Pickup</DialogTitle>
               <DialogDescription>
@@ -693,7 +693,7 @@ export default function PickupsPage() {
 
         {/* Edit Pickup Modal */}
         <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-          <DialogContent data-testid="edit-pickup-modal">
+          <DialogContent data-testid="edit-pickup-modal" className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Pickup</DialogTitle>
               <DialogDescription>Update pickup details</DialogDescription>
@@ -765,7 +765,7 @@ export default function PickupsPage() {
 
         {/* Update Status Modal */}
         <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>
-          <DialogContent data-testid="status-pickup-modal">
+          <DialogContent data-testid="status-pickup-modal" className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Update Pickup Status</DialogTitle>
               <DialogDescription>
@@ -853,7 +853,7 @@ export default function PickupsPage() {
 
         {/* View Details Modal */}
         <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-          <DialogContent data-testid="view-pickup-modal">
+          <DialogContent data-testid="view-pickup-modal" className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Pickup Details</DialogTitle>
             </DialogHeader>

@@ -193,7 +193,7 @@ function ReviewsContent() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ReviewDetails = ({ review }: { review: any }) => (
     <div className="space-y-6" data-testid="review-details">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="text-lg font-semibold">{review.title || "Review"}</h3>
           {renderStars(review.rating || 0)}
@@ -248,7 +248,7 @@ function ReviewsContent() {
       </div>
 
       {(review.status === "pending" || user?.role === "admin") && (
-        <div className="flex space-x-2 pt-4 border-t">
+        <div className="flex flex-wrap space-x-2 pt-4 border-t">
           {review.status === "pending" && (
             <>
               <Button
@@ -297,7 +297,7 @@ function ReviewsContent() {
   return (
     <RoleGuard allowedRoles={["admin", "moderator"]}>
       <div className="space-y-6" data-testid="reviews-page">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
               Review Management
@@ -310,7 +310,7 @@ function ReviewsContent() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
@@ -418,7 +418,7 @@ function ReviewsContent() {
         />
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Review Details</DialogTitle>
             </DialogHeader>

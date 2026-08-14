@@ -83,7 +83,7 @@ const CrossCartCorporate = () => {
   ];
 
   return (
-    <div className="w-full h-auto bg-soft-green">
+    <div className="w-full h-auto bg-soft-green overflow-x-hidden">
       <PageHeader 
         title="CROSSCART CORPORATE" 
         subtitle="CROSSCART CORPORATE" 
@@ -95,7 +95,7 @@ const CrossCartCorporate = () => {
       <div className="w-full bg-white">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-[#12352A] mb-6">
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#12352A] mb-6">
               Leading International Courier Solutions
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
@@ -106,7 +106,7 @@ const CrossCartCorporate = () => {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             {stats.map((stat, index) => (
               <div key={index} className="bg-[#12352A] rounded-lg p-8 text-center text-white">
                 <div className="bg-[#12352A] rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
@@ -177,7 +177,7 @@ const CrossCartCorporate = () => {
             </p>
           </div>
           
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {services.map((service, index) => (
               <div key={index} className="bg-white rounded-lg p-8 shadow-lg hover:shadow-xl transition-shadow">
                 <h3 className="text-xl font-bold text-[#12352A] mb-4">{service.title}</h3>
@@ -251,7 +251,7 @@ const CrossCartCorporate = () => {
                   </div>
                   <div className="flex-1">
                     <div className="bg-white rounded-lg p-6 border border-border shadow-card">
-                      <div className="flex items-center mb-3">
+                      <div className="flex items-center mb-3 flex-wrap">
                         <span className="bg-soft-green text-primary px-3 py-1 rounded-full text-sm font-bold mr-4 border border-border">
                           {milestone.year}
                         </span>
@@ -277,7 +277,7 @@ const CrossCartCorporate = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
               <div key={index} className="text-center">
                 <div className="bg-[#12352A] rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
@@ -356,7 +356,7 @@ const CrossCartCorporate = () => {
             international logistics needs. Experience the difference of working with 
             Bangladesh{"'"}s leading courier service provider.
           </p>
-          <div className="space-x-4">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center align-middle items-center">
             <Link href="/contact">
               <button className="bg-primary text-white py-3 px-8 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold">
                 Start Partnership

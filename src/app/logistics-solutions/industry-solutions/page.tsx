@@ -75,7 +75,7 @@ const IndustrySolutions = () => {
   ];
 
   return (
-    <div className="w-full h-auto bg-soft-green">
+    <div className="w-full h-auto bg-soft-green overflow-x-hidden">
       <PageHeader 
         title="LOGISTICS SOLUTIONS" 
         subtitle="OUR INDUSTRY SOLUTIONS" 
@@ -87,7 +87,7 @@ const IndustrySolutions = () => {
       <div className="w-full bg-white">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-[#12352A] mb-6">
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#12352A] mb-6">
               Industry-Specific Logistics Solutions
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
@@ -98,7 +98,7 @@ const IndustrySolutions = () => {
           </div>
 
           {/* Industries Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {industries.map((industry, index) => (
               <div key={index} className={`bg-white border-l-4 ${industry.color} rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow`}>
                 <div className="bg-soft-green rounded-full w-16 h-16 flex items-center justify-center mb-4 border border-border">
@@ -136,7 +136,7 @@ const IndustrySolutions = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {capabilities.map((capability, index) => (
               <div key={index} className="bg-[#12352A] rounded-lg p-6 text-center hover:bg-[#1c4a36] transition-colors">
                 <Shield className="w-12 h-12 text-[#F5C400] mx-auto mb-4" strokeWidth={1.5} />
@@ -209,7 +209,7 @@ const IndustrySolutions = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="bg-section rounded-lg p-6">
               <Heart className="w-8 h-8 text-red-500 mb-4" strokeWidth={1.5} />
               <h3 className="text-lg font-semibold text-[#12352A] mb-2">Healthcare Success</h3>

@@ -250,7 +250,7 @@ const TrackShipmentContent = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Quick Track (Demo)
                   </label>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {quickTrackOptions.map((option, index) => (
                       <button
                         key={index}
@@ -289,7 +289,7 @@ const TrackShipmentContent = () => {
             <div className="max-w-4xl mx-auto">
               <div className="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
                 <div className="bg-[#12352A] text-white p-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <h3 className="text-xl font-bold">
                         Tracking Number: {trackingData.trackId}
@@ -350,7 +350,7 @@ const TrackShipmentContent = () => {
                               </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-2">
+                              <div className="flex flex-wrap items-center justify-between gap-1 mb-2">
                                 <h5
                                   className={`font-semibold ${getStatusColor(
                                     step.status
@@ -422,7 +422,7 @@ const TrackShipmentContent = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <div
                 key={index}
@@ -453,7 +453,7 @@ const TrackShipmentContent = () => {
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
               <div>
                 <h4 className="font-semibold text-[#12352A] mb-2">

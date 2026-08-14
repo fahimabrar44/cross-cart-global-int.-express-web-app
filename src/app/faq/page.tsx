@@ -60,7 +60,7 @@ export default function FQAPage() {
   }, [faqs, activeCategory, query]);
 
   return (
-    <div className="w-full h-auto bg-soft-green">
+    <div className="w-full h-auto bg-soft-green overflow-x-hidden">
       <PageHeader
         title="FAQ"
         subtitle="Frequently Asked Questions"

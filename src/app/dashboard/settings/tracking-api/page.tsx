@@ -113,7 +113,7 @@ export default function TrackingApiSettingsPage() {
   return (
     <RoleGuard allowedRoles={["admin", "moderator"]}>
       <div className="space-y-6" data-testid="tracking-api-settings-page">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Tracking API</h1>
             <p className="text-muted-foreground">
@@ -130,7 +130,7 @@ export default function TrackingApiSettingsPage() {
         {loading ? (
           <p className="text-muted-foreground">Loading settings...</p>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {settings.map((s) => {
               const meta = FIELD_META[s.key] || {
                 label: s.key,
@@ -171,7 +171,7 @@ export default function TrackingApiSettingsPage() {
                       />
                     )}
 
-                    <div className="flex items-center justify-between">
+<div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
                         {s.masked || s.isSecret ? "Currently saved (masked)" : s.value !== "" ? "Saved" : "Not saved"}
                       </span>

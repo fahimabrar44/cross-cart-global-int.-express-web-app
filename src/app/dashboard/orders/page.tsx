@@ -564,7 +564,7 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6" data-testid="orders-page">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold" data-testid="orders-title">
             Orders
@@ -628,7 +628,7 @@ export default function OrdersPage() {
 
       {/* Create Order Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle data-testid="create-order-modal-title">
               Create New Order
@@ -647,7 +647,7 @@ export default function OrdersPage() {
 
       {/* Edit Order Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle data-testid="edit-order-modal-title">
               Edit Order
@@ -670,7 +670,7 @@ export default function OrdersPage() {
 
       {/* Tracking Update Modal */}
       <Dialog open={isTrackingModalOpen} onOpenChange={setIsTrackingModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-full max-w-md">
           <DialogHeader>
             <DialogTitle data-testid="tracking-update-modal-title">
               Courier Tracking Update
@@ -710,7 +710,7 @@ export default function OrdersPage() {
                   data-testid="tracking-number-input"
                 />
               </div>
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
                 <Button
                   variant="outline"
                   onClick={() => setIsTrackingModalOpen(false)}
@@ -743,7 +743,7 @@ export default function OrdersPage() {
 
       {/* View Order Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-3xl overflow-auto h-[100vh] p-4">
+        <DialogContent className="w-full max-w-3xl overflow-auto h-[100vh] p-4">
           <DialogHeader>
             <DialogTitle data-testid="view-order-modal-title">
               Order Details
@@ -998,7 +998,7 @@ export default function OrdersPage() {
 
                 {/* Payment Table */}
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                     <h3 className="font-semibold">Payment Details</h3>
                     {canProcessPayment ? (
                       <Button
@@ -1116,7 +1116,7 @@ export default function OrdersPage() {
 
       {/* Payment Modal */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
@@ -1426,7 +1426,7 @@ export default function OrdersPage() {
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end space-x-2 pt-4">
+                <div className="flex flex-wrap justify-end gap-2 pt-4">
                   <Button
                     variant="outline"
                     onClick={() => setIsPaymentModalOpen(false)}

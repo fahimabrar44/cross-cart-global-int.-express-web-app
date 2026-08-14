@@ -376,7 +376,7 @@ export default function NotificationsPage() {
 
   const NotificationDetails = ({ notification }: { notification: Notification }) => (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center space-x-2">
           {getTypeIcon(notification.type)}
           <h3 className="text-lg font-semibold">{notification.title}</h3>
@@ -473,7 +473,7 @@ export default function NotificationsPage() {
               Manage system notifications and alerts
             </p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center space-x-2">
             <Button
               variant="outline"
               size="sm"
@@ -496,7 +496,7 @@ export default function NotificationsPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Card className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
@@ -598,7 +598,7 @@ export default function NotificationsPage() {
 
         {/* Tabs for different notification views */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-center gap-2">
             <TabsList>
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="unread">Unread</TabsTrigger>
@@ -667,9 +667,9 @@ export default function NotificationsPage() {
         </Tabs>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <DialogTitle>
                   {dialogMode === "create" 
                     ? "Create Notification" 

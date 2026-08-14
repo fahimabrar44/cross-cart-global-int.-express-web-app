@@ -101,23 +101,23 @@ const featuresData = [
 
 const OurWorkProcessSection = () => {
   return (
-    <section className="w-full h-auto p-4">
+    <section className="w-full h-auto p-4 overflow-x-hidden">
       <div className="container py-22 m-auto">
         <h1 className="text-2xl md:text-4xl sm:text-3xl lg:text-5xl text-center font-bold">
           Easy & Stress-Free Shipping with Cross Cart Global International Express
         </h1>
 
-        <div className="w-full h-auto p-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 items-center align-top justify-start py-10 pt-16">
+        <div className="w-full h-auto p-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 items-center align-top justify-start py-10 pt-16">
           {processStep.map((item) => (
             <div
               key={item.title}
               className="w-full h-full p-1 flex-col flex items-center gap-2 group"
             >
-              <div className="w-[160px] h-[160px] p-6 rounded-full shadow-3xl flex flex-col items-center align-middle justify-center">
+              <div className="w-full max-w-[160px] aspect-square p-6 rounded-full shadow-3xl flex flex-col items-center align-middle justify-center">
                 <Image
                   width={110}
                   height={70}
-                  className="w-[110px] h-[70px]"
+                  className="w-full h-auto max-w-[110px]"
                   src={item.img}
                   alt={item.title}
                 />
@@ -137,7 +137,7 @@ const OurWorkProcessSection = () => {
             <h1 className="text-2xl md:text-4xl sm:text-3xl lg:text-5xl text-center font-bold">
               CROSSCART ADVANTAGES
             </h1>
-            <p className="md:w-[600px] w-full px-8 h-auto flex justify-center align-middle items-center text-base">
+            <p className="w-full max-w-[600px] h-auto flex justify-center align-middle items-center text-base">
               Your needs drive our strategies—Cross Cart Global International Express designs solutions that make
               global shipping easier, faster, and more reliable.
             </p>

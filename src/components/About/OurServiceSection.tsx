@@ -53,10 +53,10 @@ const searvices = [
 
 const OurServiceSection = () => {
   return (
-    <section className="w-full h-auto p-4">
+    <section className="w-full h-auto p-4 overflow-x-hidden">
       <div className="container py-20 m-auto">
         <div className="w-full h-auto flex justify-center align-middle">
-          <h1 className="text-4xl sm:text-5xl font-bold">OUR SERVICES</h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">OUR SERVICES</h1>
         </div>
 
         <div className="w-full h-auto flex flex-col gap-4 mt-14">
@@ -66,14 +66,13 @@ const OurServiceSection = () => {
               className="w-full h-auto p-4 border-b border-gray-200"
             >
               <div className="flex flex-col md:flex-row items-center gap-4">
-                <div className="w-65 h-40">
-                  {" "}
+                <div className="w-full max-w-[260px] min-h-[160px] h-auto flex items-center justify-center">
                   <Image
                     width={200}
                     height={200}
                     alt={service.title}
                     src={service.logo}
-                    className="w-70 h-36 object-contain"
+                    className="w-full h-auto max-w-[280px] object-contain"
                   />
                 </div>
                 <div className="w-auto">

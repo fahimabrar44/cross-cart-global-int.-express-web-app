@@ -215,7 +215,7 @@ export default function BlogsPage() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const BlogDetails = ({ blog }: { blog: any }) => (
     <div className="space-y-6" data-testid="blog-details">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <h2 className="text-2xl font-bold">{blog.title}</h2>
         {getStatusBadge(blog.status)}
       </div>
@@ -284,7 +284,7 @@ export default function BlogsPage() {
   return (
     <RoleGuard allowedRoles={["admin", "moderator"]}>
       <div className="space-y-6" data-testid="blogs-page">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
               Blog Management
@@ -300,7 +300,7 @@ export default function BlogsPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
@@ -398,7 +398,7 @@ export default function BlogsPage() {
         />
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {dialogMode === "create" && "Create Blog Post"}
@@ -482,7 +482,7 @@ export default function BlogsPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4">
+                <div className="flex flex-wrap justify-end space-x-2 pt-4">
                   <Button
                     type="button"
                     variant="outline"

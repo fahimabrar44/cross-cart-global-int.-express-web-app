@@ -151,7 +151,7 @@ export default function AddressBookPage() {
   return (
     <div className="space-y-6" data-testid="address-book-page">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold" data-testid="address-book-title">Address Book</h1>
           <p className="text-muted-foreground">
@@ -248,7 +248,7 @@ export default function AddressBookPage() {
 
       {/* View Address Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-full max-w-2xl">
           <DialogHeader>
             <DialogTitle data-testid="view-address-modal-title">Address Details</DialogTitle>
           </DialogHeader>

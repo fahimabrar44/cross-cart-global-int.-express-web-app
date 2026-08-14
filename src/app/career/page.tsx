@@ -50,14 +50,14 @@ const Career = () => {
   ];
 
   return (
-    <div className="w-full h-auto bg-soft-green">
+    <div className="w-full h-auto bg-soft-green overflow-x-hidden">
       <PageHeader title="CAREER" subtitle="CAREER" mainLink="/career" subLink="/career" />
 
       {/* Intro */}
       <div className="w-full bg-white">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-4xl font-bold text-[#12352A] mb-6">
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#12352A] mb-6">
               Build Your Future With Us
             </h2>
             <p className="text-lg text-gray-600">
@@ -67,7 +67,7 @@ const Career = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
             {perks.map((perk, index) => (
               <div
                 key={index}

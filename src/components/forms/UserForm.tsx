@@ -170,7 +170,7 @@ export function UserForm({ user, onSuccess, onCancel, isEdit = false }: UserForm
             </div>
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="flex flex-wrap justify-end space-x-2 pt-4">
             {onCancel && (
               <Button
                 type="button"

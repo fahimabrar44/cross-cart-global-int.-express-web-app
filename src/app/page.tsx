@@ -5,11 +5,11 @@ import HomeSaliderSectation from "@/components/Home/HomeSaliderSectation";
 
 export default function Home() {
   return (
-    <>
+    <div className="overflow-x-hidden">
       <HeroHomeSection />
       <HomeSaliderSectation />
       <HomeCustomerServiceSection />
       <HomeCustomerReviewSection />
-    </>
+    </div>
   );
 }

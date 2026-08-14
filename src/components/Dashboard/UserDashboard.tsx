@@ -68,7 +68,7 @@ export function UserDashboard() {
       <div className="space-y-6">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="h-32 bg-gray-200 rounded"></div>
             ))}
@@ -120,7 +120,7 @@ export function UserDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Total Orders"
           value={orderStats.total}
@@ -151,7 +151,7 @@ export function UserDashboard() {
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {/* Recent Orders */}
         <div className="md:col-span-2">
           <Card>
@@ -172,7 +172,7 @@ export function UserDashboard() {
                   
   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {myOrders.slice(0, 5).map((order: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div key={index} className="flex flex-wrap items-center justify-between gap-2 p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">{order.trackId}</p>
                         <p className="text-sm text-gray-500">

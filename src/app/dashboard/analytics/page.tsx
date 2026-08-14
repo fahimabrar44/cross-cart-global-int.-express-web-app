@@ -122,7 +122,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
@@ -131,7 +131,7 @@ export default function AnalyticsPage() {
           ))}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="h-96 bg-gray-200 rounded-lg animate-pulse"></div>
           <div className="h-96 bg-gray-200 rounded-lg animate-pulse"></div>
         </div>
@@ -182,7 +182,7 @@ export default function AnalyticsPage() {
               Comprehensive insights into your business performance
             </p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center space-x-2">
             <button
               onClick={handleRefresh}
               className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -256,7 +256,7 @@ export default function AnalyticsPage() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1 rounded-lg">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 bg-gray-100 p-1 rounded-lg">
             <TabsTrigger
               value="overview"
               className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md transition-all"
@@ -291,7 +291,7 @@ export default function AnalyticsPage() {
 
           <TabsContent value="overview" className="space-y-6">
             {/* Key Metrics with improved cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
               <StatsCard
                 title="Total Users"
                 value={data.totalUsers || 0}
@@ -329,7 +329,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Charts with improved cards */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {data.monthlyRevenue && data.monthlyRevenue.length > 0 && (
                 <Card className="hover:shadow-md transition-shadow">
                   <CardHeader className="pb-2">
@@ -392,7 +392,7 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <StatsCard
                 title="Total Users"
                 value={data.totalUsers || 0}
@@ -413,7 +413,7 @@ export default function AnalyticsPage() {
               />
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {data.signupTrend && data.signupTrend.length > 0 && (
                 <Card className="hover:shadow-md transition-shadow">
                   <CardHeader>
@@ -488,7 +488,7 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           <TabsContent value="orders" className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <StatsCard
                 title="Total Orders"
                 value={revenueSummary?.totalOrders || 0}
@@ -513,7 +513,7 @@ export default function AnalyticsPage() {
             </div>
 
             {data.ordersByType && data.ordersByType.length > 0 && (
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <Card className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
@@ -565,7 +565,7 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           <TabsContent value="revenue" className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               <StatsCard
                 title="Total Revenue"
                 value={`$${
@@ -628,7 +628,7 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           <TabsContent value="security" className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <StatsCard
                 title="Failed Login Attempts"
                 value={

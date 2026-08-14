@@ -79,7 +79,7 @@ const ECommerceSolutions = () => {
   ];
 
   return (
-    <div className="w-full h-auto bg-soft-green">
+    <div className="w-full h-auto bg-soft-green overflow-x-hidden">
       <PageHeader
         title="LOGISTICS SOLUTIONS"
         subtitle="OUR E-COMMERCE SOLUTIONS"
@@ -92,7 +92,7 @@ const ECommerceSolutions = () => {
         <div className="container mx-auto px-4 py-16">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold text-[#12352A] mb-6">
+              <h2 className="text-3xl sm:text-4xl font-bold text-[#12352A] mb-6">
                 E-Commerce Shipping Made Simple
               </h2>
               <p className="text-lg text-gray-600 mb-6">
@@ -101,7 +101,7 @@ const ECommerceSolutions = () => {
                 management, we handle every aspect of your shipping needs so you
                 can focus on growing your business.
               </p>
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row items-center gap-3">
                 <Link href="/contact">
                   <button className="bg-primary text-white py-3 px-6 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold">
                     Start Free Trial
@@ -145,7 +145,7 @@ const ECommerceSolutions = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {services.map((service, index) => (
               <div
                 key={index}
@@ -177,7 +177,7 @@ const ECommerceSolutions = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {platforms.map((platform, index) => (
               <div
                 key={index}
@@ -262,7 +262,7 @@ const ECommerceSolutions = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="bg-[#12352A] rounded-lg p-6 text-center">
               <div className="text-3xl font-bold text-[#F5C400] mb-2">500+</div>
               <p className="text-white font-semibold mb-1">E-Commerce Stores</p>

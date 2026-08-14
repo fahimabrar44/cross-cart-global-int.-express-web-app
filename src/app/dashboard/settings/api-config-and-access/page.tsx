@@ -107,7 +107,7 @@ export default function ApiConfigPage() {
   return (
     <RoleGuard allowedRoles={["admin", "moderator", "user"]}>
       <div className="space-y-6" data-testid="api-config-page">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
               API Config & Access
@@ -142,7 +142,7 @@ export default function ApiConfigPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {configs.map((config) => (
               <Card key={config._id}>
                 <CardContent className="p-5">
@@ -179,7 +179,7 @@ export default function ApiConfigPage() {
                     )}
                   </div>
 
-                  <div className="mt-4 flex space-x-2 pt-4 border-t">
+                  <div className="mt-4 flex flex-wrap space-x-2 pt-4 border-t">
                     <Button
                       variant="outline"
                       className="flex items-center space-x-2"
@@ -209,7 +209,7 @@ export default function ApiConfigPage() {
         )}
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="w-full max-w-md">
             <DialogHeader>
               <DialogTitle>Create API Config</DialogTitle>
             </DialogHeader>

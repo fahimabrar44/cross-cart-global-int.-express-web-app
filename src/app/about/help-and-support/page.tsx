@@ -5,7 +5,7 @@ import { Mail, Phone, MessageCircle, MapPin, Clock, HelpCircle, Shield, ThumbsUp
 const HelpAndSupport = () => {
     return (
         <>
-            <div className="w-full h-auto bg-soft-green">
+            <div className="w-full h-auto bg-soft-green overflow-x-hidden">
                 <PageHeader title="ABOUT US" subtitle="HELP AND SUPPORT" mainLink="/about" subLink="/about/help-and-support" />
             </div>
 
@@ -44,7 +44,7 @@ const HelpAndSupport = () => {
                             </div>
                             <p className="text-gray-700 mb-4">We offer multiple ways to reach our support team:</p>
                             
-                            <div className="grid md:grid-cols-2 gap-4 mb-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                 <div className="flex items-center gap-3 p-3 bg-white rounded shadow-sm">
                                     <Mail className="w-5 h-5 text-[#12352A]" />
                                     <div>

@@ -374,7 +374,7 @@ export function OrderForm({ order, onSuccess, onCancel, isEdit = false }: OrderF
 
           {/* Items */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-lg font-semibold">Items</h3>
               <Button
                 type="button"
@@ -497,7 +497,7 @@ export function OrderForm({ order, onSuccess, onCancel, isEdit = false }: OrderF
             </div>
           </div>
 
-          <div className="flex justify-end space-x-2 pt-6">
+          <div className="flex flex-wrap justify-end space-x-2 pt-6">
             {onCancel && (
               <Button
                 type="button"

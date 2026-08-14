@@ -17,7 +17,7 @@ const HeroHomeSection = () => {
         />
 
         <div className="w-full h-auto pt-6 sm:pt-15 pb-6 z-[10] relative flex justify-center text-center align-middle items-center flex-col">
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-foreground overflow-hidden z-[10]">
+          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold text-foreground overflow-hidden z-[10]">
             CROSS CART GLOBAL INTERNATIONAL EXPRESS
           </h1>
           <h3 className="text-base sm:text-2xl md:text-3xl font-semibold text-primary z-[10]">

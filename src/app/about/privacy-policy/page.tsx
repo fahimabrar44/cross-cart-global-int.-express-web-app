@@ -4,7 +4,7 @@ import React from 'react'
 const PrivacyPolicy = () => {
   return (
     <>
-      <div className="w-full h-auto bg-soft-green">
+      <div className="w-full h-auto bg-soft-green overflow-x-hidden">
         <PageHeader title="ABOUT US" subtitle="PRIVACY POLICY" mainLink="/about" subLink="/about/privacy-policy" />
       </div>
 

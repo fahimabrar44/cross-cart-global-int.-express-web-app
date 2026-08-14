@@ -2,10 +2,10 @@ import Image from "next/image";
 
 const OurStorySection = () => {
   return (
-    <section className="w-full h-auto p-4">
+    <section className="w-full h-auto p-4 overflow-x-hidden">
       <div className="container py-20 m-auto">
         <div className="w-full h-auto flex justify-center align-middle">
-          <h1 className="text-4xl sm:text-5xl font-bold">OUR STORY</h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">OUR STORY</h1>
         </div>
 
         <div className="w-full h-auto grid grid-cols-1 md:grid-cols-2 gap-4 items-center align-middle justify-center mt-14">
@@ -15,7 +15,7 @@ const OurStorySection = () => {
               height={500}
               alt="CrossCart Global Int Express Man"
               src={"/crosscart-man.jpg"}
-              className="w-full h-full rounded-lg"
+              className="w-full h-auto rounded-lg"
             />
           </div>
           <div className="w-full h-auto p-6">

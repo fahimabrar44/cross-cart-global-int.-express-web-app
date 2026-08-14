@@ -149,14 +149,14 @@ export default function CouponsPage() {
 
   return (    <RoleGuard allowedRoles={["admin", "moderator"]}>
       <div className="space-y-6" data-testid="coupons-page">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Coupons</h1>
             <p className="text-muted-foreground">
               Create and manage promo codes & discounts
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={fetchCoupons} className="flex items-center space-x-2">
               <RefreshCw className="h-4 w-4" />
               <span>Refresh</span>
@@ -185,7 +185,7 @@ export default function CouponsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {coupons.map((coupon) => (
               <Card key={coupon._id}>
                 <CardContent className="p-5">
@@ -238,7 +238,7 @@ export default function CouponsPage() {
                     </p>
                   </div>
 
-                  <div className="mt-4 flex space-x-2 pt-4 border-t">
+                  <div className="mt-4 flex flex-wrap space-x-2 pt-4 border-t">
                     <Button variant="outline" onClick={() => handleToggle(coupon)}>
                       {coupon.isActive ? "Deactivate" : "Activate"}
                     </Button>
@@ -257,7 +257,7 @@ export default function CouponsPage() {
         )}
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create Coupon</DialogTitle>
             </DialogHeader>
@@ -283,7 +283,7 @@ export default function CouponsPage() {
                   placeholder="What does this coupon do?"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Discount Type</Label>
                   <select
@@ -305,7 +305,7 @@ export default function CouponsPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Min Order Amount</Label>
                   <Input
@@ -325,7 +325,7 @@ export default function CouponsPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Usage Limit</Label>
                   <Input
@@ -345,7 +345,7 @@ export default function CouponsPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Valid From</Label>
                   <Input

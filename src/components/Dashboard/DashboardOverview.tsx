@@ -323,7 +323,7 @@ export function DashboardOverview() {
     <div className="min-h-screen ">
       <div className=" space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
               Admin Dashboard
@@ -334,7 +334,7 @@ export function DashboardOverview() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="text-sm text-gray-500">
               Last updated: {lastRefresh.toLocaleTimeString()}
             </div>
@@ -588,7 +588,7 @@ export function DashboardOverview() {
 
         {/* Footer */}
         <div className="text-center text-sm text-gray-500 border-t pt-4">
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <span>System Version: {health?.version || "1.0.0"}</span>
             <span>•</span>
             <span>Environment: {health?.environment || "development"}</span>

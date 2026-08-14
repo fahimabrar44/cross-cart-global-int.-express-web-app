@@ -605,7 +605,7 @@ const CreateShipment = () => {
                       Sender Information
                     </h4>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Full Name *
@@ -717,7 +717,7 @@ const CreateShipment = () => {
                       Recipient Information
                     </h4>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Full Name *
@@ -848,7 +848,7 @@ const CreateShipment = () => {
                     </h4>
                   </div>
 
-                  <div className="grid md:grid-cols-3 gap-6 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     {packageTypes.map((type) => (
                       <div
                         key={type.value}
@@ -886,7 +886,7 @@ const CreateShipment = () => {
                     ))}
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Weight (kg) *
@@ -918,7 +918,7 @@ const CreateShipment = () => {
                   </div>
 
                   {/* Insurance & Coupon */}
-                  <div className="grid md:grid-cols-2 gap-6 mb-6 p-4 border border-gray-200 rounded-lg">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-4 border border-gray-200 rounded-lg">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         <span className="inline-flex items-center gap-2">
@@ -1012,7 +1012,7 @@ const CreateShipment = () => {
                     {formData.parcel.item.map((item, index) => (
                       <div
                         key={index}
-                        className="grid md:grid-cols-5 gap-4 mb-4 p-4 border border-gray-200 rounded-lg"
+                        className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 p-4 border border-gray-200 rounded-lg"
                       >
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1111,7 +1111,7 @@ const CreateShipment = () => {
                     </h4>
                   </div>
 
-                  <div className="grid md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {serviceTypes.map((service) => (
                       <div
                         key={service.value}
@@ -1185,7 +1185,7 @@ const CreateShipment = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <div
                 key={index}
@@ -1218,7 +1218,7 @@ const CreateShipment = () => {
           </div>
 
           <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
               {steps.map((step, index) => (
                 <div key={index} className="text-center">
                   <div className="bg-primary rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">

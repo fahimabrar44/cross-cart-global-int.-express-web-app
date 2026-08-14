@@ -132,7 +132,7 @@ const FooterBar = () => {
     <footer className="w-full h-auto bg-[#12352A] text-white">
       <div className="container h-auto m-auto p-5">
         <div className="w-full h-auto p-2 py-6">
-          <div className="w-full h-auto grid md:grid-cols-2 lg:grid-cols-3 grid-cols-1 gap-5">
+          <div className="w-full h-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <div className="lg:border-r border-white/10 border-dashed">
               <div className={"flex gap-2 pb-2"}>
                 <Logo isFooter={true} width={220} height={80} />

@@ -337,7 +337,7 @@ export function AddressForm({ address, onSubmit, onCancel, loading = false }: Ad
           </CardContent>
         </Card>
 
-        <div className="flex justify-end space-x-4">
+        <div className="flex flex-wrap justify-end space-x-4">
           <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>Cancel</Button>
           <Button type="submit" disabled={loading}>{loading ? "Saving..." : address ? "Update" : "Add"}</Button>
         </div>

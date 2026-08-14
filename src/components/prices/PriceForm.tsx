@@ -277,7 +277,7 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
               </Button>
             </div>
 
-            <div className="flex justify-end space-x-2 mt-4">
+            <div className="flex flex-wrap justify-end space-x-2 mt-4">
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>

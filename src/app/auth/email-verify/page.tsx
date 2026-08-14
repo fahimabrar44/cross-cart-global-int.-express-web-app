@@ -115,7 +115,7 @@ function EmailVerifyContent() {
   if (isVerified) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-section py-12 px-4 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md" data-testid="verification-success">
+        <Card className="w-full max-w-md mx-auto" data-testid="verification-success">
           <CardHeader className="text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
               <CheckCircle className="h-6 w-6 text-green-600" />
@@ -144,7 +144,7 @@ function EmailVerifyContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-section py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md" data-testid="email-verify-form">
+      <Card className="w-full max-w-md mx-auto" data-testid="email-verify-form">
         <CardHeader className="text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
             <Mail className="h-6 w-6 text-primary" />

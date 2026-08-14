@@ -90,7 +90,7 @@ export default function LoginHistoryPage() {
           <div className="space-y-3">
             {history.map((item, index) => (
               <Card key={item._id || index}>
-                <CardContent className="p-4 flex items-start justify-between gap-4">
+                <CardContent className="p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex items-start space-x-3">
                     <div
                       className={`rounded-full p-2 ${

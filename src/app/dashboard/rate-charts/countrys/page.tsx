@@ -251,7 +251,7 @@ export default function CountriesPage() {
   return (
     <div className="space-y-6" data-testid="countries-page">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold" data-testid="countries-title">
             Countries
@@ -375,7 +375,7 @@ export default function CountriesPage() {
 
       {/* Create Country Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle data-testid="create-country-modal-title">
               Add New Country
@@ -394,7 +394,7 @@ export default function CountriesPage() {
 
       {/* Edit Country Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle data-testid="edit-country-modal-title">
               Edit Country
@@ -419,7 +419,7 @@ export default function CountriesPage() {
 
       {/* View Country Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-full max-w-2xl">
           <DialogHeader>
             <DialogTitle data-testid="view-country-modal-title">
               Country Details
@@ -445,7 +445,7 @@ export default function CountriesPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold">Region</h4>
                   <p data-testid="view-country-region">

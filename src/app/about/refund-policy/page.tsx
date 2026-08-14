@@ -4,7 +4,7 @@ import React from 'react'
 const RefundPolicy = () => {
   return (
    <>
-    <div className="w-full h-auto bg-soft-green">
+    <div className="w-full h-auto bg-soft-green overflow-x-hidden">
       <PageHeader title="ABOUT US" subtitle="REFUND POLICY" mainLink="/about" subLink="/about/refund-policy" />
     </div>
 

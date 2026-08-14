@@ -44,7 +44,7 @@ const OurBlog = () => {
 
   return (
     <>
-      <div className="w-full h-auto bg-soft-green">
+      <div className="w-full h-auto bg-soft-green overflow-x-hidden">
         <PageHeader
           title="ABOUT US"
           subtitle="OUR BLOG"
@@ -90,7 +90,7 @@ const OurBlog = () => {
               Stay tuned for upcoming topics:
             </h2>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {blogPosts.map((post) => (
                 <div
                   key={post.id}

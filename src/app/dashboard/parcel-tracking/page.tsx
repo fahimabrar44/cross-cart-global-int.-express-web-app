@@ -605,7 +605,7 @@ export default function ParcelTrackingPage() {
   return (
     <div className="space-y-6" data-testid="parcel-tracking-page">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold" data-testid="tracking-title">
             Parcel Tracking
@@ -614,7 +614,7 @@ export default function ParcelTrackingPage() {
             Track and manage shipment status
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center space-x-2">
           {canCreateTrack && (
             <Button
               onClick={() => setIsCreateModalOpen(true)}
@@ -747,7 +747,7 @@ export default function ParcelTrackingPage() {
 
       {/* View Track Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle data-testid="view-track-modal-title">
               Track Details
@@ -895,7 +895,7 @@ export default function ParcelTrackingPage() {
 
       {/* Create Track Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-full max-w-md">
           <DialogHeader>
             <DialogTitle data-testid="create-track-modal-title">
               Create New Track
@@ -980,7 +980,7 @@ export default function ParcelTrackingPage() {
         open={isAddHistoryModalOpen}
         onOpenChange={setIsAddHistoryModalOpen}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-full max-w-md">
           <DialogHeader>
             <DialogTitle data-testid="add-history-modal-title">
               Add Tracking History
@@ -1025,7 +1025,7 @@ export default function ParcelTrackingPage() {
                 rows={3}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="city">City</Label>
                 <Input

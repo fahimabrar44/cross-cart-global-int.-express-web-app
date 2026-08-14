@@ -145,14 +145,14 @@ export default function BranchesPage() {
   return (
     <RoleGuard allowedRoles={["admin", "moderator"]}>
       <div className="space-y-6" data-testid="branches-page">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Branches & Coverage</h1>
             <p className="text-muted-foreground">
               Manage branches, hubs and coverage zones
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={fetchBranches} className="flex items-center space-x-2">
               <RefreshCw className="h-4 w-4" />
               <span>Refresh</span>
@@ -181,7 +181,7 @@ export default function BranchesPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {branches.map((branch) => (
               <Card key={branch._id}>
                 <CardContent className="p-5">
@@ -232,7 +232,7 @@ export default function BranchesPage() {
                     )}
                   </div>
 
-                  <div className="mt-4 flex space-x-2 pt-4 border-t">
+                  <div className="mt-4 flex flex-wrap gap-2 pt-4 border-t">
                     <Button variant="outline" onClick={() => handleToggleActive(branch)}>
                       {branch.isActive ? "Deactivate" : "Activate"}
                     </Button>
@@ -251,7 +251,7 @@ export default function BranchesPage() {
         )}
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add Branch / Hub</DialogTitle>
             </DialogHeader>

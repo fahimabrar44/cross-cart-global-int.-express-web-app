@@ -200,7 +200,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-section py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md" data-testid="signup-form">
+      <Card className="w-full max-w-md mx-auto" data-testid="signup-form">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
             Create your account

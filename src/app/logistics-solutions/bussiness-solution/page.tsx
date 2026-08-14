@@ -74,7 +74,7 @@ function BussinessSolution() {
   ];
 
   return (
-    <div className="w-full h-auto bg-soft-green">
+    <div className="w-full h-auto bg-soft-green overflow-x-hidden">
       <PageHeader
         title="LOGISTICS SOLUTIONS"
         subtitle="OUR BUSINESS SOLUTIONS"
@@ -87,7 +87,7 @@ function BussinessSolution() {
         <div className="container mx-auto px-4 py-16">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold text-[#12352A] mb-6">
+              <h2 className="text-3xl sm:text-4xl font-bold text-[#12352A] mb-6">
                 Streamline Your Business Logistics
               </h2>
               <p className="text-lg text-gray-600 mb-6">
@@ -96,7 +96,7 @@ function BussinessSolution() {
                 businesses to large enterprises, we provide scalable logistics
                 solutions that grow with your business.
               </p>
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row items-center gap-3">
                 <Link href="/contact">
                   <button className="bg-primary text-white py-3 px-6 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold">
                     Get Business Quote
@@ -141,7 +141,7 @@ function BussinessSolution() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {services.map((service, index) => (
               <div
                 key={index}
@@ -233,7 +233,7 @@ function BussinessSolution() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {industries.map((industry, index) => (
               <div
                 key={index}
