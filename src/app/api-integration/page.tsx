@@ -120,12 +120,19 @@ const ApiIntegrationPage = () => {
             <div className="flex items-center space-x-2">
               <Link2 className="h-6 w-6 text-primary" />
               <h2 className="text-xl font-bold text-foreground">
-                Base URL
+                Base URLs
               </h2>
             </div>
-            <CodeBlock
-              code={`https://<your-domain>/api/v1`}
-            />
+            <div className="space-y-2">
+              <p className="text-muted-foreground">
+                Public tracking (external websites / resellers):
+              </p>
+              <CodeBlock code={`https://<your-domain>/api`} />
+              <p className="text-muted-foreground">
+                Core services (prices, countries, zones, admin APIs):
+              </p>
+              <CodeBlock code={`https://<your-domain>/api/v1`} />
+            </div>
           </section>
 
           {/* Endpoints */}
@@ -142,15 +149,17 @@ const ApiIntegrationPage = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Badge variant="default">GET</Badge>
-                  <code className="font-mono text-sm">/tracks/{`{trackID}`}</code>
+                  <code className="font-mono text-sm">/track/{`{trackID}`}</code>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground">
-                  Track a shipment by its tracking (AWB) number.
+                  Public tracking endpoint for your website. Requires your API
+                  key and returns the shipment&apos;s receiver, sender and full
+                  tracking history in a clean shape.
                 </p>
                 <CodeBlock
-                  code={`curl -X GET "https://<your-domain>/api/v1/tracks/CROSS00123" \\
+                  code={`curl -X GET "https://<your-domain>/api/track/CROSS00123" \\
   -H "X-API-Key: ccg_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"`}
                 />
                 <div>
@@ -161,14 +170,34 @@ const ApiIntegrationPage = () => {
   "message": "Track fetched successfully",
   "data": {
     "trackId": "CROSS00123",
-    "currentStatus": "In Transit",
+    "orderId": "66f0c2a1b3d4e5f6a7b8c9d0",
+    "receiver": {
+      "name": "John Doe",
+      "country": "Germany"
+    },
+    "sender": {
+      "name": "CrossCart Global",
+      "city": "Dhaka",
+      "country": "Bangladesh"
+    },
+    "currentStatus": "in-transit",
     "history": [
-      { "status": "Picked Up", "description": "Shipment picked up", "timestamp": "2026-08-10T09:00:00.000Z" }
+      {
+        "status": "in-transit",
+        "description": "Shipment picked up",
+        "location": { "city": "Dhaka", "country": "Bangladesh" },
+        "timestamp": "2026-08-10T09:00:00.000Z"
+      }
     ]
   }
 }`}
                   />
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  You can also pass a carrier tracking number (e.g. a DHL,
+                  FedEx or Aramex AWB) — the router resolves it to the linked
+                  order automatically.
+                </p>
               </CardContent>
             </Card>
 
@@ -234,7 +263,7 @@ const ApiIntegrationPage = () => {
                     ["400", "Invalid request parameters"],
                     ["401", "Missing or invalid API key"],
                     ["403", "IP address not allowed / forbidden"],
-                    ["404", "Tracking number or price route not found"],
+                    ["404", "Tracking number not found"],
                     ["429", "API key rate limit exceeded"],
                     ["500", "Internal server error"],
                   ].map(([code, meaning]) => (
