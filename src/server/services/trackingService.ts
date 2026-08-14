@@ -84,23 +84,41 @@ export interface TimelineStep {
   timestamp?: Date | string;
 }
 
-// Append a step to a track's history (dedupe identical status+desc+time)
+// Append a step to a track's history (dedupe identical status+desc+time).
+// Entries with the same description are UPGRADED (status/location refreshed)
+// instead of duplicated — this re-classifies previously stored "created" rows
+// into their real stage (in-transit, arrived-at-hub, delivered, ...) and stops
+// the same scan from being pushed twice.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function appendHistory(track: any, step: TimelineStep): boolean {
   if (!track.history) return false;
   const ts = step.timestamp ? new Date(step.timestamp) : new Date();
-  const last = track.history[track.history.length - 1];
-  if (
-    last &&
-    last.status === step.status &&
-    last.description === (step.description || "") &&
-    Math.abs(new Date(last.timestamp).getTime() - ts.getTime()) < 60_000
-  ) {
-    return false;
+  const desc = step.description || statusDescription(step.status);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const existing = track.history.find((h: any) => {
+    if (h.description !== desc) return false;
+    const diff = Math.abs(new Date(h.timestamp).getTime() - ts.getTime());
+    // Re-scans within 24h, or any still-"created" row (status re-classification)
+    return diff < 24 * 60 * 60 * 1000 || h.status === "created";
+  });
+
+  if (existing) {
+    const changed = existing.status !== step.status;
+    existing.status = step.status;
+    if (step.location?.city || step.location?.country) {
+      existing.location = {
+        city: step.location.city || existing.location?.city || "",
+        country: step.location.country || existing.location?.country || "",
+      };
+    }
+    existing.timestamp = ts;
+    return changed;
   }
+
   track.history.push({
     status: step.status,
-    description: step.description || statusDescription(step.status),
+    description: desc,
     location: {
       city: step.location?.city || "",
       country: step.location?.country || "",

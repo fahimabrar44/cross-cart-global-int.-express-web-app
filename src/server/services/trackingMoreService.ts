@@ -463,6 +463,74 @@ export function mapTMDeliveryStatus(tmStatus?: string): string {
 }
 
 /**
+ * When TrackingMore trackinfo events don't carry a delivery_status/status
+ * field (very common with DHL and several other carriers), fall back to
+ * inferring the pipeline stage from the description text.
+ */
+export function inferStatusFromText(description?: string): string {
+  const t = (description || "").toLowerCase();
+  if (!t) return "created";
+
+  // Delivery complete
+  if (
+    /delivered|delivery completed|successful(ly)? delivered|signed for|delivered to recipient|delivery done/.test(
+      t
+    )
+  ) {
+    return "delivered";
+  }
+  // Failed / exceptions / returns
+  if (
+    /undeliverable|not delivered|delivery failed|failed delivery|return to sender|being returned|returned|exception|damaged|could not deliver|held .*customs.*unpaid/.test(
+      t
+    )
+  ) {
+    return "failed";
+  }
+  // Out for delivery
+  if (
+    /out for delivery|out with courier|with courier for delivery|on vehicle for delivery|out for shipment|out for final delivery|scheduled for delivery/.test(
+      t
+    )
+  ) {
+    return "out-for-delivery";
+  }
+  // Customs
+  if (
+    /customs|custom clearance|clearance processing|custom cleared|customs cleared|released from customs|clearance complete/.test(
+      t
+    )
+  ) {
+    return "customs-clearance";
+  }
+  // Arrived at a hub / sort facility
+  if (
+    /arrived at .*(facility|hub|depot|station|terminal|center|centre|office|destination|sorting)|arrived .*delivery facility|received at/.test(
+      t
+    )
+  ) {
+    return "arrived-at-hub";
+  }
+  // In transit / departed / en route
+  if (
+    /departed|departure|in transit|transit to destination|en route|on the way|shipped|outbound|processed at|handed over|tendered|forwarded/.test(
+      t
+    )
+  ) {
+    return "in-transit";
+  }
+  // Picked up / accepted / info received
+  if (
+    /accepted|picked up|pickup|received by carrier|shipment accepted|info received|label created|shipper created|manifest|pre-advice/.test(
+      t
+    )
+  ) {
+    return "pickup-pending";
+  }
+  return "created";
+}
+
+/**
  * Extract normalized timeline steps from a TrackingMore tracking object.
  */
 export function extractTimelineEvents(
@@ -489,7 +557,17 @@ export function extractTimelineEvents(
     for (const rawEv of section || []) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ev = rawEv as any;
-      const status = mapTMDeliveryStatus(ev.delivery_status || ev.status);
+      const description = String(
+        ev.tracking_detail ||
+          (ev.status || "").replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
+      );
+      let status = mapTMDeliveryStatus(ev.delivery_status || ev.status);
+      // Many carriers omit the per-event status field — infer it from the text
+      // so the timeline shows real stages (in-transit, arrived-at-hub, ...)
+      // instead of "created" everywhere.
+      if (status === "created" && description) {
+        status = inferStatusFromText(description);
+      }
       const rawLocation =
         Array.isArray(ev.location) ?
           ev.location
@@ -503,9 +581,7 @@ export function extractTimelineEvents(
               : "";
       events.push({
         status,
-        description:
-          ev.tracking_detail ||
-          (ev.status || "").replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+        description,
         location: { city: typeof rawLocation === "string" ? rawLocation : "", country: ev.country || "" },
         timestamp: new Date(ev.datetime || ev.date || Date.now()),
       });
