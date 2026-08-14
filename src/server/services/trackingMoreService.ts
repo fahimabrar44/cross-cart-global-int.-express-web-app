@@ -252,15 +252,36 @@ export async function detectCourier(
 
 /**
  * POST /trackings/create — create a tracking (realtime query).
+ * Falls back to POST /trackings for accounts/API revisions where the
+ * legacy /trackings/create path is rejected (HTTP 4130).
  */
 export async function createTracking(
   payload: Record<string, unknown>
 ): Promise<TMTracking | null> {
-  const res = await request<TMTracking>("/trackings/create", {
-    method: "POST",
-    body: payload,
-  });
-  return (res.data as TMTracking) || null;
+  const pickData = (d: unknown): TMTracking | null => {
+    if (!d) return null;
+    if (Array.isArray(d)) return (d[0] as TMTracking) || null;
+    return d as TMTracking;
+  };
+
+  try {
+    const res = await request<TMTracking | TMTracking[]>("/trackings/create", {
+      method: "POST",
+      body: payload,
+    });
+    return pickData(res.data);
+  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const code = (error as any)?.code;
+    if (code !== 4130) throw error;
+
+    // Fallback endpoint (current TrackingMore v4 route)
+    const fallback = await request<TMTracking | TMTracking[]>("/trackings", {
+      method: "POST",
+      body: payload,
+    });
+    return pickData(fallback.data);
+  }
 }
 
 /**
