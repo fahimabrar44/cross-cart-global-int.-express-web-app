@@ -489,7 +489,7 @@ export function inferStatusFromText(description?: string): string {
   }
   // Out for delivery
   if (
-    /out for delivery|out with courier|with courier for delivery|on vehicle for delivery|out for shipment|out for final delivery|scheduled for delivery/.test(
+    /out for delivery|out with courier|with courier for delivery|on vehicle for delivery|out for shipment|scheduled for delivery|for delivery/.test(
       t
     )
   ) {
@@ -497,7 +497,7 @@ export function inferStatusFromText(description?: string): string {
   }
   // Customs
   if (
-    /customs|custom clearance|clearance processing|custom cleared|customs cleared|released from customs|clearance complete/.test(
+    /customs|custom clearance|clearance processing|custom cleared|customs cleared|released from customs|clearance complete|clearance event/.test(
       t
     )
   ) {
@@ -505,7 +505,7 @@ export function inferStatusFromText(description?: string): string {
   }
   // Arrived at a hub / sort facility
   if (
-    /arrived at .*(facility|hub|depot|station|terminal|center|centre|office|destination|sorting)|arrived .*delivery facility|received at/.test(
+    /arrived at .*(facility|hub|depot|station|terminal|center|centre|office|destination|sorting)|arrived .*delivery facility|received at|\bat .*(facility|hub|depot|sort facility|station|terminal)\b/.test(
       t
     )
   ) {
@@ -513,7 +513,7 @@ export function inferStatusFromText(description?: string): string {
   }
   // In transit / departed / en route
   if (
-    /departed|departure|in transit|transit to destination|en route|on the way|shipped|outbound|processed at|handed over|tendered|forwarded/.test(
+    /departed|departure|in transit|transit to destination|en route|on the way|shipped|outbound|processed at|handed over|tendered|forwarded|left .*(facility|hub|depot)|on the move/.test(
       t
     )
   ) {
@@ -521,7 +521,7 @@ export function inferStatusFromText(description?: string): string {
   }
   // Picked up / accepted / info received
   if (
-    /accepted|picked up|pickup|received by carrier|shipment accepted|info received|label created|shipper created|manifest|pre-advice/.test(
+    /accepted|picked up|pickup|received by carrier|shipment accepted|info received|label created|shipper created|manifest|pre-advice|information sent|shipment information/.test(
       t
     )
   ) {
