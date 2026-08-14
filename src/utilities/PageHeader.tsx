@@ -21,13 +21,24 @@ const PageHeader = ({
           {subtitle}
         </h1>
         <div className="flex items-center gap-1 text-sm sm:text-lg font-bold text-muted-foreground mt-3 z-[20]">
-          <Link href="/" className="hover:text-primary transition-colors">HOME</Link>
+          <Link href="/" className="hover:text-primary transition-colors">
+            HOME
+          </Link>
           <span className="text-primary">/</span>
-          <Link href={mainLink} className="hover:text-primary transition-colors">{title}</Link>
-          {subtitle !== title ? <>
-            <span className="text-primary">/</span>
-            <Link href={subLink} className="text-primary">{subtitle}</Link>
-          </> : null}
+          <Link
+            href={mainLink}
+            className="hover:text-primary transition-colors"
+          >
+            {title}
+          </Link>
+          {subtitle !== title ? (
+            <>
+              <span className="text-primary">/</span>
+              <Link href={subLink} className="text-primary">
+                {subtitle}
+              </Link>
+            </>
+          ) : null}
         </div>
       </div>
       <Globe
@@ -40,7 +51,6 @@ const PageHeader = ({
         glowColor="#087F4F"
         className={` container left-0 absolute -bottom-[10%] sm:-bottom-[20%] md:-bottom-[60%] lg:-bottom-[80%] xl:-bottom-[100%] 2xl:-bottom-[150%] m-auto`}
       />
-
     </div>
   );
 };
