@@ -19,6 +19,7 @@ import {
   createTracking,
   extractTimelineEvents,
   mapTMDeliveryStatus,
+  inferStatusFromText,
 } from "@/server/services/trackingMoreService";
 import { verifyApiKeyIfProvided } from "@/server/common/apiKeyAuth";
 
@@ -323,12 +324,19 @@ export async function GET(
     }
 
     // History locations sometimes store a Country ObjectId as a string;
-    // resolve any that look like one into the country name.
+    // resolve any that look like one into the country name. Also re-classify
+    // any history rows still stored as "created" (synced before the status-
+    // inference fix) into their real stage from the scan description.
     if (Array.isArray(tracked.history)) {
       tracked.history = await Promise.all(
-        tracked.history.map(async (step: { location?: { country?: string } }) => {
-          if (step.location?.country) {
-            step.location.country = await normalizeCountry(step.location.country);
+        tracked.history.map(async (step: { status?: string; description?: string; location?: { country?: string } }) => {
+          const loc = step.location?.country;
+          if (loc && typeof loc === "string") {
+            step.location!.country = await normalizeCountry(loc);
+          }
+          if (step.status === "created" && step.description) {
+            const inferred = inferStatusFromText(step.description);
+            if (inferred !== "created") step.status = inferred;
           }
           return step;
         })
