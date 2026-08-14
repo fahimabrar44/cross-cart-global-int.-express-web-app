@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import "@/server/models";
 
 declare global {
   var mongoose: {
