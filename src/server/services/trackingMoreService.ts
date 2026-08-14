@@ -481,7 +481,7 @@ export function inferStatusFromText(description?: string): string {
   }
   // Failed / exceptions / returns
   if (
-    /undeliverable|not delivered|delivery failed|failed delivery|return to sender|being returned|returned|exception|damaged|could not deliver|held .*customs.*unpaid|insufficient address|address problem|delivery attempted.*unsuccessful/.test(
+    /undeliverable|not delivered|delivery failed|failed delivery|return to sender|being returned|returned|exception|damaged|could not deliver|held .*customs.*unpaid|insufficient address|address problem|delivery attempted.*unsuccessful|attempted to deliver|delivery attempted|missed delivery|delivery rescheduled|rescheduled|not home|no such number|not available/.test(
       t
     )
   ) {
@@ -489,7 +489,7 @@ export function inferStatusFromText(description?: string): string {
   }
   // Out for delivery
   if (
-    /out for delivery|out with courier|with courier for delivery|on vehicle for delivery|out for shipment|scheduled for delivery|for delivery|ready for pickup|available for pickup|available for collection/.test(
+    /out for delivery|out with courier|with courier for delivery|on vehicle for delivery|out for shipment|scheduled for delivery|for delivery|ready for pickup|available for pickup|available for collection|delivery champion|doorstep|out on delivery|on the way to the customer|soon with .*customer/.test(
       t
     )
   ) {
@@ -503,9 +503,9 @@ export function inferStatusFromText(description?: string): string {
   ) {
     return "customs-clearance";
   }
-  // Arrived at a hub / sort facility / post office
+  // Arrived at a hub / sort facility / post office / transit office
   if (
-    /arrived at .*(facility|hub|depot|station|terminal|center|centre|office|destination|sorting|post office|location)|arrived .*delivery facility|received at|\bat .*(facility|hub|depot|sort facility|station|terminal|post office)\b|\barrived\b/.test(
+    /arrived at .*(facility|hub|depot|station|terminal|center|centre|office|destination|sorting|post office|location)|arrived .*delivery facility|received at|reached .*(office|depot|facility|hub|station)|reached .*transit office|reached .*origin office|\bat .*(facility|hub|depot|sort facility|station|terminal|post office)\b|\barrived\b/.test(
       t
     )
   ) {
@@ -513,7 +513,7 @@ export function inferStatusFromText(description?: string): string {
   }
   // In transit / departed / en route
   if (
-    /departed|departure|in transit|transit to destination|en route|on the way|shipped|outbound|processed at|handed over|tendered|forwarded|left .*(facility|hub|depot)|on the move|in transit company|processed through facility|transporting|arriving|destination scan/.test(
+    /departed|departure|in transit|transit to destination|en route|on the way|on its way|shipped|outbound|processed at|being processed|processing|handed over|tendered|forwarded|forwarded by|left .*(facility|hub|depot|office|station)|on the move|in transit company|processed through facility|transporting|arriving|destination scan|heading .*(to|for)|bound for/.test(
       t
     )
   ) {
@@ -521,7 +521,7 @@ export function inferStatusFromText(description?: string): string {
   }
   // Picked up / accepted / info received
   if (
-    /accepted|picked up|pickup|received by carrier|shipment accepted|info received|label created|shipper created|manifest|pre-advice|information sent|shipment information|electronic shipping/.test(
+    /accepted|picked up|pickup|received by carrier|shipment accepted|info received|label created|shipper created|manifest|pre-advice|information sent|shipment information|electronic shipping|collected from the shipper|collected|preparing your|preparing shipment|we'?re preparing/.test(
       t
     )
   ) {
