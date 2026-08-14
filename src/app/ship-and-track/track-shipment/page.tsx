@@ -135,6 +135,19 @@ const TrackShipmentContent = () => {
     }
   };
 
+  const normalizeCountryName = (
+    country: unknown
+  ): string => {
+    if (!country) return "";
+    if (typeof country === "string") return country;
+    if (typeof country === "object") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const c = country as any;
+      return c.name || c.code || "";
+    }
+    return "";
+  };
+
   const formatStatus = (status: string) => {
     return status
       .split("-")
@@ -331,11 +344,17 @@ const TrackShipmentContent = () => {
                           </p>
                           <p className="text-lg font-semibold text-[#12352A]">
                             {typeof trackingData.order === "object" &&
-                            trackingData.order?.parcel?.receiver?.address?.city
+                            trackingData.order?.parcel?.receiver?.address
+                              ?.city
                               ? `${trackingData.order.parcel.receiver.address.city}${
-                                  trackingData.order.parcel.receiver.address
-                                    .country
-                                    ? `, ${trackingData.order.parcel.receiver.address.country}`
+                                  normalizeCountryName(
+                                    trackingData.order.parcel.receiver.address
+                                      .country
+                                  )
+                                    ? `, ${normalizeCountryName(
+                                        trackingData.order.parcel.receiver
+                                          .address.country
+                                      )}`
                                     : ""
                                 }`
                               : "N/A"}
@@ -381,7 +400,7 @@ const TrackShipmentContent = () => {
                                 step.location.country) && (
                                 <p className="text-xs text-gray-600">
                                   ðŸ“ {step.location.city}{" "}
-                                  {step.location.country}
+                                  {normalizeCountryName(step.location.country)}
                                 </p>
                               )}
                             </div>

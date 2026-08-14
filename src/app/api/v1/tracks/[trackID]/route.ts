@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/config/db";
 import { Track } from "@/server/models/Track.model";
+import { Country } from "@/server/models/Country.model";
+import { Types } from "mongoose";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { updateTrackStatus } from "@/server/services/trackingService";
+
+// History locations sometimes store a Country ObjectId as a string;
+// resolve any that look like one into the country name.
+const normalizeCountry = async (value: string | unknown): Promise<string> => {
+  if (typeof value !== "string" || !value.trim()) return "";
+  if (Types.ObjectId.isValid(value)) {
+    const country =
+      value.length === 24
+        ? await Country.findById(value).select("name").lean()
+        : null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (country as any)?.name ?? value;
+  }
+  return value;
+};
 
 export async function GET(
   req: NextRequest,
@@ -14,8 +31,31 @@ export async function GET(
 
     const { trackID } = await params;
 
-    const track = await Track.findOne({ trackId: trackID }).populate("order").lean();
+    const track = await Track.findOne({ trackId: trackID })
+      .populate({
+        path: "order",
+        populate: [
+          { path: "parcel.from" },
+          { path: "parcel.to" },
+          { path: "parcel.sender.address.country" },
+          { path: "parcel.receiver.address.country" },
+        ],
+      })
+      .lean();
     if (!track) return errorResponse({ status: 404, message: "Track not found", req });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tracked = track as any;
+    if (Array.isArray(tracked.history)) {
+      tracked.history = await Promise.all(
+        tracked.history.map(async (step: { location?: { country?: string } }) => {
+          if (step.location?.country) {
+            step.location.country = await normalizeCountry(step.location.country);
+          }
+          return step;
+        })
+      );
+    }
 
     return successResponse({ status: 200, message: "Track fetched successfully", data: track, req });
   } catch (error: unknown) {
