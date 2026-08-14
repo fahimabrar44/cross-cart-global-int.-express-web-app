@@ -1,41 +1,5 @@
- /*Ensure you had installed the package
-or read our installation document. (go to lightswind.com/components/Installation)
-npm i lightswind@latest*/
-
 "use client";
-import React, { useEffect, useRef, useState } from "react";
-import createGlobe from "cobe";
-import { cn } from "@/lib/utils"; 
-
-// Utility function to convert a hex color string to a normalized RGB array
-// Handles #RGB and #RRGGBB formats.
-const hexToRgbNormalized = (hex: string): [number, number, number] => {
-  let r = 0,
-    g = 0,
-    b = 0;
-
-  // Remove the # if present
-  const cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
-
-  if (cleanHex.length === 3) {
-    // Handle shorthand hex codes (e.g., #00F -> #0000FF)
-    r = parseInt(cleanHex[0] + cleanHex[0], 16);
-    g = parseInt(cleanHex[1] + cleanHex[1], 16);
-    b = parseInt(cleanHex[2] + cleanHex[2], 16);
-  } else if (cleanHex.length === 6) {
-    // Handle full hex codes (e.g., #RRGGBB)
-    r = parseInt(cleanHex.substring(0, 2), 16);
-    g = parseInt(cleanHex.substring(2, 4), 16);
-    b = parseInt(cleanHex.substring(4, 6), 16);
-  } else {
-    // Fallback for invalid hex (or if you want to throw an error)
-    console.warn(`Invalid hex color: ${hex}. Falling back to black.`);
-    return [0, 0, 0];
-  }
-
-  // Normalize to 0-1 range
-  return [r / 255, g / 255, b / 255];
-};
+import { cn } from "@/lib/utils";
 
 interface GlobeProps {
   className?: string;
@@ -45,234 +9,75 @@ interface GlobeProps {
   diffuse?: number;
   mapSamples?: number;
   mapBrightness?: number;
-  // Allow color props to be either a hex string or an RGB array
   baseColor?: [number, number, number] | string;
   markerColor?: [number, number, number] | string;
   glowColor?: [number, number, number] | string;
 }
 
+const toHex = (color?: [number, number, number] | string): string => {
+  if (typeof color === "string") return color;
+  if (Array.isArray(color) && color.length === 3) {
+    return `rgb(${Math.round(color[0] * 255)},${Math.round(
+      color[1] * 255
+    )},${Math.round(color[2] * 255)})`;
+  }
+  return "#ffffff";
+};
+
 const Globe: React.FC<GlobeProps> = ({
   className,
-  theta = 0.25,
-  dark = 0,
-  scale = 1.1,
-  diffuse = 1.2,
-  mapSamples = 60000,
-  mapBrightness = 10,
-  baseColor = "#ffffff", // Removed default here, handled in useEffect
-  markerColor = "#ffffff", // Removed default here
-  glowColor = "#ffffff", // Removed default here
-  
+  baseColor = "#ffffff",
+  markerColor = "#87ceeb",
+  glowColor = "#ffffff",
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  const globeRef = useRef<any>(null); // To store the cobe globe instance
-  const [webglUnsupported, setWebglUnsupported] = useState(false);
-
-  // Refs for interactive rotation and dragging state
-  const phiRef = useRef(0);
-  const thetaRef = useRef(theta); // Initialize thetaRef with prop theta
-  const isDragging = useRef(false);
-  const lastMouseX = useRef(0);
-  const lastMouseY = useRef(0);
-  const autoRotateSpeed = 0.003; // Define auto-rotation speed
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    // WebGL is required by cobe; if unavailable (blocklisted GPU, disabled
-    // hardware acceleration, headless/VM browsers) skip rendering instead of
-    // crashing the whole page.
-    const supported =
-      !!canvas.getContext("webgl2") ||
-      !!canvas.getContext("webgl") ||
-      !!canvas.getContext("experimental-webgl");
-    if (!supported) {
-      setWebglUnsupported(true);
-      return;
-    }
-    setWebglUnsupported(false);
-
-    // Resolve color props to the [R, G, B] format required by cobe
-    const resolvedBaseColor: [number, number, number] =
-      typeof baseColor === "string"
-        ? hexToRgbNormalized(baseColor)
-        : baseColor || [0.4, 0.6509, 1]; // Default if not provided or invalid hex
-
-    const resolvedMarkerColor: [number, number, number] =
-      typeof markerColor === "string"
-        ? hexToRgbNormalized(markerColor)
-        : markerColor || [1, 0, 0]; // Default if not provided or invalid hex
-
-    const resolvedGlowColor: [number, number, number] =
-      typeof glowColor === "string"
-        ? hexToRgbNormalized(glowColor)
-        : glowColor || [0.2745, 0.5765, 0.898]; // Default if not provided or invalid hex
-
-    const initGlobe = () => {
-      // Destroy existing globe instance if it exists to prevent multiple instances
-      if (globeRef.current) {
-        globeRef.current.destroy();
-        globeRef.current = null;
-      }
-
-      const rect = canvas.getBoundingClientRect();
-      const size = Math.min(rect.width, rect.height);
-      const devicePixelRatio = window.devicePixelRatio || 1;
-      const internalWidth = size * devicePixelRatio;
-      const internalHeight = size * devicePixelRatio;
-
-      canvas.width = internalWidth;
-      canvas.height = internalHeight;
-
-      globeRef.current = createGlobe(canvas, {
-        devicePixelRatio: devicePixelRatio,
-        width: internalWidth,
-        height: internalHeight,
-        phi: phiRef.current,
-        theta: thetaRef.current, // Use thetaRef for initial and interactive theta
-        dark: dark,
-        scale: scale,
-        diffuse: diffuse,
-        mapSamples: mapSamples,
-        mapBrightness: mapBrightness,
-        baseColor: resolvedBaseColor, // Use converted/resolved colors
-        markerColor: resolvedMarkerColor, // Use converted/resolved colors
-        glowColor: resolvedGlowColor, // Use converted/resolved colors
-        opacity: 1,
-        offset: [0, 0],
-        markers: [
-
-        ],
-        /* eslint-disable @typescript-eslint/no-explicit-any */
-        onRender: (state: Record<string, any>) => {
-          if (!isDragging.current) {
-            // Only auto-rotate if not currently dragging
-            phiRef.current += autoRotateSpeed;
-          }
-          state.phi = phiRef.current;
-          state.theta = thetaRef.current; // Ensure cobe uses the updated thetaRef
-        },
-      });
-    };
-
-    // --- Mouse Interaction Handlers ---
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging.current = true;
-      lastMouseX.current = e.clientX;
-      lastMouseY.current = e.clientY;
-      canvas.style.cursor = "grabbing"; // Change cursor to indicate dragging
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (isDragging.current) {
-        const deltaX = e.clientX - lastMouseX.current;
-        const deltaY = e.clientY - lastMouseY.current;
-
-        // Adjust rotation sensitivity as needed
-        const rotationSpeed = 0.005;
-
-        // Update phi (horizontal rotation)
-        phiRef.current += deltaX * rotationSpeed;
-        // Update theta (vertical rotation), clamp to prevent flipping
-        // Clamped between -PI/2 and PI/2 to prevent globe from going upside down
-        thetaRef.current = Math.max(
-          -Math.PI / 2,
-          Math.min(Math.PI / 2, thetaRef.current - deltaY * rotationSpeed)
-        );
-
-        lastMouseX.current = e.clientX;
-        lastMouseY.current = e.clientY;
-      }
-    };
-
-    const onMouseUp = () => {
-      isDragging.current = false;
-      canvas.style.cursor = "grab"; // Change cursor back
-    };
-
-    const onMouseLeave = () => {
-      // If mouse leaves canvas while dragging, stop dragging
-      if (isDragging.current) {
-        isDragging.current = false;
-        canvas.style.cursor = "grab";
-      }
-    };
-    // --- End Mouse Interaction Handlers ---
-
-    initGlobe();
-
-    // Attach event listeners for mouse interaction
-    canvas.addEventListener("mousedown", onMouseDown);
-    canvas.addEventListener("mousemove", onMouseMove);
-    canvas.addEventListener("mouseup", onMouseUp);
-    canvas.addEventListener("mouseleave", onMouseLeave); // Important for when mouse leaves canvas during a drag
-
-    const handleResize = () => {
-      initGlobe();
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    // Cleanup function: destroy the globe instance and remove event listeners when component unmounts
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      // Remove mouse event listeners on cleanup
-      if (canvas) {
-        canvas.removeEventListener("mousedown", onMouseDown);
-        canvas.removeEventListener("mousemove", onMouseMove);
-        canvas.removeEventListener("mouseup", onMouseUp);
-        canvas.removeEventListener("mouseleave", onMouseLeave);
-      }
-      if (globeRef.current) {
-        globeRef.current.destroy();
-        globeRef.current = null;
-      }
-    };
-  }, [
-    theta,
-    dark,
-    scale,
-    diffuse,
-    mapSamples,
-    mapBrightness,
-    baseColor, // Include color props in dependency array so globe re-initializes if they change
-    markerColor,
-    glowColor,
-  ]);
-
-  if (webglUnsupported) {
-    return null;
-  }
+  const base = toHex(baseColor);
+  const marker = toHex(markerColor);
+  const glow = toHex(glowColor);
 
   return (
-    <div
-      className={cn(
-        "flex items-center justify-center align-middle z-[10] mx-auto",
-        className
-      )}
-      style={{
-        width: "100%",
-        height: "1500px", // Container takes full viewport height
-        display: "flex", // Ensure flexbox properties are active for centering
-        alignItems: "center",
-        justifyContent: "center",
-        overflow: "hidden", // Prevent scrollbars if content overflows
-      }}
-    >
-      <canvas
-        ref={canvasRef}
+    <div aria-hidden="true" className={cn("pointer-events-none select-none overflow-hidden", className)}>
+      <div
+        className="relative"
         style={{
-          width: "100%", // Canvas takes full width of its parent (which is constrained)
-          height: "1500px", // Canvas takes full height of its parent (which is constrained)
-          maxWidth: "auto", // Limit max width to viewport height to ensure square aspect in landscape
-          maxHeight: "auto", // Limit max height to viewport width to ensure square aspect in portrait
-          aspectRatio: "1", // Force a 1:1 aspect ratio for the canvas element
-          display: "block", // Ensure canvas behaves as a block element
-          cursor: "grab", // Default cursor
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "min(65vmin, 90%)",
+          height: "65vmin",
+          aspectRatio: "1",
+          borderRadius: "50%",
+          background: `radial-gradient(circle at 32% 28%, rgba(255,255,255,0.45) 0%, transparent 45%), radial-gradient(circle, ${base} 0%, ${base} 75%)`,
+          boxShadow: `0 0 90px 10px ${glow}55, inset -24px -18px 60px rgba(0,0,0,0.35)`,
         }}
-      />
+      >
+        {/* latitude lines */}
+        <div className="absolute inset-0 rounded-full overflow-hidden">
+          {[18, 38, 58, 78].map((top) => (
+            <div
+              key={top}
+              className="absolute right-[8%] left-[8%] border-t border-white/15"
+              style={{ top: `${top}%`, transform: `rotate(${3}deg)` }}
+            />
+          ))}
+        </div>
+        {/* marker dots */}
+        <span
+          className="absolute"
+          style={{ top: "22%", left: "30%", width: 8, height: 8, borderRadius: "50%", background: marker }}
+        />
+        <span
+          className="absolute"
+          style={{ top: "42%", left: "62%", width: 8, height: 8, borderRadius: "50%", background: marker }}
+        />
+        <span
+          className="absolute"
+          style={{ top: "66%", left: "38%", width: 8, height: 8, borderRadius: "50%", background: marker }}
+        />
+        <span
+          className="absolute"
+          style={{ top: "52%", left: "22%", width: 5, height: 5, borderRadius: "50%", background: marker }}
+        />
+      </div>
     </div>
   );
 };

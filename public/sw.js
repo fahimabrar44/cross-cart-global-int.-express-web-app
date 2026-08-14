@@ -1,9 +1,20 @@
 const CACHE_NAME = "crosscart-v1";
-const PRECACHE_ASSETS = ["/", "/logo.png", "/icon.png"];
+const PRECACHE_ASSETS = [
+  "/",
+  "/logo.png",
+  "/web-app-manifest-192x192.png",
+  "/web-app-manifest-512x512.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
+    caches
+      .open(CACHE_NAME)
+      .then((cache) =>
+        Promise.allSettled(
+          PRECACHE_ASSETS.map((asset) => cache.add(asset))
+        )
+      )
   );
   self.skipWaiting();
 });
