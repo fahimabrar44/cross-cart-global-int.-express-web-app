@@ -18,6 +18,33 @@ const CodeBlock = ({ code }: { code: string }) => (
   </pre>
 );
 
+const ParamTable = ({
+  rows,
+}: {
+  rows: [string, string, string][]; // name, type, description
+}) => (
+  <div className="overflow-x-auto rounded-lg border">
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b bg-muted">
+          <th className="text-left p-3 font-semibold">Param</th>
+          <th className="text-left p-3 font-semibold">Type</th>
+          <th className="text-left p-3 font-semibold">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(([name, type, description]) => (
+          <tr key={name} className="border-b last:border-0">
+            <td className="p-3 font-mono">{name}</td>
+            <td className="p-3 text-muted-foreground">{type}</td>
+            <td className="p-3 text-muted-foreground">{description}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
 const ApiIntegrationPage = () => {
   return (
     <div>
@@ -201,20 +228,226 @@ const ApiIntegrationPage = () => {
               </CardContent>
             </Card>
 
-            {/* Price */}
+            {/* Countries */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Badge variant="default">POST</Badge>
-                  <code className="font-mono text-sm">/prices/calculate</code>
+                  <Badge variant="default">GET</Badge>
+                  <code className="font-mono text-sm">/v1/countrys</code>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground">
-                  Calculate the shipping price for a parcel. Provide the origin
-                  country ID, destination zone ID, and weight in grams. Country
-                  and zone IDs are returned by the public coverage listing.
+                  List all supported origin countries. The country{" "}
+                  <code className="font-mono">_id</code> is the{" "}
+                  <code className="font-mono">fromCountryId</code> you pass to
+                  the price calculator.
                 </p>
+                <CodeBlock
+                  code={`curl -X GET "https://<your-domain>/api/v1/countrys" \\
+  -H "X-API-Key: ccg_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"`}
+                />
+                <div>
+                  <p className="text-sm font-medium mb-2">Query params</p>
+                  <ParamTable
+                    rows={[
+                      ["search", "string", "Find by name, code, zone or phone code"],
+                      ["name", "string", "Filter by exact country name"],
+                      ["code", "string", "Filter by ISO-2 code (e.g. BD)"],
+                      ["zone", "string", "Filter by region (e.g. South Asia)"],
+                      ["isActive", "boolean", "true / false"],
+                      ["page", "number", "Page number (default 1)"],
+                      ["limit", "number", "Per page (default 20)"],
+                      ["sortBy", "string", "name, code, zone, createdAt, updatedAt"],
+                      ["sortOrder", "string", "asc or desc (default desc)"],
+                    ]}
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-2">Response</p>
+                  <CodeBlock
+                    code={`{
+  "success": true,
+  "message": "Countries fetched successfully",
+  "data": [
+    {
+      "_id": "66f0c2a1b3d4e5f6a7b8c9d0",
+      "name": "Bangladesh",
+      "code": "BD",
+      "phoneCode": "+880",
+      "zone": "South Asia",
+      "isActive": true
+    }
+  ],
+  "meta": { "page": 1, "limit": 20, "total": 150, "totalPages": 8 }
+}`}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Zones */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Badge variant="default">GET</Badge>
+                  <code className="font-mono text-sm">/v1/zones</code>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                  List all destination zones. The zone{" "}
+                  <code className="font-mono">_id</code> is the{" "}
+                  <code className="font-mono">toZoneId</code> you pass to the
+                  price calculator. Each zone lists the countries grouped under
+                  it via <code className="font-mono">countryIds</code>.
+                </p>
+                <CodeBlock
+                  code={`curl -X GET "https://<your-domain>/api/v1/zones" \\
+  -H "X-API-Key: ccg_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"`}
+                />
+                <div>
+                  <p className="text-sm font-medium mb-2">Response</p>
+                  <CodeBlock
+                    code={`{
+  "success": true,
+  "message": "Zones fetched successfully",
+  "data": [
+    {
+      "_id": "66f0c2a1b3d4e5f6a7b8c9d1",
+      "name": "EUROPE",
+      "code": "EU",
+      "description": "Zone covering European destinations",
+      "countryIds": [
+        { "_id": "...", "name": "Germany", "code": "DE", "isActive": true }
+      ],
+      "isActive": true
+    }
+  ],
+  "meta": { "page": 1, "limit": 20, "total": 12, "totalPages": 1 }
+}`}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Price List */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Badge variant="default">GET</Badge>
+                  <code className="font-mono text-sm">/v1/prices</code>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                  List the published price tables. You can filter by origin
+                  country and destination (zone or country) using either IDs or
+                  names.
+                </p>
+                <CodeBlock
+                  code={`# By IDs
+curl -X GET "https://<your-domain>/api/v1/prices?from=66f0c2a1b3d4e5f6a7b8c9d0&to=66f0c2a1b3d4e5f6a7b8c9d1" \\
+  -H "X-API-Key: ccg_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
+
+# By names (destination resolves to a zone first, then a country)
+curl -X GET "https://<your-domain>/api/v1/prices?fromName=Bangladesh&toName=EUROPE" \\
+  -H "X-API-Key: ccg_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"`}
+                />
+                <div>
+                  <p className="text-sm font-medium mb-2">Query params</p>
+                  <ParamTable
+                    rows={[
+                      ["from", "ObjectId", "Origin country ID"],
+                      ["to", "ObjectId", "Destination zone (or country) ID"],
+                      ["fromName", "string", "Origin country name (e.g. Bangladesh)"],
+                      ["toName", "string", "Destination zone or country name"],
+                      ["rateName", "string", "Rate name (e.g. Standard, Economy)"],
+                      ["page", "number", "Page number (default 1)"],
+                      ["limit", "number", "Per page (default 20, max 200)"],
+                    ]}
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-2">Response</p>
+                  <CodeBlock
+                    code={`{
+  "success": true,
+  "message": "Prices fetched successfully",
+  "data": [
+    {
+      "_id": "66f0c2a1b3d4e5f6a7b8c9d2",
+      "from": { "_id": "66f...", "name": "Bangladesh", "code": "BD" },
+      "to": { "_id": "66f...", "name": "EUROPE", "code": "EU" },
+      "rate": [
+        {
+          "name": "Standard",
+          "fuel": 5,
+          "gift": 15,
+          "profitPercentage": 10,
+          "price": {
+            "gm500": 8.5,
+            "gm1000": 10,
+            "gm1500": 12.5,
+            "gm2000": 15,
+            "kg6to10": 2.5,
+            "kg11to20": 2.2
+          }
+        }
+      ],
+      "isActive": true
+    }
+  ],
+  "meta": { "page": 1, "limit": 20, "total": 1, "totalPages": 1 }
+}`}
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Tier keys: <code className="font-mono">gm500 … gm5500</code>{" "}
+                  are flat rates for weights up to that many grams;{" "}
+                  <code className="font-mono">kg6to10 … kg501to1000</code> are
+                  per-kilogram rates for those weight ranges.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Price Calculate */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Badge variant="default">POST</Badge>
+                  <code className="font-mono text-sm">/v1/prices/calculate</code>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                  Calculate the final shipping price for a parcel. It returns
+                  one rate per delivery tier (Standard, Economy, …) with the
+                  base and final price already computed for your weight.
+                </p>
+
+                <div>
+                  <p className="text-sm font-medium mb-2">Workflow</p>
+                  <ol className="list-decimal list-inside text-muted-foreground space-y-1">
+                    <li>
+                      Call <code className="font-mono">GET /v1/countrys</code> to
+                      find the origin country{"'"}s{" "}
+                      <code className="font-mono">_id</code> (→{" "}
+                      <code className="font-mono">fromCountryId</code>).
+                    </li>
+                    <li>
+                      Call <code className="font-mono">GET /v1/zones</code> to
+                      find the destination zone{"'"}s{" "}
+                      <code className="font-mono">_id</code> (→{" "}
+                      <code className="font-mono">toZoneId</code>).
+                    </li>
+                    <li>
+                      Call <code className="font-mono">POST /v1/prices/calculate</code>{" "}
+                      with both IDs plus the parcel weight in grams.
+                    </li>
+                  </ol>
+                </div>
+
                 <CodeBlock
                   code={`curl -X POST "https://<your-domain>/api/v1/prices/calculate" \\
   -H "X-API-Key: ccg_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" \\
@@ -225,6 +458,17 @@ const ApiIntegrationPage = () => {
     "weight": 1500
   }'`}
                 />
+                <div>
+                  <p className="text-sm font-medium mb-2">Body params</p>
+                  <ParamTable
+                    rows={[
+                      ["fromCountryId", "ObjectId", "Required – origin country ID from /countrys"],
+                      ["toZoneId", "ObjectId", "Required – destination zone ID from /zones"],
+                      ["weight", "number", "Required – weight in grams (e.g. 1500 = 1.5 kg)"],
+                      ["rateName", "string", "Optional – only return one rate (e.g. Standard)"],
+                    ]}
+                  />
+                </div>
                 <div>
                   <p className="text-sm font-medium mb-2">Response</p>
                   <CodeBlock
@@ -237,7 +481,16 @@ const ApiIntegrationPage = () => {
     "tier": "gm1500",
     "tierLabel": "1500 GM",
     "rates": [
-      { "name": "Standard", "tier": "gm1500", "basePrice": 12.5, "finalPrice": 14.2 }
+      {
+        "name": "Standard",
+        "profitPercentage": 10,
+        "gift": 15,
+        "fuel": 5,
+        "tier": "gm1500",
+        "tierLabel": "1500 GM",
+        "basePrice": 12.5,
+        "finalPrice": 14.2
+      }
     ]
   }
 }`}
