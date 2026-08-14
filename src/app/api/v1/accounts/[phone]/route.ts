@@ -41,7 +41,7 @@ export async function GET(
     }
 
     const user = await User.findOne({ phone })
-      .select("-password -refreshToken")
+      .select("-password -refreshTokens")
       .lean();
 
     if (!user) {
@@ -94,7 +94,7 @@ export async function PUT(
       { phone },
       { $set: body },
       { new: true, runValidators: true }
-    ).select("-password -refreshToken").lean();
+    ).select("-password -refreshTokens").lean();
 
     if (!updatedUser) {
       return errorResponse({ status: 404, message: "User not found", req });
@@ -108,7 +108,7 @@ export async function PUT(
   }
 }
 
-// PATCH: Partial account update (activate/deactivate/verify) — Admin or Moderator
+// PATCH: Partial account update (activate/deactivate/verify/NID verification) — Admin or Moderator
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ phone: string }> }
@@ -130,22 +130,37 @@ export async function PATCH(
       return errorResponse({ status: 400, message: "Phone parameter is required", req });
     }
 
-    const body: { name?: string; email?: string; isActive?: boolean; isVerified?: boolean } = await req.json();
+    const body: {
+      name?: string;
+      email?: string;
+      isActive?: boolean;
+      isVerified?: boolean;
+      nid?: { verified?: boolean };
+    } = await req.json();
 
     if (
       body.name === undefined &&
       body.email === undefined &&
       body.isActive === undefined &&
-      body.isVerified === undefined
+      body.isVerified === undefined &&
+      (body.nid === undefined || body.nid.verified === undefined)
     ) {
       return errorResponse({ status: 400, message: "No update fields provided", req });
     }
 
+    // Build flat update object so nested nid fields are set individually (avoids wiping documents)
+    const update: Record<string, unknown> = {};
+    if (body.name !== undefined) update.name = body.name;
+    if (body.email !== undefined) update.email = body.email;
+    if (body.isActive !== undefined) update.isActive = body.isActive;
+    if (body.isVerified !== undefined) update.isVerified = body.isVerified;
+    if (body.nid && body.nid.verified !== undefined) update["nid.verified"] = body.nid.verified;
+
     const updatedUser = await User.findOneAndUpdate(
       { phone },
-      { $set: body },
+      { $set: update },
       { new: true, runValidators: true }
-    ).select("-password -refreshToken").lean();
+    ).select("-password -refreshTokens").lean();
 
     if (!updatedUser) {
       return errorResponse({ status: 404, message: "User not found", req });

@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
     }
 
     const users = await User.find(query)
-      .select("-password -refreshToken")
+      .select("-password -refreshTokens")
       .sort({ createdAt: -1 })
       .limit(5000)
       .lean();

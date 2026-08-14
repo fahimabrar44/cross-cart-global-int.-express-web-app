@@ -42,6 +42,23 @@ export class UserService {
   static async getUserNotifications(phone: string): Promise<ApiResponse<any[]>> {
     return apiService.get(`/accounts/${phone}/notifications`);
   }
+
+  static async uploadFile(
+    phone: string,
+    type: "avatar" | "nid-front" | "nid-back",
+    dataUrl: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): Promise<ApiResponse<any>> {
+    return apiService.post(`/accounts/${phone}/upload`, { type, dataUrl });
+  }
+
+  static async verifyNid(
+    phone: string,
+    verified: boolean
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): Promise<ApiResponse<any>> {
+    return apiService.patch(`/accounts/${phone}`, { nid: { verified } });
+  }
 }
 
 // Order Management Service

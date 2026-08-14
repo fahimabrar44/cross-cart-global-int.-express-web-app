@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { 
   Loader2, 
@@ -194,6 +195,31 @@ export default function UsersPage() {
     } catch (error) {
       console.error("Failed to verify user:", error);
       toast.error("Failed to verify user");
+    }
+  };
+
+  const handleNidVerification = async (user: User, verified: boolean) => {
+    try {
+      setActionLoading(true);
+      const response = await userService.verifyNid(user.phone, verified);
+
+      if (response.success) {
+        toast.success(
+          verified
+            ? "NID verified successfully"
+            : "NID verification rejected"
+        );
+        setSelectedUser({
+          ...user,
+          nid: { ...(user.nid || {}), verified },
+        });
+        loadUsers();
+      }
+    } catch (error) {
+      console.error("Failed to update NID verification:", error);
+      toast.error("Failed to update NID verification");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -458,10 +484,18 @@ export default function UsersPage() {
           {selectedUser && (
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-2xl font-semibold">
-                    {selectedUser.name.charAt(0).toUpperCase()}
-                  </span>
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                  {selectedUser.avatar ? (
+                    <img
+                      src={selectedUser.avatar}
+                      alt={selectedUser.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl font-semibold">
+                      {selectedUser.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold" data-testid="view-user-name">
@@ -500,6 +534,72 @@ export default function UsersPage() {
                   </p>
                 </div>
               </div>
+
+              {(selectedUser.nid?.front || selectedUser.nid?.back) && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold">NID Documents</h4>
+                    <Badge
+                      variant={selectedUser.nid?.verified ? "default" : "secondary"}
+                      data-testid="view-user-nid-status"
+                    >
+                      {selectedUser.nid?.verified
+                        ? "NID Verified"
+                        : "Pending Review"}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedUser.nid?.front && (
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Front</p>
+                        <a href={selectedUser.nid.front} target="_blank" rel="noreferrer">
+                          <img
+                            src={selectedUser.nid.front}
+                            alt="NID Front"
+                            className="h-32 w-full object-cover rounded-md border"
+                          />
+                        </a>
+                      </div>
+                    )}
+                    {selectedUser.nid?.back && (
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Back</p>
+                        <a href={selectedUser.nid.back} target="_blank" rel="noreferrer">
+                          <img
+                            src={selectedUser.nid.back}
+                            alt="NID Back"
+                            className="h-32 w-full object-cover rounded-md border"
+                          />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                  {(currentUser.role === "admin" || currentUser.role === "moderator") && (
+                    <div className="flex space-x-2 pt-1">
+                      <Button
+                        onClick={() => handleNidVerification(selectedUser, true)}
+                        disabled={actionLoading || selectedUser.nid?.verified}
+                        data-testid="approve-nid-btn"
+                      >
+                        {actionLoading ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <UserCheck className="mr-2 h-4 w-4" />
+                        )}
+                        Approve
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleNidVerification(selectedUser, false)}
+                        disabled={actionLoading || !selectedUser.nid?.verified}
+                        data-testid="reject-nid-btn"
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

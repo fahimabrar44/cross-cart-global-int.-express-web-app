@@ -139,6 +139,10 @@ class UserService {
     return api.patch<User>(`${this.baseEndpoint}/${phone}`, { isVerified: true });
   }
 
+  async verifyNid(phone: string, verified: boolean): Promise<ApiResponse<User>> {
+    return api.patch<User>(`${this.baseEndpoint}/${phone}`, { nid: { verified } });
+  }
+
   async resetUserPassword(phone: string): Promise<ApiResponse<{ message: string }>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return api.post<any>(`${this.baseEndpoint}/${phone}/reset-password`, {});

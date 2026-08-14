@@ -8,11 +8,23 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/AuthContext";
 import { RoleGuard } from "@/middleware/roleGuard";
 import { UserService } from "@/services/dashboardService";
-import { Bell, MapPin, Save, Settings, Shield, User } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import {
+  BadgeCheck,
+  Bell,
+  Camera,
+  Loader2,
+  MapPin,
+  Save,
+  Settings,
+  Shield,
+  UploadCloud,
+  User,
+} from "lucide-react";
+import { useEffect, useState, useCallback, ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -47,6 +59,70 @@ export default function SettingsPage() {
     profileVisibility: "public",
     dataSharing: false,
   });
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingNidSide, setUploadingNidSide] = useState<
+    "front" | "back" | null
+  >(null);
+
+  const fileToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+
+  const handleFileUpload = async (
+    type: "avatar" | "nid-front" | "nid-back",
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !user?.phone) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be 5MB or smaller");
+      return;
+    }
+
+    if (type === "avatar") {
+      setUploadingAvatar(true);
+    } else {
+      setUploadingNidSide(type === "nid-front" ? "front" : "back");
+    }
+
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const response = await UserService.uploadFile(user.phone, type, dataUrl);
+
+      if (response.status == 200) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const url = (response.data as any)?.url;
+        if (type === "avatar") {
+          updateUser({ avatar: url });
+          toast.success("Profile photo uploaded");
+        } else {
+          const side = type === "nid-front" ? "front" : "back";
+          const nid = { ...(user.nid || {}), [side]: url, verified: false };
+          updateUser({ nid });
+          toast.success(
+            "NID document uploaded. It is now pending admin verification."
+          );
+        }
+      } else {
+        toast.error(response.message || "Upload failed");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setUploadingAvatar(false);
+      setUploadingNidSide(null);
+    }
+  };
 
   const {
     register,
@@ -185,7 +261,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6">
             <TabsTrigger
               value="profile"
               className="flex items-center space-x-2"
@@ -220,6 +296,13 @@ export default function SettingsPage() {
             >
               <Settings className="h-4 w-4" />
               <span>Advanced</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="verification"
+              className="flex items-center space-x-2"
+            >
+              <BadgeCheck className="h-4 w-4" />
+              <span>Verification</span>
             </TabsTrigger>
           </TabsList>
 
@@ -531,6 +614,143 @@ export default function SettingsPage() {
                       <Button variant="outline">User Management</Button>
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="verification" className="space-y-6">
+            <Card data-testid="verification-settings">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <BadgeCheck className="h-5 w-5" />
+                  <span>Account Verification</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-14 w-14">
+                      <AvatarImage src={user?.avatar} alt={user?.name} />
+                      <AvatarFallback>
+                        {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">Identity Verification</p>
+                      <p className="text-sm text-muted-foreground">
+                        Upload your NID documents to get your account verified.
+                      </p>
+                    </div>
+                  </div>
+                  <Badge
+                    variant={
+                      user?.nid?.verified ? "default" : "secondary"
+                    }
+                    data-testid="identity-status-badge"
+                  >
+                    {user?.nid?.verified
+                      ? "Verified"
+                      : user?.nid?.front || user?.nid?.back
+                      ? "Pending Review"
+                      : "Not Submitted"}
+                  </Badge>
+                </div>
+
+                <Separator />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label>Profile Photo</Label>
+                    <div className="border rounded-lg p-4 flex flex-col items-center gap-3">
+                      {user?.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt="Profile"
+                          className="h-24 w-24 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center">
+                          <Camera className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      <label
+                        className="cursor-pointer inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
+                        htmlFor="avatar-upload"
+                      >
+                        {uploadingAvatar ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <UploadCloud className="h-4 w-4 mr-2" />
+                        )}
+                        {uploadingAvatar ? "Uploading..." : "Upload Photo"}
+                      </label>
+                      <input
+                        id="avatar-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleFileUpload("avatar", e)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        JPG or PNG, max 5MB
+                      </p>
+                    </div>
+                  </div>
+
+                  {(["front", "back"] as const).map((side) => {
+                    const uploading =
+                      uploadingNidSide === side;
+                    const currentUrl = user?.nid?.[side];
+                    return (
+                      <div key={side} className="space-y-2">
+                        <Label className="capitalize">NID {side}</Label>
+                        <div className="border rounded-lg p-4 flex flex-col items-center gap-3">
+                          {currentUrl ? (
+                            <img
+                              src={currentUrl}
+                              alt={`NID ${side}`}
+                              className="h-24 w-24 object-cover rounded-md"
+                            />
+                          ) : (
+                            <div className="h-24 w-24 bg-muted flex items-center justify-center">
+                              <BadgeCheck className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          <label
+                            className="cursor-pointer inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
+                            htmlFor={`nid-${side}-upload`}
+                          >
+                            {uploading ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : (
+                              <UploadCloud className="h-4 w-4 mr-2" />
+                            )}
+                            {uploading
+                              ? "Uploading..."
+                              : currentUrl
+                              ? "Replace"
+                              : "Upload"}
+                          </label>
+                          <input
+                            id={`nid-${side}-upload`}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) =>
+                              handleFileUpload(
+                                side === "front" ? "nid-front" : "nid-back",
+                                e
+                              )
+                            }
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            JPG or PNG, max 5MB
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

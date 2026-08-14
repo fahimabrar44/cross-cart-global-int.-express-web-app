@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
     // Execute queries with proper error handling
     const [users, total] = await Promise.all([
       User.find(query)
-        .select("-password -refreshToken") // Exclude sensitive data
+        .select("-password -refreshTokens") // Exclude sensitive data
         .skip(paginationParams.skip)
         .limit(paginationParams.limit)
         .sort({ createdAt: -1 })
@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
     await newUser.save();
 
     const created = await User.findById(newUser._id)
-      .select("-password -refreshToken")
+      .select("-password -refreshTokens")
       .lean();
 
     return successResponse({

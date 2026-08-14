@@ -21,6 +21,11 @@ interface User {
   isVerified: boolean;
   isActive: boolean;
   lastLogin?: string;
+  nid?: {
+    front?: string;
+    back?: string;
+    verified?: boolean;
+  };
 }
 
 interface AuthTokens {

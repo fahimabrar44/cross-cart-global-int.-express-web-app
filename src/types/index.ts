@@ -11,6 +11,11 @@ export interface User {
   lastLogin?: string;
   createdAt?: string;
   updatedAt?: string;
+  nid?: {
+    front?: string;
+    back?: string;
+    verified?: boolean;
+  };
 }
 
 
