@@ -13,7 +13,7 @@ const HeroHomeSection = () => {
           baseColor="#087F4F"
           markerColor="#F5C400"
           glowColor="#087F4F"
-          className={` container left-0 absolute -bottom-[110%] sm:-bottom-[120%] md:-bottom-[120%] lg:-bottom-[150%] xl:-bottom-[190%] m-auto  opacity-50`}
+          className={` container left-0 absolute -bottom-[50%] sm:-bottom-[80%] md:-bottom-[100%] lg:-bottom-[120%] xl:-bottom-[140%] m-auto  opacity-50`}
         />
 
         <div className="w-full h-auto pt-6 sm:pt-15 pb-6 z-[10] relative flex justify-center text-center align-middle items-center flex-col">
@@ -21,7 +21,6 @@ const HeroHomeSection = () => {
             CROSS CART GLOBAL INTERNATIONAL EXPRESS
           </h1>
           <h3 className="text-base sm:text-2xl md:text-3xl font-semibold text-primary z-[10]">
-           
             CROSS BORDER, CARRYING TRUST
           </h3>
         </div>
