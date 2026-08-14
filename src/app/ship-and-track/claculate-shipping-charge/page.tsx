@@ -1,8 +1,128 @@
-﻿import PageHeader from "@/utilities/PageHeader";
-import { Calculator, Clock, DollarSign, Globe } from "lucide-react";
+﻿"use client";
+
+import { getRequestSend } from "@/components/ApiCall/methord";
+import { ROOT_API } from "@/components/ApiCall/url";
+import PageHeader from "@/utilities/PageHeader";
+import { Calculator, Clock, DollarSign, Globe, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+
+interface CountryOption {
+  _id: string;
+  name: string;
+  code: string;
+  phoneCode?: string;
+  isActive?: boolean;
+}
+
+interface Rate {
+  name: string;
+  profitPercentage: number;
+  gift: number;
+  fuel: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  price: Record<string, number>;
+}
+
+interface PriceData {
+  _id: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  from?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  to?: any;
+  rate: Rate[];
+}
+
+const WEIGHT_LABELS: Record<string, string> = {
+  gm500: "500 GM",
+  gm1000: "1000 GM",
+  gm1500: "1500 GM",
+  gm2000: "2000 GM",
+  gm2500: "2500 GM",
+  gm3000: "3000 GM",
+  gm3500: "3500 GM",
+  gm4000: "4000 GM",
+  gm4500: "4500 GM",
+  gm5000: "5000 GM",
+  gm5500: "5500 GM",
+  kg6to10: "6 TO 10 PER KG",
+  kg11to20: "11 TO 20 PER KG",
+  kg21to30: "21 TO 30 PER KG",
+  kg31to40: "31 TO 40 PER KG",
+  kg41to50: "41 TO 50 PER KG",
+  kg51to80: "51 TO 80 PER KG",
+  kg81to100: "81 TO 100 PER KG",
+  kg101to500: "101 TO 500 PER KG",
+  kg501to1000: "501 TO 1000 PER KG",
+};
 
 const CalculateShippingCharge = () => {
+  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [fromCountry, setFromCountry] = useState("Bangladesh");
+  const [toCountry, setToCountry] = useState("");
+  const [shipmentType, setShipmentType] = useState("b2b");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [priceData, setPriceData] = useState<PriceData | null>(null);
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await getRequestSend<CountryOption[]>(
+          `${ROOT_API}countrys?isActive=true&limit=250&sortBy=name&sortOrder=asc`
+        );
+        if (response.status === 200 && Array.isArray(response.data)) {
+          setCountries(response.data);
+        }
+      } catch {
+        // countries are optional
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    if (countries.length > 0 && !toCountry) {
+      setToCountry(countries.find((c) => c.name === "United States")?._id || countries[0]?._id || "");
+    }
+  }, [countries, toCountry]);
+
+  const getCountryName = (id: string) =>
+    countries.find((c) => c._id === id)?.name || "";
+
+  const handleCalculate = async () => {
+    setError("");
+    setPriceData(null);
+    if (!toCountry) {
+      setError("Please select a destination country");
+      return;
+    }
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        fromName: getCountryName(fromCountry) || "Bangladesh",
+        toName: getCountryName(toCountry),
+      });
+      const response = await getRequestSend<PriceData[]>(
+        `${ROOT_API}prices?${params.toString()}`
+      );
+      if (response.status === 200 && Array.isArray(response.data) && response.data.length > 0) {
+        setPriceData(response.data[0]);
+      } else {
+        setError(
+          "No pricing found for this route yet. Please contact our support team."
+        );
+      }
+    } catch {
+      setError("Failed to fetch prices. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const priceWithFees = (base: any, rate: any) =>
+    Number(base * (1 + (rate.fuel || 0) / 100) * (1 + (rate.profitPercentage || 0) / 100)).toFixed(3);
   const carriers = [
     {
       name: "DHL Express",
@@ -91,8 +211,17 @@ const CalculateShippingCharge = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     From Country
                   </label>
-                  <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent">
-                    <option>Bangladesh</option>
+                  <select
+                    value={fromCountry}
+                    onChange={(e) => setFromCountry(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  >
+                    {countries.length === 0 && <option>Bangladesh</option>}
+                    {countries.map((c) => (
+                      <option key={c._id} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -101,16 +230,17 @@ const CalculateShippingCharge = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     To Country
                   </label>
-                  <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent">
-                    <option>Select Country</option>
-                    <option>United States</option>
-                    <option>United Kingdom</option>
-                    <option>Canada</option>
-                    <option>Australia</option>
-                    <option>Germany</option>
-                    <option>France</option>
-                    <option>India</option>
-                    <option>Singapore</option>
+                  <select
+                    value={toCountry}
+                    onChange={(e) => setToCountry(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  >
+                    <option value="">Select Country</option>
+                    {countries.map((c) => (
+                      <option key={c._id} value={c._id}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -120,7 +250,11 @@ const CalculateShippingCharge = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Shipment Type
                 </label>
-                <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent">
+                <select
+                  value={shipmentType}
+                  onChange={(e) => setShipmentType(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                >
                   <option value="b2b">B2B (Business to Business)</option>
                   <option value="b2c">B2C (Business to Customer)</option>
                 </select>
@@ -128,10 +262,74 @@ const CalculateShippingCharge = () => {
 
               {/* Calculate Button */}
               <div className="mt-8 text-center">
-                <button className="bg-primary text-white py-4 px-12 rounded-lg hover:bg-[#087F4F] transition-colors font-bold text-lg">
-                  Calculate Shipping Rates
+                <button
+                  onClick={handleCalculate}
+                  disabled={loading}
+                  className="bg-primary text-white py-4 px-12 rounded-lg hover:bg-[#087F4F] transition-colors font-bold text-lg disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                >
+                  {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+                  {loading ? "Calculating..." : "Calculate Shipping Rates"}
                 </button>
               </div>
+
+              {/* Results */}
+              {error && (
+                <div className="mt-8 bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-center">
+                  {error}
+                </div>
+              )}
+
+              {priceData && (
+                <div className="mt-8">
+                  <div className="bg-soft-green border border-gray-200 rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-xl font-bold text-[#12352A]">
+                        {priceData.from?.name || fromCountry} →{" "}
+                        {priceData.to?.name || getCountryName(toCountry)}
+                      </h4>
+                      <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full">
+                        {shipmentType === "b2b" ? "B2B" : "B2C"}
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {(priceData.rate || []).map((r, idx) => (
+                        <div
+                          key={idx}
+                          className="p-4 bg-white rounded-lg border border-gray-200"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="font-bold text-[#12352A] capitalize">
+                              {r.name}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Profit: {r.profitPercentage ?? 0}% • Gift:{" "}
+                              {r.gift ?? 0} • Fuel: {r.fuel ?? 0}%
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+                            {Object.entries(r.price || {})
+                              .filter(([, v]) => typeof v === "number" && Number(v) > 0)
+                              .map(([k, v]) => (
+                                <div
+                                  key={k}
+                                  className="p-2 bg-gray-50 rounded flex items-center justify-between"
+                                >
+                                  <div className="font-medium text-gray-600 truncate">
+                                    {WEIGHT_LABELS[k] || k}
+                                  </div>
+                                  <div className="font-bold text-[#12352A] pl-2">
+                                    ${priceWithFees(v, r)}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

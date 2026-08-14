@@ -22,8 +22,11 @@ type GetQuery = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function resolveCountryId(name?: string): Promise<Types.ObjectId | null> {
   if (!name) return null;
-  const country = await Country.findOne({ name: new RegExp(`^${name.trim()}$`, "i") }).lean();
-  return country ? (country._id as Types.ObjectId) : null;
+  const country = await Country.findOne({ name: new RegExp(`^${name.trim()}$`, "i") }).lean().exec();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const id = (country as any)?._id;
+  if (!id) return null;
+  return new Types.ObjectId(String(id));
 }
 
 // Helper: validate rates
