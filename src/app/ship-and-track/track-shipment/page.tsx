@@ -120,6 +120,156 @@ const TrackShipmentContent = () => {
     }
   };
 
+  const escapeReceiptHtml = (value: unknown): string =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const handleDownloadReceipt = () => {
+    if (!trackingData) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const order = trackingData.order as any;
+    const parcel = order?.parcel || {};
+    const sender = parcel.sender || {};
+    const receiver = parcel.receiver || {};
+    const countryName = (country: unknown) => {
+      if (!country) return "";
+      if (typeof country === "string") return country;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (typeof country === "object") return (country as any).name || "";
+      return "";
+    };
+
+    const itemsRows = (parcel.item || [])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (it: any) => `
+          <tr>
+            <td style="padding:8px;border:1px solid #e5e7eb;text-align:left;">${escapeReceiptHtml(it.name)}</td>
+            <td style="padding:8px;border:1px solid #e5e7eb;text-align:center;">${escapeReceiptHtml(it.quantity)}</td>
+            <td style="padding:8px;border:1px solid #e5e7eb;text-align:right;">${escapeReceiptHtml(it.totalPrice ?? it.unitPrice ?? 0)}</td>
+          </tr>`
+      )
+      .join("");
+
+    const historyRows = (trackingData.history || [])
+      .map(
+        (step) => `
+          <tr>
+            <td style="padding:8px;border:1px solid #e5e7eb;text-align:left;">${escapeReceiptHtml(step.location?.city)}${step.location?.country ? `, ${escapeReceiptHtml(step.location.country)}` : ""}</td>
+            <td style="padding:8px;border:1px solid #e5e7eb;text-align:left;">${escapeReceiptHtml(step.description)}</td>
+            <td style="padding:8px;border:1px solid #e5e7eb;text-align:right;">${escapeReceiptHtml(formatDate(step.timestamp))}</td>
+          </tr>`
+      )
+      .join("");
+
+    const receiverCity = receiver.address?.city
+      ? `${escapeReceiptHtml(receiver.address.city)}${
+          countryName(receiver.address.country)
+            ? `, ${escapeReceiptHtml(countryName(receiver.address.country))}`
+            : ""
+        }`
+      : "N/A";
+    const senderCity = sender.address?.city
+      ? `${escapeReceiptHtml(sender.address.city)}${
+          countryName(sender.address.country)
+            ? `, ${escapeReceiptHtml(countryName(sender.address.country))}`
+            : ""
+        }`
+      : "N/A";
+
+    const receiptHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Shipment Receipt - ${escapeReceiptHtml(trackingData.trackId)}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #12352A; margin: 0; padding: 24px; }
+            .header { background: #006B45; color: #fff; padding: 20px; text-align: center; }
+            .header h1 { margin: 0; font-size: 22px; }
+            .header p { margin: 4px 0 0; opacity: 0.9; }
+            h3 { color: #12352A; border-bottom: 2px solid #F5C400; padding-bottom: 6px; margin: 22px 0 10px; }
+            table { width: 100%; border-collapse: collapse; font-size: 13px; }
+            th { background: #12352A; color: #fff; padding: 8px; text-align: left; }
+            td { padding: 8px; border: 1px solid #e5e7eb; }
+            .status { display: inline-block; background: #F5C400; color: #12352A; font-weight: bold; padding: 6px 14px; border-radius: 4px; }
+            .brand { color: #F5C400; }
+            @media print { body { padding: 8px; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>CrossCart Global Int Express</h1>
+            <p>Shipment Receipt</p>
+          </div>
+
+          <div style="text-align:right; margin:16px 0;">
+            <span class="status">${escapeReceiptHtml(formatStatus(trackingData.currentStatus))}</span>
+          </div>
+
+          <h3>Tracking Information</h3>
+          <table>
+            <tr><td style="width:45%; background:#f4f4f7;">Tracking Number</td><td><strong>${escapeReceiptHtml(trackingData.trackId)}</strong></td></tr>
+            <tr><td style="background:#f4f4f7;">AWB Number</td><td>${escapeReceiptHtml(order?.awb || "N/A")}</td></tr>
+            ${order?._id ? `<tr><td style="background:#f4f4f7;">Order ID</td><td>${escapeReceiptHtml(order._id)}</td></tr>` : ""}
+            ${trackingData.estimatedDelivery ? `<tr><td style="background:#f4f4f7;">Estimated Delivery</td><td>${escapeReceiptHtml(formatDate(trackingData.estimatedDelivery))}</td></tr>` : ""}
+            ${parcel.weight ? `<tr><td style="background:#f4f4f7;">Weight</td><td>${escapeReceiptHtml(parcel.weight)}</td></tr>` : ""}
+            ${parcel.serviceType ? `<tr><td style="background:#f4f4f7;">Service Type</td><td>${escapeReceiptHtml(parcel.serviceType)}</td></tr>` : ""}
+            ${parcel.priority ? `<tr><td style="background:#f4f4f7;">Priority</td><td>${escapeReceiptHtml(parcel.priority)}</td></tr>` : ""}
+          </table>
+
+          <h3>Parcel Details</h3>
+          <table>
+            <tr><th style="width:50%;">Recipient</th><th>Sender</th></tr>
+            <tr>
+              <td><strong>${escapeReceiptHtml(receiver.name || "N/A")}</strong><br/>${escapeReceiptHtml(receiver.phone || "")}<br/>${receiverCity}</td>
+              <td><strong>${escapeReceiptHtml(sender.name || "N/A")}</strong><br/>${escapeReceiptHtml(sender.phone || "")}<br/>${senderCity}</td>
+            </tr>
+          </table>
+
+          ${
+            itemsRows
+              ? `<h3>Items</h3>
+            <table>
+              <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Price</th></tr></thead>
+              <tbody>${itemsRows}</tbody>
+            </table>`
+              : ""
+          }
+
+          ${
+            historyRows
+              ? `<h3>Tracking History</h3>
+            <table>
+              <thead><tr><th>Location</th><th>Status Detail</th><th style="text-align:right;">Time</th></tr></thead>
+              <tbody>${historyRows}</tbody>
+            </table>`
+              : ""
+          }
+
+          <p style="margin-top:24px; font-size:11px; color:#6b7280; text-align:center;">
+            Track online: ${escapeReceiptHtml(
+              `${process.env.NEXT_PUBLIC_APP_URL || "https://crosscartglobal.com"}/ship-and-track/track-shipment?trackId=${trackingData.trackId}`
+            )}
+            <br/>This is a system-generated receipt from CrossCart Global Int Express.
+          </p>
+        </body>
+      </html>
+    `;
+
+    const win = window.open("", "_blank", "width=800,height=900");
+    if (!win) return;
+    win.document.write(receiptHtml);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 300);
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "created":
@@ -472,7 +622,10 @@ const TrackShipmentContent = () => {
                           ? "Sending..."
                           : "Get Shipment Update by Email"}
                       </button>
-                      <button className="border-2 border-[#12352A] text-[#12352A] py-2 px-6 rounded-lg hover:bg-[#12352A] hover:text-white transition-colors font-semibold">
+                      <button
+                        onClick={handleDownloadReceipt}
+                        className="border-2 border-[#12352A] text-[#12352A] py-2 px-6 rounded-lg hover:bg-[#12352A] hover:text-white transition-colors font-semibold"
+                      >
                         Download Receipt
                       </button>
                       <button className="border-2 border-gray-300 text-gray-700 py-2 px-6 rounded-lg hover:bg-section transition-colors font-semibold">
