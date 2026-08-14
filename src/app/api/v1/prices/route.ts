@@ -161,7 +161,8 @@ export async function GET(req: NextRequest) {
 
     const finalPrice = prices.map((price) => ({
       ...price,
-      rate: price.rate.map((rate) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rate: price.rate.map((rate: any) => {
         const { profitPercentage, ...rest } = rate;
         return rest;
       }),
