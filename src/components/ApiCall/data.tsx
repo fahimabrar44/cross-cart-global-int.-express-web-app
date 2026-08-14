@@ -53,6 +53,7 @@ export const AdminData = {
       icon: BadgeDollarSign,
       items: [
         { title: "Countrys", url: "/dashboard/rate-charts/countrys" },
+        { title: "Zones", url: "/dashboard/rate-charts/zones" },
         { title: "Rate Charts", url: "/dashboard/rate-charts" },
         { title: "Address Book", url: "/dashboard/rate-charts/address" },
       ],
@@ -184,6 +185,7 @@ export const ModeratorData = {
       icon: BadgeDollarSign,
       items: [
         { title: "Countrys", url: "/dashboard/rate-charts/countrys" },
+        { title: "Zones", url: "/dashboard/rate-charts/zones" },
         { title: "Rate Charts", url: "/dashboard/rate-charts" },
         { title: "Address Book", url: "/dashboard/rate-charts/address" },
       ],

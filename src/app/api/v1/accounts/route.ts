@@ -2,6 +2,7 @@ import connectDB from "@/config/db";
 import { User } from "@/server/models/User.model";
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/middleware/auth";
+import { errorResponse, successResponse } from "@/server/common/response";
 
 interface UserQuery {
   role?: string;
@@ -23,7 +24,7 @@ interface PaginationParams {
 // GET: fetch all users with filters (Admin only)
 export async function GET(req: NextRequest) {
   try {
-    // Verify authentication and admin role
+    // Verify authentication and admin/moderator role
     const authResult = await verifyAuth(req);
     if (!authResult.success) {
       return NextResponse.json(
@@ -33,9 +34,9 @@ export async function GET(req: NextRequest) {
     }
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    if (authResult.user.role !== 'admin') {
+    if (authResult.user.role !== 'admin' && authResult.user.role !== 'moderator') {
       return NextResponse.json(
-        { success: false, message: "Admin access required" },
+        { success: false, message: "Admin or moderator access required" },
         { status: 403 }
       );
     }
@@ -95,10 +96,17 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      message: "Users fetched successfully",
       page: paginationParams.page,
       limit: paginationParams.limit,
       total,
       totalPages: Math.ceil(total / paginationParams.limit),
+      meta: {
+        page: paginationParams.page,
+        limit: paginationParams.limit,
+        total,
+        totalPages: Math.ceil(total / paginationParams.limit),
+      },
       data: users,
     });
 
@@ -110,5 +118,87 @@ export async function GET(req: NextRequest) {
       { success: false, message: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+// POST: Create a user account (Admin only)
+export async function POST(req: NextRequest) {
+  try {
+    // Verify authentication and admin role
+    const authResult = await verifyAuth(req);
+    if (!authResult.success) {
+      return errorResponse({ status: 401, message: "Unauthorized", req });
+    }
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    if (authResult.user.role !== "admin") {
+      return errorResponse({ status: 403, message: "Admin access required", req });
+    }
+
+    await connectDB();
+
+    const body = await req.json();
+
+    const { name, email, phone, password, role, isActive, isVerified } = body as {
+      name?: string;
+      email?: string;
+      phone?: string;
+      password?: string;
+      role?: "user" | "admin" | "moderator";
+      isActive?: boolean;
+      isVerified?: boolean;
+    };
+
+    if (!name || !email || !phone || !password) {
+      return errorResponse({
+        status: 400,
+        message: "name, email, phone, and password are required",
+        req,
+      });
+    }
+
+    if (role && !["user", "admin", "moderator"].includes(role)) {
+      return errorResponse({ status: 400, message: "Invalid role", req });
+    }
+
+    const finalRole = role || "user";
+
+    const existingUser = await User.findOne({ $or: [{ email }, { phone }] })
+      .select("email phone")
+      .lean();
+
+    if (existingUser) {
+      return errorResponse({
+        status: 409,
+        message: "An account with this email or phone number already exists",
+        req,
+      });
+    }
+
+    const newUser = new User({
+      name: String(name).trim(),
+      email: String(email).toLowerCase().trim(),
+      phone: String(phone).trim(),
+      password,
+      role: finalRole,
+      isActive: typeof isActive === "boolean" ? isActive : true,
+      isVerified: typeof isVerified === "boolean" ? isVerified : false,
+    });
+
+    await newUser.save();
+
+    const created = await User.findById(newUser._id)
+      .select("-password -refreshToken")
+      .lean();
+
+    return successResponse({
+      status: 201,
+      message: "User created successfully",
+      data: created,
+      req,
+    });
+  } catch (error) {
+    console.error("POST /accounts error:", error);
+    return errorResponse({ status: 500, message: "Internal server error", error, req });
   }
 }

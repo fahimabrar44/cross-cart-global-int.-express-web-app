@@ -23,6 +23,13 @@ interface CountryOption {
   isActive?: boolean;
 }
 
+interface ZoneOption {
+  _id: string;
+  name: string;
+  code?: string;
+  isActive?: boolean;
+}
+
 interface OrderFormData {
   parcel: {
     from: string;
@@ -138,6 +145,7 @@ const CreateShipment = () => {
   });
 
   const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [zones, setZones] = useState<ZoneOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<ApiResponse | null>(null);
   const [error, setError] = useState("");
@@ -161,6 +169,22 @@ const CreateShipment = () => {
       }
     };
     fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    const fetchZones = async () => {
+      try {
+        const response = await getRequestSend<ZoneOption[]>(
+          `${ROOT_API}zones?isActive=true&limit=100&sortBy=name&sortOrder=asc`
+        );
+        if (response.status === 200 && response.data) {
+          setZones(response.data);
+        }
+      } catch {
+        // Zones are optional for the form
+      }
+    };
+    fetchZones();
   }, []);
 
   const serviceTypes = [
@@ -371,7 +395,7 @@ const CreateShipment = () => {
     if (!parcel.receiver.phone.trim()) return "Receiver phone is required";
     if (!parcel.receiver.address.address.trim())
       return "Receiver address is required";
-    if (!parcel.to.trim()) return "Destination country is required";
+    if (!parcel.to.trim()) return "Destination zone is required";
 
     if (!parcel.weight.trim()) return "Package weight is required";
 
@@ -776,7 +800,7 @@ const CreateShipment = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Country *
+                        Destination Zone *
                       </label>
                       <select
                         value={formData.parcel.to}
@@ -789,10 +813,10 @@ const CreateShipment = () => {
                         }
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                       >
-                        <option value="">Select destination country</option>
-                        {countries.map((country) => (
-                          <option key={country._id} value={country._id}>
-                            {country.name}
+                        <option value="">Select destination zone</option>
+                        {zones.map((zone) => (
+                          <option key={zone._id} value={zone._id}>
+                            {zone.name}
                           </option>
                         ))}
                       </select>

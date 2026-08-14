@@ -344,6 +344,18 @@ export interface Country {
   updatedAt: string;
 }
 
+export interface Zone {
+  _id: string;
+  name: string;
+  code?: string;
+  countryIds: string[];
+  countries?: Country[];
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PriceChart {
   from: string;
   to: string;

@@ -89,11 +89,6 @@ const ourCompany = [
     title: "Our Work Process",
     link: "/about/our-work-process",
   },
-  {
-    id: 1234513890,
-    title: "Coverage Area",
-    link: "/about/coverage-area",
-  },
   
   {
     id: 12342457,

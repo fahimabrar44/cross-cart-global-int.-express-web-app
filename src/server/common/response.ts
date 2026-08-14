@@ -8,6 +8,7 @@ type DebugInfo = {
 };
 
 type BasePayload = {
+  success: boolean;
   status: string;
   message: string;
   timestamp: string;
@@ -71,6 +72,7 @@ function buildPayload(options: {
   const now = Date.now();
   
   const payload: BasePayload = {
+    success: status >= 200 && status < 300,
     status: status.toString(),
     message,
     timestamp: new Date(now).toISOString(),

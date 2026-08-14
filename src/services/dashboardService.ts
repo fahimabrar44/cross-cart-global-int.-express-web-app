@@ -35,7 +35,7 @@ export class UserService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static async getUserOrders(phone: string): Promise<ApiResponse<any[]>> {
-    return apiService.get(`/accounts/${phone}/order`);
+    return apiService.get(`/accounts/${phone}/orders`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,7 +80,7 @@ export class OrderService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static async updateOrderPayment(orderId: string, data: any): Promise<ApiResponse<any>> {
-    return apiService.put(`/orders/${orderId}/payment`, data);
+    return apiService.post(`/orders/${orderId}/payment`, data);
   }
 }
 

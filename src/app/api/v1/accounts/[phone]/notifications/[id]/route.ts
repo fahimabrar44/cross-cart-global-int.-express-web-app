@@ -37,7 +37,7 @@ export async function GET(
     const user = await User.findOne({ phone });
     if (!user) return errorResponse({ status: 404, message: "User not found", req });
 
-    const notification = await Notification.findOne({ _id: id, user: user._id }).populate("user").lean();
+    const notification = await Notification.findOne({ _id: id, userId: user._id }).populate("userId").lean();
     if (!notification) return errorResponse({ status: 404, message: "Notification not found", req });
 
     return successResponse({ status: 200, message: "Notification fetched", data: notification, req });
@@ -81,12 +81,12 @@ export async function PUT(
 
     const body: { read?: boolean; title?: string; message?: string } = await req.json();
     const updateData: any = {};
-    if (body.read !== undefined) updateData.read = body.read;
+    if (body.read !== undefined) updateData.isRead = body.read;
     if (body.title) updateData.title = body.title;
     if (body.message) updateData.message = body.message;
 
     const updatedNotification = await Notification.findOneAndUpdate(
-      { _id: id, user: user._id },
+      { _id: id, userId: user._id },
       { $set: updateData },
       { new: true }
     );
@@ -133,12 +133,12 @@ export async function PATCH(
 
     const body: { read?: boolean; title?: string; message?: string } = await req.json();
     const updateData: any = {};
-    if (body.read !== undefined) updateData.read = body.read;
+    if (body.read !== undefined) updateData.isRead = body.read;
     if (body.title) updateData.title = body.title;
     if (body.message) updateData.message = body.message;
 
     const updatedNotification = await Notification.findOneAndUpdate(
-      { _id: id, user: user._id },
+      { _id: id, userId: user._id },
       { $set: updateData },
       { new: true }
     );
@@ -183,7 +183,7 @@ export async function DELETE(
     const user = await User.findOne({ phone });
     if (!user) return errorResponse({ status: 404, message: "User not found", req });
 
-    const deletedNotification = await Notification.findOneAndDelete({ _id: id, user: user._id });
+    const deletedNotification = await Notification.findOneAndDelete({ _id: id, userId: user._id });
     if (!deletedNotification) return errorResponse({ status: 404, message: "Notification not found", req });
 
     return successResponse({ status: 200, message: "Notification deleted", data: deletedNotification, req });

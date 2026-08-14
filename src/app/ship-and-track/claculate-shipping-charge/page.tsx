@@ -15,6 +15,13 @@ interface CountryOption {
   isActive?: boolean;
 }
 
+interface ZoneOption {
+  _id: string;
+  name: string;
+  code?: string;
+  isActive?: boolean;
+}
+
 interface Rate {
   name: string;
   profitPercentage: number;
@@ -58,8 +65,9 @@ const WEIGHT_LABELS: Record<string, string> = {
 
 const CalculateShippingCharge = () => {
   const [countries, setCountries] = useState<CountryOption[]>([]);
-  const [fromCountry, setFromCountry] = useState("Bangladesh");
-  const [toCountry, setToCountry] = useState("");
+  const [zones, setZones] = useState<ZoneOption[]>([]);
+  const [fromCountry, setFromCountry] = useState("");
+  const [toZone, setToZone] = useState("");
   const [shipmentType, setShipmentType] = useState("b2b");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -73,6 +81,8 @@ const CalculateShippingCharge = () => {
         );
         if (response.status === 200 && Array.isArray(response.data)) {
           setCountries(response.data);
+          const bangladesh = response.data.find((c) => c.name === "Bangladesh");
+          setFromCountry(bangladesh?._id || response.data[0]?._id || "");
         }
       } catch {
         // countries are optional
@@ -82,26 +92,45 @@ const CalculateShippingCharge = () => {
   }, []);
 
   useEffect(() => {
-    if (countries.length > 0 && !toCountry) {
-      setToCountry(countries.find((c) => c.name === "United States")?._id || countries[0]?._id || "");
-    }
-  }, [countries, toCountry]);
+    const fetchZones = async () => {
+      try {
+        const response = await getRequestSend<ZoneOption[]>(
+          `${ROOT_API}zones?isActive=true&limit=100&sortBy=name&sortOrder=asc`
+        );
+        if (response.status === 200 && Array.isArray(response.data)) {
+          setZones(response.data);
+          if (!toZone) {
+            setToZone(response.data[0]?._id || "");
+          }
+        }
+      } catch {
+        // zones are optional
+      }
+    };
+    fetchZones();
+  }, [toZone]);
 
   const getCountryName = (id: string) =>
     countries.find((c) => c._id === id)?.name || "";
 
+  const getZoneName = (id: string) => zones.find((z) => z._id === id)?.name || "";
+
   const handleCalculate = async () => {
     setError("");
     setPriceData(null);
-    if (!toCountry) {
-      setError("Please select a destination country");
+    if (!fromCountry) {
+      setError("Please select an origin country");
+      return;
+    }
+    if (!toZone) {
+      setError("Please select a destination zone");
       return;
     }
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        fromName: getCountryName(fromCountry) || "Bangladesh",
-        toName: getCountryName(toCountry),
+        from: fromCountry,
+        to: toZone,
       });
       const response = await getRequestSend<PriceData[]>(
         `${ROOT_API}prices?${params.toString()}`
@@ -187,8 +216,8 @@ const CalculateShippingCharge = () => {
               Calculate Shipping Charges
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Select destination country and shipment type (B2B or B2C) to get
-              instant shipping quotes.
+              Select origin country, destination zone and shipment type (B2B
+              or B2C) to get instant shipping quotes.
             </p>
           </div>
 
@@ -216,29 +245,29 @@ const CalculateShippingCharge = () => {
                     onChange={(e) => setFromCountry(e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   >
-                    {countries.length === 0 && <option>Bangladesh</option>}
+                    {countries.length === 0 && <option value="">Select Country</option>}
                     {countries.map((c) => (
-                      <option key={c._id} value={c.name}>
+                      <option key={c._id} value={c._id}>
                         {c.name}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                {/* To Country */}
+                {/* To Zone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    To Country
+                    To Zone
                   </label>
                   <select
-                    value={toCountry}
-                    onChange={(e) => setToCountry(e.target.value)}
+                    value={toZone}
+                    onChange={(e) => setToZone(e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   >
-                    <option value="">Select Country</option>
-                    {countries.map((c) => (
-                      <option key={c._id} value={c._id}>
-                        {c.name}
+                    <option value="">Select Zone</option>
+                    {zones.map((z) => (
+                      <option key={z._id} value={z._id}>
+                        {z.name}
                       </option>
                     ))}
                   </select>
@@ -284,8 +313,8 @@ const CalculateShippingCharge = () => {
                   <div className="bg-soft-green border border-gray-200 rounded-lg p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-xl font-bold text-[#12352A]">
-                        {priceData.from?.name || fromCountry} →{" "}
-                        {priceData.to?.name || getCountryName(toCountry)}
+                        {priceData.from?.name || getCountryName(fromCountry)} →{" "}
+                        {priceData.to?.name || getZoneName(toZone)}
                       </h4>
                       <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full">
                         {shipmentType === "b2b" ? "B2B" : "B2C"}

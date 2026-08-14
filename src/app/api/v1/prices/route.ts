@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import connectDB from "@/config/db";
 import { Price } from "@/server/models/Price.model";
 import { Country } from "@/server/models/Country.model";
+import { Zone } from "@/server/models/Zone.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { Types } from "mongoose";
@@ -19,12 +20,24 @@ type GetQuery = {
   search?: string;
 };
 
+// Helper: resolve country id from name
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function resolveCountryId(name?: string): Promise<Types.ObjectId | null> {
   if (!name) return null;
   const country = await Country.findOne({ name: new RegExp(`^${name.trim()}$`, "i") }).lean().exec();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const id = (country as any)?._id;
+  if (!id) return null;
+  return new Types.ObjectId(String(id));
+}
+
+// Helper: resolve zone id from name (for destinations)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolveZoneId(name?: string): Promise<Types.ObjectId | null> {
+  if (!name) return null;
+  const zone = await Zone.findOne({ name: new RegExp(`^${name.trim()}$`, "i") }).lean().exec();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const id = (zone as any)?._id;
   if (!id) return null;
   return new Types.ObjectId(String(id));
 }
@@ -72,21 +85,20 @@ export async function GET(req: NextRequest) {
       query.from = countryId;
     }
     if (q.toName) {
-      const countryId = await resolveCountryId(q.toName);
-      if (!countryId) {
-        return successResponse({ status: 200, message: "Prices fetched successfully", data: [], meta: { page, limit, total: 0, totalPages: 0 }, req });
+      // Destination resolves to a Zone first, then falls back to a Country
+      const zoneId = await resolveZoneId(q.toName);
+      if (zoneId) {
+        query.to = zoneId;
+      } else {
+        const countryId = await resolveCountryId(q.toName);
+        if (!countryId) {
+          return successResponse({ status: 200, message: "Prices fetched successfully", data: [], meta: { page, limit, total: 0, totalPages: 0 }, req });
+        }
+        query.to = countryId;
       }
-      query.to = countryId;
     }
 
     if (q.rateName) query["rate.name"] = { $regex: q.rateName, $options: "i" };
-    if (q.search) {
-      const s = q.search.trim();
-      query.$or = [
-        { "from.country": { $regex: s, $options: "i" } },
-        { "to.country": { $regex: s, $options: "i" } },
-      ];
-    }
 
     const allowedSortFields = new Set(["createdAt", "updatedAt", "from", "to"]);
     const sortBy = allowedSortFields.has(q.sortBy || "") ? q.sortBy : "createdAt";

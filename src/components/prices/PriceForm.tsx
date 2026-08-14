@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { countryService } from "@/services/countryService";
-import { Country, PriceChart } from "@/types";
+import { zoneService } from "@/services/zoneService";
+import { Country, PriceChart, Zone } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -70,6 +71,7 @@ interface PriceFormProps {
 
 export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
   const [countries, setCountries] = useState<Country[]>([]);
+  const [zones, setZones] = useState<Zone[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const initialFrom = typeof (price as any)?.from === "string" ? (price as any).from : (price as any)?.from?._id ?? "";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,6 +94,13 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
     (async () => {
       const res = await countryService.getActiveCountries();
       if (res.status == 200) setCountries(res.data || []);
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const res = await zoneService.getActiveZones();
+      if (res.status == 200) setZones(res.data || []);
     })();
   }, []);
 
@@ -162,12 +171,17 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
                 value={form.getValues("to")}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select Destination" />
+                  <SelectValue placeholder="Select Destination Zone" />
                 </SelectTrigger>
                 <SelectContent>
-                  {countries.map((c) => (
-                    <SelectItem key={c._id} value={c._id}>
-                      {c.name}
+                  {zones.length === 0 && (
+                    <SelectItem value="__none__" disabled>
+                      No active zones. Add zones first.
+                    </SelectItem>
+                  )}
+                  {zones.map((z) => (
+                    <SelectItem key={z._id} value={z._id}>
+                      {z.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

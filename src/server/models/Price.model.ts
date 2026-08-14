@@ -1,4 +1,4 @@
-import { Document, Schema, model, models } from "mongoose";
+import { Document, Schema, model, models, Types } from "mongoose";
 
 interface IPriceCategory {
   gm500?: number;
@@ -32,9 +32,11 @@ interface IRate {
 }
 
 export interface IPrice extends Document {
-  from: { id: string; country: string };
-  to: { id: string; country: string };
+  from: Types.ObjectId; // Origin Country
+  to: Types.ObjectId; // Destination Zone
   rate: IRate[];
+  isActive: boolean;
+  deactivatedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,14 +80,16 @@ const rateSchema = new Schema<IRate>(
 
 const priceSchema = new Schema<IPrice>(
   {
-    from: { type: Schema.Types.ObjectId, ref: "Country", default: null },
-    to: { type: Schema.Types.ObjectId, ref: "Country", default: null },
+    from: { type: Schema.Types.ObjectId, ref: "Country", default: null, index: true },
+    to: { type: Schema.Types.ObjectId, ref: "Zone", default: null, index: true },
     rate: { type: [rateSchema], default: [] },
+    isActive: { type: Boolean, default: true, index: true },
+    deactivatedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
 
-priceSchema.index({ "from.country": 1, "to.country": 1 });
+priceSchema.index({ from: 1, to: 1 });
 priceSchema.index({ "rate.name": 1 });
 priceSchema.index({ createdAt: -1 });
 // priceSchema.index({ "rate.price.gm500": 1, "rate.price.kg6to10": 1 }); // Example index for specific price fields

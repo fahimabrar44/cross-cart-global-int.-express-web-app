@@ -29,6 +29,7 @@
     "start": "next start",
     "lint": "next lint",
     "check-types": "tsc --noEmit",
+    "seed:zones": "node scripts/seed-zones.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {

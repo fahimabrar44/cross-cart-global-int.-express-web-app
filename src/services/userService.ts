@@ -87,7 +87,7 @@ class UserService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getUserOrders(phone: string): Promise<ApiResponse<any[]>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return api.get<any[]>(`${this.baseEndpoint}/${phone}/order`);
+    return api.get<any[]>(`${this.baseEndpoint}/${phone}/orders`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

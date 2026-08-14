@@ -61,6 +61,49 @@ export const PUT = createModeratorHandler(async ({ req }) => {
   }
 });
 
+// PATCH: Partial update (e.g., toggle isActive) — Moderator/admin only
+export const PATCH = createModeratorHandler(async ({ req }) => {
+  try {
+    await connectDB();
+
+    const id = extractId(req);
+
+    if (!Types.ObjectId.isValid(id)) return errorResponse({ status: 400, message: "Invalid ID", req });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const body = (await req.json()) as any;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const setFields: any = {};
+
+    if (typeof body.isActive === "boolean") {
+      setFields.isActive = body.isActive;
+      setFields.deactivatedAt = body.isActive ? null : new Date();
+    }
+    if (body.from && Types.ObjectId.isValid(body.from)) setFields.from = body.from;
+    if (body.to && Types.ObjectId.isValid(body.to)) setFields.to = body.to;
+    if (body.rate && Array.isArray(body.rate)) setFields.rate = body.rate;
+
+    if (Object.keys(setFields).length === 0) {
+      return errorResponse({ status: 400, message: "No update fields provided", req });
+    }
+
+    const price = await Price.findByIdAndUpdate(
+      id,
+      { $set: setFields },
+      { new: true, runValidators: true }
+    ).lean();
+
+    if (!price) return errorResponse({ status: 404, message: "Price not found", req });
+
+    return successResponse({ status: 200, message: "Price updated successfully", data: price, req });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Failed to update price";
+    return errorResponse({ status: 500, message: msg, error, req });
+  }
+});
+
+// DELETE - remove a price by ID
 export const DELETE = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();

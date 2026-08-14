@@ -48,11 +48,11 @@ export const SINGLE_ACCOUNT_SINGLE_NOTIFICATIONS = (
 export const SINGLE_ACCOUNT_OFFER = (phone: string) =>
   `${ROOT_API}accounts/${phone}/offers`;
 export const SINGLE_ACCOUNT_ORDER_API = (phone: string) =>
-  `${ROOT_API}accounts/${phone}/order`;
+  `${ROOT_API}accounts/${phone}/orders`;
 export const SINGLE_ACCOUNT_SINGLE_ORDER_API = (
   phone: string,
   orderId: string
-) => `${ROOT_API}accounts/${phone}/order/${orderId}`;
+) => `${ROOT_API}accounts/${phone}/orders/${orderId}`;
 export const ACCOUNT_SIGNIN_HISTORY_API = (phone: string) =>
   `${ROOT_API}accounts/${phone}/sigin-historys`;
 export const ACCOUNT_NOTIFICATIONS_API = (phone: string) =>

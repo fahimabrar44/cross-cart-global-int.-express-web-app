@@ -161,6 +161,112 @@ export const PUT = createAuthHandler(async ({ req, user }) => {
   }
 });
 
+// PATCH: Update order status (admin/moderator any order, users only their own)
+const ALLOWED_STATUSES = new Set([
+  "pending",
+  "confirmed",
+  "picked-up",
+  "in-transit",
+  "out-for-delivery",
+  "delivered",
+  "cancelled",
+  "returned",
+]);
+
+export const PATCH = createAuthHandler(async ({ req, user }) => {
+  try {
+    await connectDB();
+
+    const url = new URL(req.url);
+    const orderId = url.pathname.split('/').pop();
+
+    if (!orderId || !Types.ObjectId.isValid(orderId)) {
+      return errorResponse({
+        status: 400,
+        message: "Invalid order ID",
+        req,
+      });
+    }
+
+    const body = await req.json();
+    const { status, notes } = body as { status?: string; notes?: string };
+
+    if (status === undefined && notes === undefined) {
+      return errorResponse({
+        status: 400,
+        message: "At least one of status or notes is required",
+        req,
+      });
+    }
+
+    if (status !== undefined && !ALLOWED_STATUSES.has(status)) {
+      return errorResponse({
+        status: 400,
+        message: `Invalid status. Allowed: ${[...ALLOWED_STATUSES].join(", ")}`,
+        req,
+      });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const query: any = { _id: new Types.ObjectId(orderId) };
+
+    // Users can only update their own orders
+    if (user?.role === "user") {
+      query.$or = [
+        { "parcel.sender.phone": user.phone },
+        { "parcel.sender.email": user.email }
+      ];
+    }
+
+    const existingOrder = await Order.findOne(query);
+    if (!existingOrder) {
+      return errorResponse({
+        status: 404,
+        message: "Order not found or access denied",
+        req,
+      });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateSet: any = {};
+    if (status !== undefined) updateSet.status = status;
+    if (notes !== undefined) updateSet["parcel.notes"] = notes;
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      query,
+      { $set: updateSet },
+      { new: true, runValidators: true }
+    ).lean();
+
+    // Sync status change to tracking timeline (moderator/admin only)
+    if (status !== undefined && user?.role !== "user") {
+      try {
+        await syncOrderToTrack({
+          orderId: orderId,
+          status,
+          updatedBy: user?.id || null,
+          location: {
+            city: existingOrder.parcel?.receiver?.address?.city || "",
+            country: existingOrder.parcel?.receiver?.address?.country || "",
+          },
+        });
+      } catch (syncErr) {
+        console.error("Failed to sync order status to track:", syncErr);
+      }
+    }
+
+    return successResponse({
+      status: 200,
+      message: "Order status updated successfully",
+      data: updatedOrder,
+      req,
+    });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Failed to update order status";
+    return errorResponse({ status: 500, message: msg, error, req });
+  }
+});
+
 // DELETE: Only Admin can delete orders
 export const DELETE = createAdminHandler(async ({ req, user }) => {
   try {
