@@ -3,7 +3,7 @@ or read our installation document. (go to lightswind.com/components/Installation
 npm i lightswind@latest*/
 
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import createGlobe from "cobe";
 import { cn } from "@/lib/utils"; 
 
@@ -67,6 +67,7 @@ const Globe: React.FC<GlobeProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const globeRef = useRef<any>(null); // To store the cobe globe instance
+  const [webglUnsupported, setWebglUnsupported] = useState(false);
 
   // Refs for interactive rotation and dragging state
   const phiRef = useRef(0);
@@ -79,6 +80,19 @@ const Globe: React.FC<GlobeProps> = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    // WebGL is required by cobe; if unavailable (blocklisted GPU, disabled
+    // hardware acceleration, headless/VM browsers) skip rendering instead of
+    // crashing the whole page.
+    const supported =
+      !!canvas.getContext("webgl2") ||
+      !!canvas.getContext("webgl") ||
+      !!canvas.getContext("experimental-webgl");
+    if (!supported) {
+      setWebglUnsupported(true);
+      return;
+    }
+    setWebglUnsupported(false);
 
     // Resolve color props to the [R, G, B] format required by cobe
     const resolvedBaseColor: [number, number, number] =
@@ -227,6 +241,10 @@ const Globe: React.FC<GlobeProps> = ({
     markerColor,
     glowColor,
   ]);
+
+  if (webglUnsupported) {
+    return null;
+  }
 
   return (
     <div
