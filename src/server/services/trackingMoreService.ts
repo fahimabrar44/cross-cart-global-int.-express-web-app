@@ -497,7 +497,7 @@ export function inferStatusFromText(description?: string): string {
   }
   // Customs
   if (
-    /customs|custom clearance|clearance processing|custom cleared|customs cleared|released from customs|clearance complete|clearance event/.test(
+    /customs|custom clearance|clearance processing|custom cleared|customs cleared|released from customs|clearance complete|clearance event|international shipment release|release .*import|import (release|clearance)/.test(
       t
     )
   ) {
