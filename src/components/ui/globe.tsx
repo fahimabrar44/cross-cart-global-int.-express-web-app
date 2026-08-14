@@ -505,15 +505,7 @@ const Globe: React.FC<GlobeProps> = (props) => {
       ) : (
         <CanvasGlobe
           {...props}
-          style={{
-            width: "100%", // Canvas takes full width of its parent (which is constrained)
-            height: "1500px", // Canvas takes full height of its parent (which is constrained)
-            maxWidth: "auto", // Limit max width to viewport height to ensure square aspect in landscape
-            maxHeight: "auto", // Limit max height to viewport width to ensure square aspect in portrait
-            aspectRatio: "1", // Force a 1:1 aspect ratio for the canvas element
-            display: "block", // Ensure canvas behaves as a block element
-            cursor: "grab", // Default cursor
-          }}
+          
         />
       )}
     </div>
