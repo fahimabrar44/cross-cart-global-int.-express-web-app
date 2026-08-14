@@ -433,27 +433,51 @@ export async function getTrackings(
 
 /**
  * Map a TrackingMore delivery_status to the local Track.status enum.
+ * Handles the vendor status vocabulary (incl. separators like "out_for_delivery"
+ * and "out for delivery") as well as the TM summary statuses.
  */
 export function mapTMDeliveryStatus(tmStatus?: string): string {
-  const s = (tmStatus || "").toLowerCase();
+  const s = (tmStatus || "")
+    .toLowerCase()
+    .replace(/[_\-/]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   switch (s) {
     case "pending":
-      return "pickup-pending";
+    case "picked":
+    case "picked up":
+    case "shipping information received":
     case "inforeceived":
-      return "created";
+      return "pickup-pending";
     case "transit":
+    case "in transit":
+    case "intransit":
+    case "on the way":
+    case "arriving":
       return "in-transit";
+    case "arrived":
+    case "arrived at facility":
+      return "arrived-at-hub";
+    case "customs":
+    case "custom clearance":
+    case "customs clearance":
+    case "customclearance":
+      return "customs-clearance";
     case "pickup":
+    case "outfordelivery":
+    case "out for delivery":
+    case "on vehicle for delivery":
       return "out-for-delivery";
     case "delivered":
       return "delivered";
     case "exception":
-      return "failed";
     case "undelivered":
-      return "failed";
-    case "expired":
-      return "failed";
     case "notfound":
+    case "not found":
+    case "expired":
+    case "undeliverable":
+    case "delivery failed":
+    case "failed":
       return "failed";
     case "pending_requery":
       return "pickup-pending";
@@ -463,70 +487,78 @@ export function mapTMDeliveryStatus(tmStatus?: string): string {
 }
 
 /**
- * When TrackingMore trackinfo events don't carry a delivery_status/status
- * field (very common with DHL and several other carriers), fall back to
- * inferring the pipeline stage from the description text.
+ * When TrackingMore trackinfo events don't carry a delivery_status field
+ * (common with DHL, FedEx, Aramex, UPS and several other carriers), fall back
+ * to inferring the pipeline stage from the canonical scan text used across
+ * the major global carriers.
  */
 export function inferStatusFromText(description?: string): string {
   const t = (description || "").toLowerCase();
   if (!t) return "created";
 
-  // Delivery complete
+  // Our own order-placement event ("Order has been placed and is being
+  // processed") must stay "created" — never misclassified as transit.
+  if (/^order has been placed|^order created|^order placed/.test(t)) {
+    return "created";
+  }
+
+  // ---- Delivery complete ----
   if (
-    /delivered|delivery completed|successful(ly)? delivered|signed for|delivered to recipient|delivery done/.test(
+    /delivered|delivery completed|successful(ly)? delivered|signed for|delivered to recipient|delivery done|final delivery/.test(
       t
     )
   ) {
     return "delivered";
   }
-  // Failed / exceptions / returns
+  // ---- Failed / exceptions / returns / address issues ----
   if (
-    /undeliverable|not delivered|delivery failed|failed delivery|return to sender|being returned|returned|exception|damaged|could not deliver|held .*customs.*unpaid|insufficient address|address problem|delivery attempted.*unsuccessful|attempted to deliver|delivery attempted|missed delivery|delivery rescheduled|rescheduled|not home|no such number|not available/.test(
+    /undeliverable|not delivered|delivery failed|failed delivery|return to sender|being returned|returning|returned|sent back|exception|damaged|could not deliver|held .*customs.*unpaid|insufficient address|address problem|address unknown|delivery attempted.*unsuccessful|attempted to deliver|delivery attempted|missed delivery|delivery rescheduled|rescheduled|not home|no such number|not available|unclaimed|delivery refused|refused|no delivery attempted|business closed|recipient not available|unable to deliver/.test(
       t
     )
   ) {
     return "failed";
   }
-  // Out for delivery
+  // ---- Out for delivery ----
   if (
-    /out for delivery|out with courier|with courier for delivery|on vehicle for delivery|out for shipment|scheduled for delivery|for delivery|ready for pickup|available for pickup|available for collection|delivery champion|doorstep|out on delivery|on the way to the customer|soon with .*customer|loaded on .*vehicle|loaded for delivery|loaded for depart/.test(
+    /out for delivery|out with courier|with courier for delivery|on vehicle for delivery|on delivery vehicle|loaded on .*vehicle|loaded for delivery|loaded for depart|out for shipment|scheduled for delivery|for delivery|ready for pickup|available for pickup|available for collection|delivery champion|doorstep|out on delivery|on the way to the customer|soon with .*customer/.test(
       t
     )
   ) {
     return "out-for-delivery";
   }
-  // Customs
+  // ---- Customs ----
   if (
-    /customs|custom clearance|clearance processing|custom cleared|customs cleared|released from customs|clearance complete|clearance event|international shipment release|release .*import|import (release|clearance)|available for clearance|awaiting clearance|at the clearing agency|customs hold|customs inspection/.test(
+    /customs|custom clearance|clearance processing|custom cleared|customs cleared|released from customs|clearance complete|clearance event|international shipment release|release .*import|import (release|clearance)|available for clearance|awaiting clearance|at the clearing agency|customs hold|customs inspection|customs pending|under customs/.test(
       t
     )
   ) {
     return "customs-clearance";
   }
-  // Arrived at a hub / sort facility / post office / transit office
+  // ---- Arrived at a hub / sort facility / depot / transit office ----
   if (
-    /arrived at .*(facility|hub|depot|station|terminal|center|centre|office|destination|sorting|post office|location)|arrived .*delivery facility|received at|reached .*(office|depot|facility|hub|station)|reached .*transit office|reached .*origin office|\bat .*(facility|hub|depot|sort facility|station|terminal|post office)\b|\barrived\b/.test(
+    /arrived at .*(facility|hub|depot|station|terminal|center|centre|office|destination|sorting|post office|location|airport)|arrived .*delivery facility|received at|reached .*(office|depot|facility|hub|station)|unload|unloaded|scanned at|\bat .*(facility|hub|depot|sort facility|station|terminal|post office)\b|\barrived\b/.test(
       t
     )
   ) {
     return "arrived-at-hub";
   }
-  // In transit / departed / en route
+  // ---- In transit / departed / en route ----
   if (
-    /departed|departure|in transit|transit to destination|en route|on the way|on its way|shipped|outbound|processed at|being processed|processing|handed over|tendered|forwarded|forwarded by|left .*(facility|hub|depot|office|station)|on the move|in transit company|processed through facility|transporting|arriving|destination scan|heading .*(to|for)|bound for/.test(
+    /departed|departure|in transit|transit to destination|en route|on the way|on its way|shipped|outbound|processed at|being processed|processing|handed over|tendered|forwarded|forwarded by|left .*(facility|hub|depot|office|station)|on the move|in transit company|processed through facility|transporting|arriving|destination scan|heading .*(to|for)|bound for|leaving|leaves|moved to|international dispatch|outbound delivery|dispatched|dispatched by|in transit to/.test(
       t
     )
   ) {
     return "in-transit";
   }
-  // Picked up / accepted / info received
+  // ---- Picked up / accepted / label created / info received ----
   if (
-    /accepted|picked up|pickup|received by carrier|shipment accepted|info received|label created|shipper created|manifest|pre-advice|information sent|shipment information|electronic shipping|collected from the shipper|collected|preparing your|preparing shipment|we'?re preparing/.test(
+    /accepted|picked up|pickup|received by carrier|shipment accepted|info received|information received|label created|label printed|shipper created|manifest|pre-advice|information sent|shipment information|electronic shipping|collected from the shipper|collected|preparing your|preparing shipment|we'?re preparing|usps awaiting item|pending shipment pickup|waiting for carrier|shipment picked/.test(
       t
     )
   ) {
     return "pickup-pending";
   }
+  // ---- Default ----
   return "created";
 }
 
