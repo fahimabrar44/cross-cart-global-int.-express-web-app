@@ -14,6 +14,10 @@ import {
 import {
   detectCourier,
   isTrackingMoreConfigured,
+  getTrackings,
+  createTracking,
+  extractTimelineEvents,
+  mapTMDeliveryStatus,
 } from "@/server/services/trackingMoreService";
 import { verifyApiKeyIfProvided } from "@/server/common/apiKeyAuth";
 
@@ -33,6 +37,97 @@ const normalizeCountry = async (value: string | unknown): Promise<string> => {
     return (country as any)?.name ?? value;
   }
   return value;
+};
+
+/**
+ * Live lookup of an arbitrary carrier tracking number via TrackingMore
+ * (no local Track needed). Returns a successResponse shaped like a Track
+ * (without an order) or null when nothing can be resolved.
+ */
+const lookupExternalTracking = async (
+  trackingNumber: string
+): Promise<NextResponse | null> => {
+  if (!trackingNumber || !(await isTrackingMoreConfigured())) return null;
+
+  try {
+    let courierCode = "";
+    const detected = await detectCourier(trackingNumber);
+    courierCode = detected?.[0]?.courier_code || "";
+
+    // getTrackings returns [] when not created yet (4102) — create below.
+    let tmTrackings = await getTrackings([trackingNumber], {
+      courierCode: courierCode || undefined,
+    });
+
+    if (!tmTrackings || tmTrackings.length === 0) {
+      const created = await createTracking({
+        tracking_number: trackingNumber,
+        courier_code: courierCode || undefined,
+      });
+      if (created?.tracking_number) {
+        tmTrackings = await getTrackings([created.tracking_number], {
+          courierCode: courierCode || undefined,
+        });
+      }
+    }
+
+    const tm = tmTrackings?.[0];
+    if (!tm) return null;
+
+    const history = extractTimelineEvents(tm)
+      .map((e) => ({
+        status: e.status,
+        description: e.description,
+        location: e.location,
+        timestamp: e.timestamp,
+        updatedBy: null,
+      }))
+      .sort(
+        (a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+
+    const currentStatus = tm.delivery_status
+      ? mapTMDeliveryStatus(tm.delivery_status)
+      : history.length
+        ? history[history.length - 1].status
+        : "created";
+
+    await logTrackSyncResult({
+      trackingNumber,
+      courier: courierCode,
+      source: "public",
+      status: "success",
+      added: history.length,
+      message: "Live external lookup (no local parcel)",
+    });
+
+    const data = {
+      trackId: trackingNumber,
+      currentStatus,
+      history,
+      estimatedDelivery: tm.scheduled_delivery_date || tm.estimated_delivery || null,
+      order: null,
+      live: true,
+      courier_code: courierCode,
+    };
+
+    return successResponse({
+      status: 200,
+      message: "Track fetched successfully (live)",
+      data,
+      req: undefined,
+    });
+  } catch (error) {
+    await logTrackSyncResult({
+      trackingNumber,
+      source: "public",
+      status: "failed",
+      message:
+        error instanceof Error ? error.message : "Live lookup failed",
+    });
+    return null;
+  }
 };
 
 export async function GET(
@@ -87,7 +182,13 @@ export async function GET(
       }
     }
 
-    if (!track) return errorResponse({ status: 404, message: "Track not found", req });
+    if (!track) {
+      // 3) No local parcel matched — try a LIVE TrackingMore lookup so users
+      //    can track any carrier number directly (even one never handed over).
+      const liveTrack = await lookupExternalTracking(trackID);
+      if (liveTrack) return liveTrack;
+      return errorResponse({ status: 404, message: "Track not found", req });
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let tracked = track as any;

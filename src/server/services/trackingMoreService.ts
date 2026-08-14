@@ -202,9 +202,12 @@ async function request<T>(
     const json = (await res.json().catch(() => ({}))) as any;
 
     if (json.meta && json.meta.code !== 200) {
-      throw new Error(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err: any = new Error(
         json.meta.message || `TrackingMore error (${json.meta.code})`
       );
+      err.code = json.meta.code;
+      throw err;
     }
     if (!res.ok) {
       throw new Error(`TrackingMore HTTP ${res.status}`);
@@ -285,10 +288,21 @@ export async function getTrackings(
   if (options.courierCode) params.set("courier_code", options.courierCode);
   if (options.lang) params.set("lang", options.lang);
 
-  const res = await request<TMTracking[]>(
-    `/trackings/get?${params.toString()}`
-  );
-  return Array.isArray(res.data) ? res.data : [];
+  try {
+    const res = await request<TMTracking[]>(
+      `/trackings/get?${params.toString()}`
+    );
+    return Array.isArray(res.data) ? res.data : [];
+  } catch (error) {
+    // TrackingMore returns 4102/4103 etc when a number hasn't been created
+    // yet in this account — that's a normal "empty" state, not a real error.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const code = (error as any)?.code;
+    if (code === 4102 || code === 4103 || code === 4104 || code === 4106) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 /**

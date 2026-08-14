@@ -441,20 +441,34 @@ export async function fetchAndStoreTracking(input: {
       };
     }
 
+    // getTrackings returns [] when the number hasn't been created yet (4102)
+    // so we transparently fall through to create below.
     let tmTrackings = await getTrackings([trackingNumber], {
       courierCode: carrier || undefined,
     });
 
     if (!tmTrackings || tmTrackings.length === 0) {
       // Not created yet on TrackingMore — create then fetch
-      const created = await createTracking({
-        tracking_number: trackingNumber,
-        courier_code: carrier || undefined,
-      });
-      if (created?.tracking_number) {
-        tmTrackings = await getTrackings([created.tracking_number], {
-          courierCode: carrier || undefined,
+      try {
+        const created = await createTracking({
+          tracking_number: trackingNumber,
+          courier_code: carrier || undefined,
         });
+        if (created?.tracking_number) {
+          tmTrackings = await getTrackings([created.tracking_number], {
+            courierCode: carrier || undefined,
+          });
+        }
+      } catch (error) {
+        return {
+          fetched: 0,
+          added: 0,
+          track,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to create tracking on TrackingMore.",
+        };
       }
     }
 
