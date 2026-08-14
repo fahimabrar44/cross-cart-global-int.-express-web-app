@@ -131,15 +131,18 @@ export async function POST(req: NextRequest): Promise<Response> {
         );
         succeeded += 1;
         addedEvents += (result as { added: number }).added;
-        if ((result as { added: number }).added > 0) {
+        // Log meaningful outcomes: new events merged, or a surfaced create
+        // failure (e.g. TrackingMore can't persist trackings for this account).
+        const message = String((result as { message: string }).message || "");
+        if ((result as { added: number }).added > 0 || message.startsWith("Create tracking failed")) {
           await logTrackSyncResult({
             trackId: t.trackId,
             trackingNumber,
             courier: carrier,
             source: "cron",
-            status: "success",
+            status: (result as { added: number }).added > 0 ? "success" : "failed",
             added: (result as { added: number }).added,
-            message: (result as { message: string }).message,
+            message,
           });
         }
       } catch (error) {

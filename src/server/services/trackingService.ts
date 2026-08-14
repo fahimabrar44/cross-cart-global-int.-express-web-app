@@ -4,6 +4,7 @@
 // TRACKING_API_URL, TRACKING_API_KEY, TRACKING_PROVIDER (greenweb-style / generic json)
 import { Track } from "@/server/models/Track.model";
 import { Order } from "@/server/models/Order.model";
+import { Country } from "@/server/models/Country.model";
 import { TrackSyncLog } from "@/server/models/TrackSyncLog.model";
 import { getSettingString } from "@/server/services/settingsService";
 
@@ -385,6 +386,57 @@ export async function logTrackSyncResult(input: {
 }
 
 /**
+ * Build a TrackingMore create-tracking payload enriched with the receiver's
+ * postal code + destination country. Several couriers (DPD Germany, DPD BE,
+ * etc.) REQUIRE tracking_postal_code — without it TrackingMore rejects the
+ * create with code 4122.
+ */
+async function buildCreateTrackingPayload(input: {
+  trackingNumber: string;
+  carrier?: string;
+  orderId?: unknown;
+}): Promise<Record<string, unknown>> {
+  const payload: Record<string, unknown> = {
+    tracking_number: input.trackingNumber,
+  };
+  if (input.carrier) payload.courier_code = input.carrier;
+  if (!input.orderId) return payload;
+
+  try {
+    const order = await Order.findById(input.orderId).select(
+      "parcel.receiver parcel.to"
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const receiver: any = (order as any)?.parcel?.receiver;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const address = receiver?.address || {};
+
+    const postal = String(address?.zipCode || "").trim();
+
+    let countryCode = "";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const countryField: any = address?.country || (order as any)?.parcel?.to;
+    if (countryField) {
+      if (typeof countryField === "string" && /^[A-Za-z]{2}$/.test(countryField)) {
+        countryCode = countryField;
+      } else if (countryField?.code) {
+        countryCode = String(countryField.code);
+      } else if (typeof countryField === "string" && countryField.length === 24) {
+        const c = await Country.findById(countryField).select("code").lean();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        countryCode = String((c as any)?.code || "");
+      }
+    }
+
+    if (postal) payload["tracking_postal_code"] = postal;
+    if (countryCode) payload["tracking_destination_country"] = countryCode;
+  } catch {
+    // enrichment must never break the create
+  }
+  return payload;
+}
+
+/**
  * Fetch tracking events from the configured carrier tracking API
  * and merge them into the local Track timeline.
  * Override behavior per provider via TRACKING_PROVIDER:
@@ -448,12 +500,16 @@ export async function fetchAndStoreTracking(input: {
     });
 
     if (!tmTrackings || tmTrackings.length === 0) {
-      // Not created yet on TrackingMore — create then fetch
+      // Not created yet on TrackingMore — create then fetch.
+      // Some couriers require the receiver postal code (+ destination country);
+      // enrich the payload from the order so those creates succeed.
       try {
-        const created = await createTracking({
-          tracking_number: trackingNumber,
-          courier_code: carrier || undefined,
+        const createPayload = await buildCreateTrackingPayload({
+          trackingNumber,
+          carrier,
+          orderId: track.order?._id ?? track.order,
         });
+        const created = await createTracking(createPayload);
         if (created?.tracking_number) {
           tmTrackings = await getTrackings([created.tracking_number], {
             courierCode: carrier || undefined,
@@ -466,7 +522,7 @@ export async function fetchAndStoreTracking(input: {
           track,
           message:
             error instanceof Error
-              ? error.message
+              ? `Create tracking failed: ${error.message}`
               : "Failed to create tracking on TrackingMore.",
         };
       }

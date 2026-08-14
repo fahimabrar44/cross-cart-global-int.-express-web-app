@@ -14,6 +14,7 @@ import {
 import {
   detectCourier,
   isTrackingMoreConfigured,
+  selectCourier,
   getTrackings,
   createTracking,
   extractTimelineEvents,
@@ -45,34 +46,87 @@ const normalizeCountry = async (value: string | unknown): Promise<string> => {
  * (without an order) or null when nothing can be resolved.
  */
 const lookupExternalTracking = async (
-  trackingNumber: string
+  trackingNumber: string,
+  req: NextRequest
 ): Promise<NextResponse | null> => {
   if (!trackingNumber || !(await isTrackingMoreConfigured())) return null;
 
   try {
-    let courierCode = "";
+    // detect may return several matches (e.g. "dpd" and "dpd-de" for DPD
+    // Germany) — try each until one produces a tracking result.
     const detected = await detectCourier(trackingNumber);
-    courierCode = detected?.[0]?.courier_code || "";
+    const couriers = (detected || [])
+      .map((c) => c?.courier_code)
+      .filter((c): c is string => Boolean(c));
 
-    // getTrackings returns [] when not created yet (4102) — create below.
-    let tmTrackings = await getTrackings([trackingNumber], {
-      courierCode: courierCode || undefined,
-    });
+    // Try the best-matched courier first (country match / no required fields),
+    // then keep trying the rest so a healthy account still resolves.
+    const best = await selectCourier(detected);
+    if (best && couriers.length > 1) {
+      couriers.sort((a, b) => (a === best ? -1 : b === best ? 1 : 0));
+    }
 
-    if (!tmTrackings || tmTrackings.length === 0) {
-      const created = await createTracking({
-        tracking_number: trackingNumber,
-        courier_code: courierCode || undefined,
-      });
-      if (created?.tracking_number) {
-        tmTrackings = await getTrackings([created.tracking_number], {
-          courierCode: courierCode || undefined,
+    let courierCode = "";
+    let tm: Awaited<ReturnType<typeof getTrackings>>[number] | undefined;
+    let lastCreateError = "";
+
+    for (const code of couriers.length ? couriers : [""]) {
+      courierCode = code;
+      try {
+        let tmTrackings = await getTrackings([trackingNumber], {
+          courierCode: code || undefined,
         });
+        if (tmTrackings && tmTrackings.length) {
+          tm = tmTrackings[0];
+          break;
+        }
+        const created = await createTracking({
+          tracking_number: trackingNumber,
+          courier_code: code || undefined,
+        });
+        if (created?.tracking_number) {
+          tmTrackings = await getTrackings([created.tracking_number], {
+            courierCode: code || undefined,
+          });
+          tm = tmTrackings?.[0];
+          if (tm) break;
+        }
+      } catch (error) {
+        lastCreateError = error instanceof Error ? error.message : String(error);
       }
     }
 
-    const tm = tmTrackings?.[0];
-    if (!tm) return null;
+    if (!tm) {
+      await logTrackSyncResult({
+        trackingNumber,
+        courier: courierCode,
+        source: "public",
+        status: "failed",
+        message: lastCreateError || "No courier produced a tracking result",
+      });
+
+      // 4050 is the empty-create marker from createTracking (account-level
+      // issue); 4122/4124 are courier-required-field problems. Show a precise,
+      // customer-friendly reason instead of a bare "Track not found".
+      if (lastCreateError) {
+        const marker =
+          typeof lastCreateError === "string" && lastCreateError.includes("no tracking object")
+            ? 4050
+            : lastCreateError.includes("required") || lastCreateError.includes("format")
+              ? 4122
+              : 0;
+        if (marker) {
+          return errorResponse({
+            status: 404,
+            message: marker === 4050
+              ? "Carrier lookup is temporarily unavailable for this number."
+              : lastCreateError,
+            req,
+          });
+        }
+      }
+      return null;
+    }
 
     const history = extractTimelineEvents(tm)
       .map((e) => ({
@@ -185,7 +239,7 @@ export async function GET(
     if (!track) {
       // 3) No local parcel matched — try a LIVE TrackingMore lookup so users
       //    can track any carrier number directly (even one never handed over).
-      const liveTrack = await lookupExternalTracking(trackID);
+      const liveTrack = await lookupExternalTracking(trackID, req);
       if (liveTrack) return liveTrack;
       return errorResponse({ status: 404, message: "Track not found", req });
     }
@@ -215,7 +269,9 @@ export async function GET(
           // 2) Resolve the courier (detect if not cached yet)
           if (!courierCode && (await isTrackingMoreConfigured())) {
             const detected = await detectCourier(trackingNumber);
-            courierCode = detected?.[0]?.courier_code || "";
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const destCountry = (order as any)?.parcel?.to?.code as string | undefined;
+            courierCode = await selectCourier(detected, destCountry);
             if (courierCode && order?._id) {
               await Order.findByIdAndUpdate(order._id, {
                 "handover_by.courier_code": courierCode,

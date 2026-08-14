@@ -250,6 +250,83 @@ export async function detectCourier(
   return [];
 }
 
+// /couriers/all payload is large; cache it briefly to avoid an extra API call
+// on every detect. 6-hour TTL keeps required-fields info fresh.
+const COURIERS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+let couriersCache: TMCourier[] | null = null;
+let couriersCacheLoadedAt = 0;
+
+async function getCouriersCached(): Promise<TMCourier[]> {
+  if (
+    couriersCache &&
+    Date.now() - couriersCacheLoadedAt < COURIERS_CACHE_TTL_MS
+  ) {
+    return couriersCache;
+  }
+  try {
+    const all = await getAllCouriers();
+    if (Array.isArray(all) && all.length) {
+      couriersCache = all;
+      couriersCacheLoadedAt = Date.now();
+    }
+  } catch {
+    // keep using any existing cache; never block courier resolution
+  }
+  return couriersCache || [];
+}
+
+/**
+ * Pick the best courier when detect returns several matches (common for DPD:
+ * "dpd" + "dpd-de" + "dpd-uk" ...). Priority:
+ *  1. a courier whose code matches the destination country ("dpd-de" for DE)
+ *  2. a courier that needs NO special required fields (e.g. no postal code)
+ *  3. the first detected courier
+ */
+export async function selectCourier(
+  detected: Array<{ courier_code?: string }>,
+  destinationCountryIso2?: string
+): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const codes = (detected || [])
+    .map((c) => c?.courier_code)
+    .filter((c): c is string => Boolean(c));
+  if (codes.length === 0) return "";
+  if (codes.length === 1) return codes[0];
+
+  const dest = (destinationCountryIso2 || "").toLowerCase();
+
+  // 1) destination-country match, e.g. code "dpd-de" for a DE parcel
+  if (dest) {
+    const countryMatch = codes.find((c) =>
+      c.toLowerCase().endsWith(`-${dest}`)
+    );
+    if (countryMatch) return countryMatch;
+  }
+
+  // 2) prefer a courier with no mandatory special fields so the create won't
+  //    be rejected for missing postal codes etc.
+  try {
+    const all = await getCouriersCached();
+    if (all.length) {
+      const required = new Map(
+        all.map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (c) => [c.courier_code, (c.tracking_required_fields || []) as string[]]
+        )
+      );
+      const noRequired = codes.find(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (c) => !(required.get(c) || ([] as string[])).length
+      );
+      if (noRequired) return noRequired;
+    }
+  } catch {
+    // fall through to first candidate
+  }
+
+  return codes[0];
+}
+
 /**
  * POST /trackings/create — create a tracking (realtime query).
  * Falls back to POST /trackings for accounts/API revisions where the
@@ -269,19 +346,47 @@ export async function createTracking(
       method: "POST",
       body: payload,
     });
-    return pickData(res.data);
+    const created = pickData(res.data);
+    if (created?.tracking_number) return created;
+    // Success HTTP but no tracking object — account cannot persist creates.
+    return handleEmptyCreate(payload);
   } catch (error) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const code = (error as any)?.code;
-    if (code !== 4130) throw error;
-
-    // Fallback endpoint (current TrackingMore v4 route)
-    const fallback = await request<TMTracking | TMTracking[]>("/trackings", {
-      method: "POST",
-      body: payload,
-    });
-    return pickData(fallback.data);
+    // /trackings/create is the legacy/deprecated path on some API revisions and
+    // is rejected with 413x even for perfectly valid fields — fall back.
+    if (typeof code === "number" && code >= 4130 && code < 4140) {
+      const fallback = await request<TMTracking | TMTracking[]>("/trackings", {
+        method: "POST",
+        body: payload,
+      });
+      const created = pickData(fallback.data);
+      if (created?.tracking_number) return created;
+      return handleEmptyCreate(payload);
+    }
+    throw error;
   }
+}
+
+/**
+ * POST /trackings can answer 200 with an EMPTY data array when the account is
+ * not allowed to create trackings (unactivated/read-only plan). Turn that
+ * silent failure into a clear, catchable error so callers can surface it
+ * instead of appearing to succeed.
+ */
+async function handleEmptyCreate(payload: Record<string, unknown>): Promise<never> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const err: any = new Error(
+    `TrackingMore accepted the request but returned no tracking object. The API key/account may not be authorised to create trackings.`
+  );
+  err.code = 4199;
+  err.logPayload = {
+    tracking_number: payload.tracking_number,
+    courier_code: payload.courier_code,
+    tracking_postal_code: payload.tracking_postal_code,
+    tracking_destination_country: payload.tracking_destination_country,
+  };
+  throw err;
 }
 
 /**
