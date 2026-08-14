@@ -166,7 +166,7 @@ const HomeCustomerReviewSection = () => {
   };
 
   return (
-    <section className="py-34 pt-16 w-full h-auto bg-soft-green px-4">
+    <section className="py-15 w-full h-auto bg-soft-green px-4">
       <div className="container m-auto">
         <div className="lg:container m-auto">
           <div className="mt-5 space-y-4">
