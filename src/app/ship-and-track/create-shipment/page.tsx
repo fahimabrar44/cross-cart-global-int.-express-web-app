@@ -2,6 +2,8 @@
 
 import { getRequestSend, postRequestSend } from "@/components/ApiCall/methord";
 import { ROOT_API } from "@/components/ApiCall/url";
+import { useAuth } from "@/hooks/AuthContext";
+import { UserService } from "@/services/dashboardService";
 import PageHeader from "@/utilities/PageHeader";
 import {
   AlertCircle,
@@ -146,6 +148,9 @@ const CreateShipment = () => {
 
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [zones, setZones] = useState<ZoneOption[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<ApiResponse | null>(null);
   const [error, setError] = useState("");
@@ -186,6 +191,45 @@ const CreateShipment = () => {
     };
     fetchZones();
   }, []);
+
+  useEffect(() => {
+    if (!user?.phone) return;
+    UserService.getUserAddresses(user.phone)
+      .then((response) => {
+        if (response.status === 200 && response.data) {
+          setSavedAddresses(response.data);
+        }
+      })
+      .catch(() => {
+        // Saved addresses are optional; the form still works without them
+      });
+  }, [user]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const applySavedAddress = (addr: any) => {
+    const countryId =
+      addr.country && typeof addr.country === "object"
+        ? addr.country._id
+        : addr.country || "";
+    setFormData((prev) => ({
+      ...prev,
+      parcel: {
+        ...prev.parcel,
+        from: countryId || prev.parcel.from,
+        sender: {
+          ...prev.parcel.sender,
+          name: addr.name || prev.parcel.sender.name,
+          phone: addr.phone || prev.parcel.sender.phone,
+          address: {
+            address: addr.addressLine || "",
+            city: addr.city || "",
+            zipCode: addr.zipCode || "",
+            country: countryId,
+          },
+        },
+      },
+    }));
+  };
 
   const serviceTypes = [
     {
@@ -630,6 +674,38 @@ const CreateShipment = () => {
                     </h4>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {savedAddresses.length > 0 && (
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Use Saved Pickup Address
+                        </label>
+                        <select
+                          value=""
+                          onChange={(e) => {
+                            const selected = savedAddresses.find(
+                              (a) => a._id === e.target.value
+                            );
+                            if (selected) applySavedAddress(selected);
+                          }}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                        >
+                          <option value="">-- Select a saved address --</option>
+                          {savedAddresses.map((addr) => (
+                            <option key={addr._id} value={addr._id}>
+                              {addr.label
+                                ? `${addr.label} — ${addr.city} - ${addr.name}`
+                                : `${addr.city}, ${
+                                    addr.country?.name || addr.country || ""
+                                  }`}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Selecting a saved address fills in your pickup
+                          details automatically
+                        </p>
+                      </div>
+                    )}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Full Name *

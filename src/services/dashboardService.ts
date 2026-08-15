@@ -34,6 +34,11 @@ export class UserService {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static async createAddress(phone: string, data: any): Promise<ApiResponse<any>> {
+    return apiService.post(`/accounts/${phone}/address`, data);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static async getUserOrders(phone: string): Promise<ApiResponse<any[]>> {
     return apiService.get(`/accounts/${phone}/orders`);
   }

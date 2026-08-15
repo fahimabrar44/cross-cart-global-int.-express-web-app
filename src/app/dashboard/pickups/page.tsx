@@ -35,6 +35,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/AuthContext";
 import { RoleGuard } from "@/middleware/roleGuard";
 import { PickupService, UserService } from "@/services/dashboardService";
+import { countryService } from "@/services/countryService";
+import Link from "next/link";
 import {
   AlertCircle,
   CheckCircle,
@@ -90,6 +92,24 @@ export default function PickupsPage() {
     notes: "",
   });
 
+  const [addressMode, setAddressMode] = useState<"saved" | "new">("saved");
+  const [newAddress, setNewAddress] = useState({
+    label: "Home",
+    name: "",
+    phone: "",
+    addressLine: "",
+    area: "",
+    subCity: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "",
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [countries, setCountries] = useState<any[]>([]);
+
+  const addressLabels = ["Home", "Office", "Warehouse", "Pickup Point", "Billing Address", "Other"];
+
   const [editFormData, setEditFormData] = useState({
     preferredDate: "",
     preferredTimeSlot: "",
@@ -143,18 +163,71 @@ export default function PickupsPage() {
     }
   }, [user, fetchAddresses, fetchPickups]);
 
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        const response = await countryService.getActiveCountries();
+        if (response.status == 200 && response.data) {
+          setCountries(
+            Array.isArray(response.data) ? response.data : [response.data]
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load countries:", error);
+      }
+    };
+    loadCountries();
+  }, []);
+
   const handleCreatePickup = async () => {
     try {
       setCreating(true);
 
-      if (!createFormData.address || !createFormData.preferredDate) {
+      let addressId = createFormData.address;
+
+      if (addressMode === "new") {
+        if (
+          !newAddress.addressLine ||
+          !newAddress.city ||
+          !newAddress.country
+        ) {
+          toast.error("Please fill in the address, city, and country");
+          return;
+        }
+        if (!user?.phone) {
+          toast.error("Please log in to schedule a pickup");
+          return;
+        }
+        const addressResponse = await UserService.createAddress(user.phone, {
+          label: newAddress.label,
+          name: newAddress.name,
+          phone: newAddress.phone,
+          addressLine: newAddress.addressLine,
+          area: newAddress.area,
+          subCity: newAddress.subCity,
+          city: newAddress.city,
+          state: newAddress.state,
+          zipCode: newAddress.zipCode,
+          country: newAddress.country,
+        });
+        if (addressResponse.status == 200 && addressResponse.data?._id) {
+          addressId = addressResponse.data._id;
+        } else {
+          toast.error(
+            addressResponse.message || "Failed to save pickup address"
+          );
+          return;
+        }
+      }
+
+      if (!addressId || !createFormData.preferredDate) {
         toast.error("Please fill all required fields");
         return;
       }
 
       const payload = {
         user: user?.id,
-        address: createFormData.address,
+        address: addressId,
         preferredDate: new Date(createFormData.preferredDate).toISOString(),
         preferredTimeSlot: createFormData.preferredTimeSlot,
         notes: createFormData.notes,
@@ -171,7 +244,21 @@ export default function PickupsPage() {
           preferredTimeSlot: "",
           notes: "",
         });
+        setAddressMode("saved");
+        setNewAddress({
+          label: "Home",
+          name: "",
+          phone: "",
+          addressLine: "",
+          area: "",
+          subCity: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: "",
+        });
         fetchPickups();
+        fetchAddresses();
       } else {
         toast.error(response.message || "Failed to schedule pickup");
       }// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -452,23 +539,34 @@ export default function PickupsPage() {
   return (
     <RoleGuard allowedRoles={["admin", "moderator", "user"]}>
       <div className="space-y-6" data-testid="pickups-page">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Pickup Management
-            </h1>
-            <p className="text-muted-foreground">
-              Schedule and manage package pickups
-            </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Pickup Management
+              </h1>
+              <p className="text-muted-foreground">
+                Schedule and manage package pickups
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link href="/dashboard/settings/address">
+                <Button
+                  variant="outline"
+                  data-testid="manage-addresses-btn"
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Manage Addresses
+                </Button>
+              </Link>
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                data-testid="create-pickup-btn"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Schedule Pickup
+              </Button>
+            </div>
           </div>
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            data-testid="create-pickup-btn"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Schedule Pickup
-          </Button>
-        </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -589,35 +687,214 @@ export default function PickupsPage() {
             <div className="grid gap-4 py-4">
               <div>
                 <Label>Address *</Label>
-                <Select
-                  value={createFormData.address}
-                  onValueChange={(value) =>
-                    setCreateFormData({ ...createFormData, address: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select from saved addresses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {addresses.length > 0 ? (// eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      addresses.map((addr: any) => (
-                        <SelectItem key={addr._id} value={addr._id}>
-                          {addr.label
-                            ? `${addr.label} — ${addr.city} - ${addr.name}`
-                            : `${addr.city}, ${addr.country}`}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem disabled value="no-address">
-                        No saved addresses found
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2 mb-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={addressMode === "saved" ? "default" : "outline"}
+                    onClick={() => setAddressMode("saved")}
+                  >
+                    Use Saved Address
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={addressMode === "new" ? "default" : "outline"}
+                    onClick={() => setAddressMode("new")}
+                  >
+                    Enter New Address
+                  </Button>
+                </div>
 
-                <p className="text-xs text-muted-foreground mt-1">
-                  Choose one of your saved addresses
-                </p>
+                {addressMode === "saved" ? (
+                  <>
+                    <Select
+                      value={createFormData.address}
+                      onValueChange={(value) =>
+                        setCreateFormData({ ...createFormData, address: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select from saved addresses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {addresses.length > 0 ? (// eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          addresses.map((addr: any) => (
+                            <SelectItem key={addr._id} value={addr._id}>
+                              {addr.label
+                                ? `${addr.label} — ${addr.city} - ${addr.name}`
+                                : `${addr.city}, ${addr.country}`}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem disabled value="no-address">
+                            No saved addresses found
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Choose one of your saved addresses or enter a new one
+                    </p>
+                  </>
+                ) : (
+                  <div className="space-y-3 border rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label>Label</Label>
+                        <Select
+                          value={newAddress.label}
+                          onValueChange={(value) =>
+                            setNewAddress({ ...newAddress, label: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select label" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {addressLabels.map((l) => (
+                              <SelectItem key={l} value={l}>
+                                {l}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Contact Name</Label>
+                        <Input
+                          value={newAddress.name}
+                          onChange={(e) =>
+                            setNewAddress({ ...newAddress, name: e.target.value })
+                          }
+                          placeholder="Contact person name"
+                          data-testid="new-address-name-input"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Phone</Label>
+                      <Input
+                        value={newAddress.phone}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, phone: e.target.value })
+                        }
+                        placeholder="Contact phone number"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Address Line *</Label>
+                      <Input
+                        value={newAddress.addressLine}
+                        onChange={(e) =>
+                          setNewAddress({
+                            ...newAddress,
+                            addressLine: e.target.value,
+                          })
+                        }
+                        placeholder="House, road, area details"
+                        data-testid="new-address-line-input"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label>Area</Label>
+                        <Input
+                          value={newAddress.area}
+                          onChange={(e) =>
+                            setNewAddress({ ...newAddress, area: e.target.value })
+                          }
+                          placeholder="e.g., Mohakhali DOHS"
+                        />
+                      </div>
+                      <div>
+                        <Label>Sub City</Label>
+                        <Input
+                          value={newAddress.subCity}
+                          onChange={(e) =>
+                            setNewAddress({
+                              ...newAddress,
+                              subCity: e.target.value,
+                            })
+                          }
+                          placeholder="e.g., Dhaka North"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label>City *</Label>
+                        <Input
+                          value={newAddress.city}
+                          onChange={(e) =>
+                            setNewAddress({ ...newAddress, city: e.target.value })
+                          }
+                          placeholder="Enter city"
+                          data-testid="new-address-city-input"
+                        />
+                      </div>
+                      <div>
+                        <Label>State / Province</Label>
+                        <Input
+                          value={newAddress.state}
+                          onChange={(e) =>
+                            setNewAddress({
+                              ...newAddress,
+                              state: e.target.value,
+                            })
+                          }
+                          placeholder="Enter state"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <Label>ZIP Code</Label>
+                        <Input
+                          value={newAddress.zipCode}
+                          onChange={(e) =>
+                            setNewAddress({
+                              ...newAddress,
+                              zipCode: e.target.value,
+                            })
+                          }
+                          placeholder="e.g., 1206"
+                        />
+                      </div>
+                      <div>
+                        <Label>Country *</Label>
+                        <Select
+                          value={newAddress.country}
+                          onValueChange={(value) =>
+                            setNewAddress({ ...newAddress, country: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {countries.map((c) => (
+                              <SelectItem key={c._id} value={c._id}>
+                                {c.name} ({c.code})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      This address will be saved to your address book for
+                      future pickups.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>

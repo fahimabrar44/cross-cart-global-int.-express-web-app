@@ -223,7 +223,7 @@ const CalculateShippingCharge = () => {
 
           {/* Calculator Form */}
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-4">
+            <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-3">
               <div className="flex items-center mb-4">
                 <Calculator
                   className="w-8 h-8 text-primary mr-3"
@@ -297,7 +297,7 @@ const CalculateShippingCharge = () => {
                   className="bg-primary text-white py-4 px-12 rounded-lg hover:bg-[#087F4F] transition-colors font-bold text-lg disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
                 >
                   {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {loading ? "Calculating..." : "Calculate Shipping Rates"}
+                  {loading ? "Calculating..." : "Get Shipping Rates"}
                 </button>
               </div>
 
@@ -310,7 +310,7 @@ const CalculateShippingCharge = () => {
 
               {priceData && (
                 <div className="mt-8">
-                  <div className="bg-soft-green border border-gray-200 rounded-lg p-6">
+                  <div className="bg-soft-green border border-gray-200 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-xl font-bold text-[#12352A]">
                         {priceData.from?.name || getCountryName(fromCountry)} →{" "}

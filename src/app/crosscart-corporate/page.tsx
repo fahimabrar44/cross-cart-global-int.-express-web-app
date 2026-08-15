@@ -50,13 +50,13 @@ const CrossCartCorporate = () => {
   // ];
 
   const milestones = [
-    { year: "2024", title: "Company Founded", description: "Started with a vision to make international shipping affordable" },
-    { year: "2024", title: "First 100 Clients", description: "Achieved our first milestone of 100 satisfied customers" },
-    { year: "2024", title: "International Expansion", description: "Expanded services to 25+ countries worldwide" },
-    { year: "2024", title: "Corporate Solutions Launch", description: "Launched dedicated corporate and B2B services" },
-    { year: "2025", title: "Technology Integration", description: "Introduced API services and automated solutions" },
-    { year: "2025", title: "500+ Corporate Clients", description: "Reached 500+ corporate clients across various industries" },
-    { year: "2025", title: "Global Recognition", description: "Recognized as leading logistics provider in Bangladesh" }
+    { year: "2025", title: "Company Founded", description: "Started with a vision to make international shipping affordable" },
+    { year: "2025", title: "First 100 Clients", description: "Achieved our first milestone of 100 satisfied customers" },
+    { year: "2025", title: "International Expansion", description: "Expanded services to 25+ countries worldwide" },
+    { year: "2026", title: "Corporate Solutions Launch", description: "Launched dedicated corporate and B2B services" },
+    { year: "2026", title: "Technology Integration", description: "Introduced API services and automated solutions" },
+    { year: "2026", title: "500+ Corporate Clients", description: "Reached 500+ corporate clients across various industries" },
+    { year: "2026", title: "Global Recognition", description: "Recognized as leading logistics provider in Bangladesh" }
   ];
 
   const values = [
@@ -85,8 +85,8 @@ const CrossCartCorporate = () => {
   return (
     <div className="w-full h-auto bg-soft-green overflow-x-hidden">
       <PageHeader 
-        title="CROSSCART CORPORATE" 
-        subtitle="CROSSCART CORPORATE" 
+        title="CROSS CART CORPORATE" 
+        subtitle="CROSS CART CORPORATE" 
         mainLink="/crosscart-corporate" 
         subLink="/crosscart-corporate" 
       />

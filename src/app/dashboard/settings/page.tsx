@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/AuthContext";
 import { RoleGuard } from "@/middleware/roleGuard";
 import { UserService } from "@/services/dashboardService";
+import { UserAddressManager } from "@/components/addresses/UserAddressManager";
 import {
   BadgeCheck,
   Bell,
@@ -24,7 +25,7 @@ import {
   UploadCloud,
   User,
 } from "lucide-react";
-import { useEffect, useState, useCallback, ChangeEvent } from "react";
+import { useEffect, useState, ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -48,7 +49,6 @@ interface PrivacySettings {
 export default function SettingsPage() {
   const { user, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [userAddresses, setUserAddresses] = useState([]);
   const [notificationSettings, setNotificationSettings] =
     useState<NotificationSettings>({
       email: true,
@@ -137,33 +137,13 @@ export default function SettingsPage() {
     },
   });
 
-  const fetchUserAddresses = useCallback(async () => {
-    try {
-      if (!user?.phone) return;
-
-      const response = await UserService.getUserAddresses(user.phone);
-      if (response.status == 200) {
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-        setUserAddresses(response.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch addresses:", error);
-    }
-  }, [user]);
-
   useEffect(() => {
     if (user) {
       setValue("name", user.name);
       setValue("email", user.email);
       setValue("phone", user.phone);
-
-      // Load user-specific settings
-      if (user.phone) {
-        fetchUserAddresses();
-      }
     }
-  }, [user, setValue, fetchUserAddresses]);
+  }, [user, setValue]);
 
   const onSubmitProfile = async (data: ProfileFormData) => {
     try {
@@ -527,47 +507,7 @@ export default function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="addresses" className="space-y-6">
-            <Card data-testid="address-settings">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <MapPin className="h-5 w-5" />
-                  <span>Saved Addresses</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {userAddresses.length > 0 ? (
-                  <div className="space-y-4">{/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
-                    {userAddresses.map((address: any, index: number) => (
-                      <Card key={index} className="p-4">
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-start">
-                            <p className="font-medium">
-                              {address.label || "Address"}
-                            </p>
-                            <Badge variant="outline">
-                              {address.type || "Other"}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            {address.address}
-                            <br />
-                            {address.city}, {address.zipCode}
-                          </p>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">No saved addresses found</p>
-                    <p className="text-sm text-gray-400 mt-2">
-                      Addresses will appear here when you create orders
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <UserAddressManager />
           </TabsContent>
 
           <TabsContent value="advanced" className="space-y-6">

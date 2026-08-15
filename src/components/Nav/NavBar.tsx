@@ -172,7 +172,7 @@ const NavData = [
     items: [],
   },
   {
-    title: "CrossCart Corporate",
+    title: "Cross Cart Corporate",
     href: "/crosscart-corporate",
     items: [],
   },
