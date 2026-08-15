@@ -103,9 +103,11 @@ blogSchema.pre("validate", async function (next) {
   next();
 });
 
-// Index for search & filter
-blogSchema.index({ title: "text", content: "text", tags: 1 });
+// Indexes for search & filter (text index must NOT include array fields like tags)
+blogSchema.index({ title: "text", content: "text" });
+blogSchema.index({ tags: 1 });
 blogSchema.index({ category: 1, createdAt: -1 });
+blogSchema.index({ status: 1, createdAt: -1 });
 
 // Export Blog Model
 export const Blog = models.Blog || model<IBlog>("Blog", blogSchema);
