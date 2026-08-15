@@ -6,9 +6,10 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/dashboard", "/auth"],
+        disallow: ["/dashboard", "/auth", "/api"],
       },
     ],
     sitemap: "https://crosscartglobal.com/sitemap.xml",
+    host: "https://crosscartglobal.com",
   };
 }
