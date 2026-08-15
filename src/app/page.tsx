@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import HeroHomeSection from "@/components/Home/HeroHomeSection";
 import HomeCustomerReviewSection from "@/components/Home/HomeCustomerReviewSection";
 import HomeCustomerServiceSection from "@/components/Home/HomeCustomerServiceSection";
@@ -8,6 +8,7 @@ import HomeServiceQuickLinksSection from "@/components/Home/HomeServiceQuickLink
 const siteName = "Cross Cart Global International Express";
 const siteUrl = "https://crosscartglobal.com";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title:
     "International Courier Services in Bangladesh – Doorstep Pickup & Worldwide Delivery",

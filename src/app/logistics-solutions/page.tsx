@@ -3,6 +3,7 @@ import PageHeader from "@/utilities/PageHeader";
 import Link from "next/link";
 import { Truck, Globe, Shield, Clock, Users, CheckCircle } from "lucide-react";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Logistics Solutions",
   description:

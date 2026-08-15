@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import OurTeamMemberSection from "@/components/About/OurTeamMemberSection";
 import PageHeader from "@/utilities/PageHeader";
 import connectDB from "@/config/db";
 import { TeamMember } from "@/server/models/TeamMember.model";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Our Team",
   description:

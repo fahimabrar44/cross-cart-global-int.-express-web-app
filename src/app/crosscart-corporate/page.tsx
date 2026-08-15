@@ -3,6 +3,7 @@ import PageHeader from '@/utilities/PageHeader';
 import Link from "next/link";
 import { Building2, Users, Globe, Award, TrendingUp, Shield, CheckCircle, ArrowRight, Calendar, MapPin } from "lucide-react";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Corporate Solutions",
   description:

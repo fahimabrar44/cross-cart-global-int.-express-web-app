@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import PageHeader from "@/utilities/PageHeader";
 import { Briefcase, Clock, GraduationCap, HeartHandshake, MapPin, Sparkles } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Career",
   description:

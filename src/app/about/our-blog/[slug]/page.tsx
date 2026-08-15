@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageHeader from "@/utilities/PageHeader";
@@ -197,4 +197,5 @@ const BlogDetail = async ({ params }: BlogDetailPageProps) => {
   );
 };
 
+export const dynamic = "force-dynamic";
 export default BlogDetail;

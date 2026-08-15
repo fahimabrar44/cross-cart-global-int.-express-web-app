@@ -3,6 +3,7 @@ import PageHeader from '@/utilities/PageHeader';
 import Link from "next/link";
 import { Heart, Car, Laptop, ShirtIcon, Factory, Pill, CheckCircle, ArrowRight, Shield } from "lucide-react";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: 'Industry Solutions',
   description:

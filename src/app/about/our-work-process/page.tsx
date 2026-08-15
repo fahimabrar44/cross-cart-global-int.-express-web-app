@@ -1,8 +1,9 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import OurWorkProcessSection from '@/components/About/OurWorkProcessSection';
 import PageHeader from '@/utilities/PageHeader';
 import React from 'react'
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: 'Our Work Process',
   description:

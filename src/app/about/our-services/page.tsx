@@ -1,8 +1,9 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import OurServiceSection from '@/components/About/OurServiceSection';
 import PageHeader from '@/utilities/PageHeader'
 import React from 'react'
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: 'Our Services',
   description:

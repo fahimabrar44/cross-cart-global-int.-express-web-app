@@ -3,6 +3,7 @@ import PageHeader from "@/utilities/PageHeader";
 import React from 'react';
 import { Mail, Phone, MessageCircle, MapPin, Clock, HelpCircle, Shield, ThumbsUp } from "lucide-react";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Help & Support",
   description:

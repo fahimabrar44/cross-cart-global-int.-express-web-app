@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import OurServiceSection from "@/components/About/OurServiceSection";
 import OurStorySection from "@/components/About/OurStorySection";
 import OurTeamMemberSection from "@/components/About/OurTeamMemberSection";
@@ -10,6 +10,7 @@ import { TeamMember } from "@/server/models/TeamMember.model";
 const siteName = "Cross Cart Global International Express";
 const pageUrl = "https://crosscartglobal.com/about";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "About Us",
   description:

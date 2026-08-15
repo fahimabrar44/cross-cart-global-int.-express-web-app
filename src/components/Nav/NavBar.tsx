@@ -337,7 +337,7 @@ const NavBar = () => {
                   className={navigationMenuTriggerStyle()}
                 >
                   <Link
-                    href="/contact"
+                    href="/api-integration"
                     className="hover:text-primary font-semibold text-foreground "
                   >
                     API Integration

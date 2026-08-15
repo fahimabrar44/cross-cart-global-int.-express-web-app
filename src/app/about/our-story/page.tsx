@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import OurStorySection from "@/components/About/OurStorySection";
 import PageHeader from "@/utilities/PageHeader";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Our Story",
   description:

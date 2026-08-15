@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import PageHeader from "@/utilities/PageHeader";
 import React from 'react';
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Trust & Safety",
   description:
