@@ -378,7 +378,7 @@ const NavBar = () => {
                 href="/crosscart-corporate"
                 className="text-foreground hover:text-primary  font-semibold cursor-pointer"
               >
-                CrossCart Corporate
+                Cross Cart Corporate
               </Link>
             </li>
           </ul>

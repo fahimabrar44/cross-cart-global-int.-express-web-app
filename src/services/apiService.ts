@@ -110,7 +110,20 @@ export class ApiService {
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async get<T>(endpoint: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
-    const url = params ? `${endpoint}?${new URLSearchParams(params).toString()}` : endpoint;
+    // Drop undefined/null/empty params so URLSearchParams doesn't serialize
+    // them as the literal strings "undefined"/"null" (which the API would then
+    // misinterpret, e.g. isActive="undefined" -> isActive:false hiding everything).
+    const cleanParams = params
+      ? Object.fromEntries(
+          Object.entries(params).filter(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ([, v]: [string, any]) => v !== undefined && v !== null && v !== ""
+          )
+        )
+      : {};
+    const url = Object.keys(cleanParams).length
+      ? `${endpoint}?${new URLSearchParams(cleanParams).toString()}`
+      : endpoint;
     return this.makeRequest<T>(url, { method: "GET" });
   }
 

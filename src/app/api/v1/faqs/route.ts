@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const q: GetQuery = Object.fromEntries(url.searchParams.entries());
 
-    const page = Math.max(1, parseInt(q.page || "1", 10));
-    const limit = Math.max(1, Math.min(200, parseInt(q.limit || "100", 10)));
+    const page = Math.max(1, parseInt(q.page || "1", 10) || 1);
+    const limit = Math.max(1, Math.min(200, parseInt(q.limit || "100", 10) || 100));
     const skip = (page - 1) * limit;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
