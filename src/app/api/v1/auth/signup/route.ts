@@ -259,9 +259,12 @@ export const POST = createRateLimitedHandler(
       console.error("Signup API Error:", error);
       recordSignupAttempt(ipAddress);
 
+      const msg =
+        error instanceof Error ? error.message : "An error occurred during registration";
       return errorResponse({
         status: 500,
-        message: "An error occurred during registration. Please try again.",
+        message: `Registration failed: ${msg}`,
+        error,
         req,
       });
     }

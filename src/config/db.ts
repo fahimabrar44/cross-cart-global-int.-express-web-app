@@ -23,8 +23,11 @@ if (!cached) {
 }
 
 async function connectDB(): Promise<mongoose.Mongoose> {
-  if (cached.conn) {
-    return cached.conn; // Already connected
+  // Only reuse the cached connection if it is actually connected.
+  // On serverless platforms a cached connection can die between invocations;
+  // returning a dead socket makes writes (and eventually reads) fail.
+  if (cached.conn && mongoose.connection.readyState === 1) {
+    return cached.conn;
   }
 
   if (!cached.promise) {
@@ -42,7 +45,12 @@ async function connectDB(): Promise<mongoose.Mongoose> {
     });
   }
 
-  cached.conn = await cached.promise;
+  try {
+    cached.conn = await cached.promise;
+  } catch (err) {
+    cached.promise = null;
+    throw err;
+  }
   return cached.conn;
 }
 
