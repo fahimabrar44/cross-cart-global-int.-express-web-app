@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { models } from "mongoose";
 import { Document, Schema, Types, model } from "mongoose";
 
@@ -69,11 +70,34 @@ const blogSchema = new Schema<IBlog>(
   { timestamps: true }
 );
 
-// Slug auto-generation from title
-blogSchema.pre("save", function (next) {
-  if (this.isModified("title")) {
-    this.slug = this.title.toLowerCase().replace(/\s+/g, "-");
+// Slug auto-generation from title (handles special chars + duplicate titles)
+blogSchema.pre("save", async function (next) {
+  if (!this.isModified("title")) return next();
+
+  const base =
+    this.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-") || "post";
+
+  let candidate = base;
+  let suffix = 2;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const existing = await (
+      this.constructor as typeof mongoose.Model
+    ).findOne({
+      slug: candidate,
+      _id: { $ne: this._id },
+    });
+    if (!existing) break;
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
   }
+
+  this.slug = candidate;
   next();
 });
 

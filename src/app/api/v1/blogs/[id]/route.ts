@@ -1,6 +1,7 @@
 import connectDB from "@/config/db";
 import { errorResponse, successResponse } from "@/server/common/response";
 import { Blog } from "@/server/models/Blog.model";
+import { verifyAuth } from "@/middleware/auth";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
@@ -29,6 +30,18 @@ export async function GET(
 
     if (!blog) {
       return errorResponse({ status: 404, message: "Blog not found", req });
+    }
+
+    // Drafts/archived posts are only visible to staff (admin/moderator)
+    if (blog.status !== "published") {
+      const authResult = await verifyAuth(req);
+      const isStaff =
+        authResult.success &&
+        (authResult.user?.role === "admin" ||
+          authResult.user?.role === "moderator");
+      if (!isStaff) {
+        return errorResponse({ status: 404, message: "Blog not found", req });
+      }
     }
 
     return successResponse({
