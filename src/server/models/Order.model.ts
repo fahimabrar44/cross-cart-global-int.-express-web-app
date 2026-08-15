@@ -91,7 +91,6 @@ const handoverSchema = new Schema({
 // Delivery assignment sub-schema
 const assignmentSchema = new Schema({
   rider: { type: Schema.Types.ObjectId, ref: "Rider", default: null },
-  branch: { type: Schema.Types.ObjectId, ref: "Branch", default: null },
   assignedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
   assignedAt: { type: Date, default: null },
 });

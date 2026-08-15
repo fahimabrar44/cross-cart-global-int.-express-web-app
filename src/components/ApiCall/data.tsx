@@ -16,11 +16,9 @@ import {
   Settings2,
   UserStar,
   Truck,
-  Network,
   TicketPercent,
   UserPlus,
   FileDown,
-  ClipboardList,
 } from "lucide-react";
 
 // Navigation data for different user roles
@@ -83,12 +81,6 @@ export const AdminData = {
       items: [],
     },
     {
-      title: "Branches",
-      url: "/dashboard/branches",
-      icon: Network,
-      items: [],
-    },
-    {
       title: "Coupons",
       url: "/dashboard/coupons",
       icon: TicketPercent,
@@ -98,12 +90,6 @@ export const AdminData = {
       title: "Referrals",
       url: "/dashboard/referrals",
       icon: UserPlus,
-      items: [],
-    },
-    {
-      title: "Bulk Orders",
-      url: "/dashboard/bulk-orders",
-      icon: ClipboardList,
       items: [],
     },
     {
@@ -212,12 +198,6 @@ export const ModeratorData = {
       title: "Riders",
       url: "/dashboard/riders",
       icon: Truck,
-      items: [],
-    },
-    {
-      title: "Branches",
-      url: "/dashboard/branches",
-      icon: Network,
       items: [],
     },
     {

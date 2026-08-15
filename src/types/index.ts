@@ -178,7 +178,6 @@ export interface Parcel {
 
 export interface OrderAssignment {
   rider: string | null;
-  branch: string | null;
   assignedBy: string | null;
   assignedAt: string | null;
 }

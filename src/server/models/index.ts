@@ -6,7 +6,6 @@ import "./Rider.model";
 import "./Track.model";
 import "./Country.model";
 import "./Coupon.model";
-import "./Branch.model";
 import "./ApiConfig.model";
 import "./Settings.model";
 import "./Order.model";

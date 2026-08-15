@@ -6,8 +6,8 @@ import { createModeratorHandler } from "@/server/common/apiWrapper";
 
 /**
  * PUT /api/v1/orders/[id]/assignment?path suffix
- * Body: { rider?, branch? }
- * Assign a rider (and/or branch) to an order.
+ * Body: { rider? }
+ * Assign a rider to an order.
  */
 export const PUT = createModeratorHandler(async ({ req, user }) => {
   try {
@@ -29,10 +29,6 @@ export const PUT = createModeratorHandler(async ({ req, user }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (rider as any).status = "on-delivery";
       await rider.save();
-    }
-
-    if (body.branch) {
-      order.assignment.branch = body.branch;
     }
 
     if (user?.id) order.assignment.assignedBy = user.id as never;

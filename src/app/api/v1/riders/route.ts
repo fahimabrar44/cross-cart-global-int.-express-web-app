@@ -6,7 +6,6 @@ import { createModeratorHandler } from "@/server/common/apiWrapper";
 
 type GetQuery = {
   status?: string;
-  branch?: string;
   search?: string;
   page?: string;
   limit?: string;
@@ -26,7 +25,6 @@ export async function GET(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {};
     if (q.status) query.status = q.status;
-    if (q.branch) query.branch = q.branch;
     if (q.search) {
       const s = q.search.trim();
       query.$or = [
@@ -41,7 +39,6 @@ export async function GET(req: NextRequest) {
       .sort({ createdAt: -1 } as any)
       .skip(skip)
       .limit(limit)
-      .populate("branch")
       .lean();
 
     return successResponse({
@@ -76,7 +73,6 @@ export const POST = createModeratorHandler(async ({ req }) => {
       vehicleType: body.vehicleType || "bike",
       vehiclePlate: body.vehiclePlate || "",
       status: body.status || "available",
-      branch: body.branch || null,
       zones: Array.isArray(body.zones) ? body.zones : [],
       userId: body.userId || null,
       joiningDate: body.joiningDate ? new Date(body.joiningDate) : new Date(),

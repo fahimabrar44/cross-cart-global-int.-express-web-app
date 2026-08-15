@@ -8,7 +8,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     await connectDB();
     const { id } = await params;
-    const rider = await Rider.findById(id).populate("branch").lean();
+    const rider = await Rider.findById(id).lean();
     if (!rider) return errorResponse({ status: 404, message: "Rider not found", req });
     return successResponse({ status: 200, message: "Rider fetched successfully", data: rider, req });
   } catch (error: unknown) {
@@ -36,7 +36,6 @@ export const PUT = createModeratorHandler(async ({ req }) => {
       "vehicleType",
       "vehiclePlate",
       "status",
-      "branch",
       "zones",
       "userId",
     ];
@@ -47,7 +46,6 @@ export const PUT = createModeratorHandler(async ({ req }) => {
     }
 
     const updated = await Rider.findByIdAndUpdate(id, update, { new: true })
-      .populate("branch")
       .lean();
     if (!updated) return errorResponse({ status: 404, message: "Rider not found", req });
 

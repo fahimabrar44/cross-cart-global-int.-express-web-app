@@ -8,7 +8,6 @@ export interface IRider extends Document {
   vehicleType: "bike" | "cycle" | "van" | "car" | "walking";
   vehiclePlate?: string;
   status: "available" | "on-delivery" | "offline" | "blocked";
-  branch?: Types.ObjectId;
   zones: string[];
   userId?: Types.ObjectId;
   joiningDate: Date;
@@ -35,7 +34,6 @@ const riderSchema = new Schema<IRider>(
       enum: ["available", "on-delivery", "offline", "blocked"],
       default: "available",
     },
-    branch: { type: Schema.Types.ObjectId, ref: "Branch", default: null },
     zones: { type: [String], default: [] },
     userId: { type: Schema.Types.ObjectId, ref: "User", default: null },
     joiningDate: { type: Date, default: Date.now },
@@ -45,7 +43,7 @@ const riderSchema = new Schema<IRider>(
   { timestamps: true }
 );
 
-riderSchema.index({ status: 1, branch: 1 });
+riderSchema.index({ status: 1 });
 riderSchema.index({ zones: 1 });
 
 export const Rider = models.Rider || model<IRider>("Rider", riderSchema);
