@@ -3,6 +3,7 @@ import { User } from "@/server/models/User.model";
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/middleware/auth";
 import { errorResponse, successResponse } from "@/server/common/response";
+import bcrypt from "bcryptjs";
 
 interface UpdateUserBody {
   name?: string;
@@ -10,6 +11,7 @@ interface UpdateUserBody {
   role?: "user" | "admin" | "moderator";
   isActive?: boolean;
   isVerified?: boolean;
+  password?: string;
 }
 
 // GET: fetch account information by phone (self, admin, or moderator)
@@ -85,14 +87,27 @@ export async function PUT(
       return errorResponse({ status: 400, message: "Invalid role", req });
     }
 
-    // Ensure at least one field is provided for update
-    if (!body.name && !body.email && !body.role && body.isActive === undefined && body.isVerified === undefined) {
+    // Build a sanitized flat update object. `phone` is the lookup identifier and
+    // must not be changed here; unknown/extra fields are ignored.
+    const update: Record<string, unknown> = {};
+    if (body.name !== undefined) update.name = body.name;
+    if (body.email !== undefined) update.email = body.email;
+    if (body.role !== undefined) update.role = body.role;
+    if (body.isActive !== undefined) update.isActive = body.isActive;
+    if (body.isVerified !== undefined) update.isVerified = body.isVerified;
+    if (body.password) {
+      // findOneAndUpdate bypasses the pre("save") hook, so hash here (12 rounds,
+      // matching the signup flow) to avoid storing plaintext passwords.
+      update.password = await bcrypt.hash(body.password, 12);
+    }
+
+    if (Object.keys(update).length === 0) {
       return errorResponse({ status: 400, message: "No update fields provided", req });
     }
 
     const updatedUser = await User.findOneAndUpdate(
       { phone },
-      { $set: body },
+      { $set: update },
       { new: true, runValidators: true }
     ).select("-password -refreshTokens").lean();
 

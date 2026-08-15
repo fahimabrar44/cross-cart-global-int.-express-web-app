@@ -112,12 +112,16 @@ const userSchema = new Schema<IUser>(
       maxlength: [128, "Password must not exceed 128 characters"],
       select: false, // Don't return password by default
       validate: {
-        validator: function(v: string) {
-          // Only validate on new passwords (not on existing hashed ones)
-          if (this.isNew || this.isModified('password')) {
-            return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(v);
+        validator: function (v: string) {
+          if (!v) return true;
+          // During update validators `this` is the update context (no isModified/isNew).
+          // Only skip re-validation on document saves when the password was not changed.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const ctx = this as any;
+          if (typeof ctx?.isModified === "function") {
+            if (!ctx.isNew && !ctx.isModified("password")) return true;
           }
-          return true;
+          return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(v);
         },
         message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
       }
