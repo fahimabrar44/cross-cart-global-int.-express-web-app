@@ -2,19 +2,28 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { RoleGuard } from "@/middleware/roleGuard";
-import { ContentService } from "@/services/dashboardService";
-import { BookOpen, Mail, Plus } from "lucide-react";
+import { ContentService, TeamMemberService } from "@/services/dashboardService";
+import { BookOpen, Mail, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function ContentsPage() {
   const [blogCount, setBlogCount] = useState(0);
+  const [memberCount, setMemberCount] = useState<number | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
         const blogs = await ContentService.getBlogs({ limit: 1 });
         if (blogs.success) setBlogCount(blogs.meta?.total || 0);
+      } catch {
+        /* noop */
+      }
+      try {
+        const members = await TeamMemberService.getTeamMembers({
+          includeInactive: true,
+        });
+        if (members.success) setMemberCount((members.data as unknown[])?.length || 0);
       } catch {
         /* noop */
       }
@@ -36,6 +45,13 @@ export default function ContentsPage() {
       icon: <BookOpen className="h-6 w-6 text-primary" />,
       href: "/dashboard/contents/blogs",
       count: blogCount,
+    },
+    {
+      title: "Team Members",
+      description: "Add, edit and manage team members shown on the website",
+      icon: <Users className="h-6 w-6 text-primary" />,
+      href: "/dashboard/contents/team-members",
+      count: memberCount,
     },
   ];
 

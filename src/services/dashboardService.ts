@@ -199,6 +199,38 @@ export class ContentService {
   }
 }
 
+// Team Member Management Service
+export class TeamMemberService {
+  static async getTeamMembers(params?: {
+    includeInactive?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }): Promise<ApiResponse<any[]>> {
+    return apiService.get("/team-members", {
+      includeInactive: params?.includeInactive ? true : undefined,
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static async getTeamMember(memberId: string): Promise<ApiResponse<any>> {
+    return apiService.get(`/team-members/${memberId}`);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static async createTeamMember(data: any): Promise<ApiResponse<any>> {
+    return apiService.post("/team-members", data);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static async updateTeamMember(memberId: string, data: any): Promise<ApiResponse<any>> {
+    return apiService.put(`/team-members/${memberId}`, data);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static async deleteTeamMember(memberId: string): Promise<ApiResponse<any>> {
+    return apiService.delete(`/team-members/${memberId}`);
+  }
+}
+
 // Notification Service
 export class NotificationService {
   static async getNotifications(params?: {

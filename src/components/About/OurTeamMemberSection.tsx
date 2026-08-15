@@ -9,51 +9,23 @@ import {
   Users,
 } from "lucide-react";
 
-const OurTeamMemberSection = () => {
-  const leadership = [
-    {
-      id: 1,
-      name: "Alamin Hossain",
-      position: "Marque Associate",
-      image: "/alamin-hossin.jpg",
-      bio: "Dedicated associate handling parcel pickup and ensuring on-time delivery.",
-      experience: "2+ years in courier operations",
-      location: "Chittagong",
-      keyAchievement: "Successfully handled 1,500+ deliveries",
-      social: {
-        email: "fardin.al.foysal@crosscartglobal.com",
-        phone: "+8801622541719",
-      },
-    },
-    {
-      id: 2,
-      name: "Fardin Al Hasan",
-      position: "Marque Associate",
-      image: "/fardin-al-foysal.jpeg",
-      bio: "Focused on customer support and problem-solving to ensure smooth service.",
-      experience: "1+ years in customer support",
-      location: "Chittagong",
-      keyAchievement: "98% positive customer feedback",
-      social: {
-        email: "fardin.al.foysal@crosscartglobal.com",
-        phone: "+8801979226766",
-      },
-    },
-    {
-      id: 3,
-      name: "Intesar Tanvin",
-      position: "Marque Associate",
-      image: "/imtesar-tanvine.jpg",
-      bio: "Ensures seamless last-mile delivery and builds trust with clients.",
-      experience: "3+ years in delivery operations",
-      location: "Chittagong",
-      keyAchievement: "Best Delivery Associate 2024",
-      social: {
-        email: "fardin.al.foysal@crosscartglobal.com",
-        phone: "+8801863468546",
-      },
-    },
-  ];
+export interface TeamMemberItem {
+  name: string;
+  position: string;
+  image?: string;
+  bio?: string;
+  experience?: string;
+  location?: string;
+  keyAchievement?: string;
+  social?: { email?: string; phone?: string };
+}
+
+const OurTeamMemberSection = ({
+  members = [],
+}: {
+  members?: TeamMemberItem[];
+}) => {
+  const leadership = members;
 
   const departments = [
     {
@@ -163,19 +135,25 @@ const OurTeamMemberSection = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {leadership.map((leader) => (
+            {leadership.map((leader, idx) => (
               <div
-                key={leader.id}
+                key={leader.name + idx}
                 className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
               >
                 <div className="aspect-square">
-                  <Image
-                    src={leader.image}
-                    alt={leader.name}
-                    width={400}
-                    height={400}
-                    className="w-full h-full object-cover"
-                  />
+                  {leader.image ? (
+                    <Image
+                      src={leader.image}
+                      alt={leader.name}
+                      width={400}
+                      height={400}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-section text-gray-400">
+                      <Users className="w-16 h-16" />
+                    </div>
+                  )}
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-[#12352A] mb-1">
@@ -208,13 +186,13 @@ const OurTeamMemberSection = () => {
 
                   <div className="flex gap-3">
                     <a
-                      href={`tel:${leader.social.phone}`}
+                      href={`tel:${leader.social?.phone}`}
                       className="flex items-center gap-1 text-[#12352A] hover:text-primary transition-colors text-sm"
                     >
                       <Phone className="w-4 h-4" />
                       Call
                     </a>
-                    {leader.social.email && (
+                    {leader.social?.email && (
                       <a
                         href={`mailto:${leader.social.email}`}
                         className="text-[#12352A] hover:text-primary transition-colors text-sm"
