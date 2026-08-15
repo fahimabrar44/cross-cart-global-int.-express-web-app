@@ -197,6 +197,74 @@ class AuthApiService {
     });
   }
 
+  async forgotPassword(email: string) {
+    try {
+      const response = await fetch("/api/v1/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const responseText = await response.text();
+      let data;
+      if (responseText.trim()) {
+        data = JSON.parse(responseText);
+      } else {
+        data = { message: "Empty response from server" };
+      }
+
+      return {
+        success: response.ok,
+        status: response.status,
+        message: data.message || (response.ok ? "Success" : "Request failed"),
+        data: data.data || null,
+        meta: data.meta,
+      };
+    } catch (error) {
+      console.error("Forgot password API error:", error);
+      return {
+        success: false,
+        status: 500,
+        message: error instanceof Error ? error.message : "Network error",
+        data: null,
+      };
+    }
+  }
+
+  async resetPassword(token: string, password: string, confirmPassword: string) {
+    try {
+      const response = await fetch("/api/v1/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password, confirmPassword }),
+      });
+
+      const responseText = await response.text();
+      let data;
+      if (responseText.trim()) {
+        data = JSON.parse(responseText);
+      } else {
+        data = { message: "Empty response from server" };
+      }
+
+      return {
+        success: response.ok,
+        status: response.status,
+        message: data.message || (response.ok ? "Success" : "Request failed"),
+        data: data.data || null,
+        meta: data.meta,
+      };
+    } catch (error) {
+      console.error("Reset password API error:", error);
+      return {
+        success: false,
+        status: 500,
+        message: error instanceof Error ? error.message : "Network error",
+        data: null,
+      };
+    }
+  }
+
   async verifyEmail(email: string, code: string) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.makeRequest<{ user: any }>('/auth/email-verify', {

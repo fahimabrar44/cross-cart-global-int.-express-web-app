@@ -154,9 +154,9 @@ private renderTemplate(template: string | null, data: Record<string, any>): stri
     `${(process.env.PUBLIC_APP_URL || "").replace(/\/+$/, "")}${p}`;
 
   // Ensure logo is included dynamically
-  if (!data.logoUrl) {
-    data.logoUrl = publicUrl("/logo.png");
-  }
+    if (!data.logoUrl) {
+      data.logoUrl = publicUrl("/full-logo.png");
+    }
   if (!data.year) {
     data.year = String(new Date().getFullYear());
   }
@@ -190,7 +190,7 @@ async sendTransactionalEmail(data: TransactionalEmailData): Promise<boolean> {
     // Inline the logo as a CID attachment so it renders even when email
     // clients block remote images (falls back to public URL).
     const cid = "crosscart-logo";
-    const logoPath = path.join(process.cwd(), "public/logo.png");
+    const logoPath = path.join(process.cwd(), "public/full-logo.png");
     let logoAttachment: { filename: string; path: string; cid: string } | null = null;
     if (fs.existsSync(logoPath)) {
       logoAttachment = { filename: "logo.png", path: logoPath, cid };
@@ -237,9 +237,50 @@ async sendVerificationEmail(userData: { email: string; name: string; code: strin
   });
 }
 
-/**
- * Send welcome email
- */
+  /**
+   * Send password reset email
+   */
+  async sendPasswordResetEmail(userData: {
+    email: string;
+    name: string;
+    resetUrl: string;
+  }): Promise<boolean> {
+    return this.sendTransactionalEmail({
+      to: userData.email,
+      subject: "Reset Your Cross Cart Global International Express Password",
+      template: "password-reset",
+      data: {
+        name: userData.name,
+        title: "Reset Your Password",
+        message: `Hi ${userData.name}, we received a request to reset your password. Click the button below to choose a new password.`,
+        actionUrl: userData.resetUrl,
+        actionText: "Reset Password",
+      },
+    });
+  }
+
+  /**
+   * Send password-changed confirmation email
+   */
+  async sendPasswordChangedEmail(userData: {
+    email: string;
+    name: string;
+  }): Promise<boolean> {
+    return this.sendTransactionalEmail({
+      to: userData.email,
+      subject: "Your Cross Cart Global International Express Password Was Changed",
+      template: "notification",
+      data: {
+        name: userData.name,
+        title: "Password Changed Successfully",
+        message: `Hi ${userData.name}, your account password was just changed. If this wasn't you, please reset your password immediately or contact our support team.`,
+      },
+    });
+  }
+
+  /**
+   * Send welcome email
+   */
 async sendWelcomeEmail(userData: { email: string; name: string; verificationCode?: string }): Promise<boolean> {
   const base = (process.env.PUBLIC_APP_URL || "").replace(/\/+$/, "");
   const verificationUrl = userData.verificationCode

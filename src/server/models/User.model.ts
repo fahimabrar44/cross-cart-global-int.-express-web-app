@@ -48,6 +48,12 @@ export interface IUser extends Document {
     attempts?: number;
   };
 
+  passwordReset: {
+    token: string | null;
+    expires: Date | null;
+    attempts?: number;
+  };
+
   // Profile completion
   profileCompletion: {
     basicInfo: boolean;
@@ -59,6 +65,7 @@ export interface IUser extends Document {
   // Methods
   comparePassword(candidatePassword: string): Promise<boolean>;
   generateVerificationCode(): string;
+  generatePasswordResetToken(): string;
   isLocked(): boolean;
   incrementLoginAttempts(): Promise<void>;
   resetLoginAttempts(): Promise<void>;
@@ -268,6 +275,23 @@ const userSchema = new Schema<IUser>(
       }
     },
 
+    passwordReset: {
+      token: {
+        type: String,
+        default: null,
+        select: false, // Don't return reset token
+      },
+      expires: {
+        type: Date,
+        default: null,
+      },
+      attempts: {
+        type: Number,
+        default: 0,
+        max: 5, // Max 5 reset attempts
+      },
+    },
+
     profileCompletion: {
       basicInfo: { type: Boolean, default: false },
       contactVerified: { type: Boolean, default: false },
@@ -286,12 +310,13 @@ const userSchema = new Schema<IUser>(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       transform: function(doc: any, ret: any) {
         // Remove sensitive fields from JSON output
-        if (ret) {
-          delete ret.password;
-          delete ret.refreshTokens;
-          if (ret.emailVerification) delete ret.emailVerification.code;
-          delete ret.registrationIP;
-        }
+    if (ret) {
+           delete ret.password;
+           delete ret.refreshTokens;
+           delete ret.passwordReset;
+           if (ret.emailVerification) delete ret.emailVerification.code;
+           delete ret.registrationIP;
+         }
         return ret;
       }
     }
@@ -303,6 +328,7 @@ userSchema.index({ role: 1, isActive: 1 });
 userSchema.index({ isVerified: 1, isActive: 1 });
 userSchema.index({ lockUntil: 1 }, { sparse: true });
 userSchema.index({ "emailVerification.expires": 1 }, { sparse: true, expireAfterSeconds: 0 });
+userSchema.index({ "passwordReset.expires": 1 }, { sparse: true, expireAfterSeconds: 0 });
 
 // Password hashing with stronger rounds
 userSchema.pre("save", async function (next) {
@@ -346,6 +372,16 @@ userSchema.methods.generateVerificationCode = function (): string {
 // Instance method: Check if account is locked
 userSchema.methods.isLocked = function (): boolean {
   return !!(this.lockUntil && this.lockUntil > Date.now());
+};
+
+// Instance method: Generate a secure password-reset token
+userSchema.methods.generatePasswordResetToken = function (): string {
+  // Cryptographically secure random token (sent in the reset link)
+  const token = crypto.randomBytes(32).toString("hex");
+  this.passwordReset.token = token;
+  this.passwordReset.expires = new Date(Date.now() + 30 * 60 * 1000); // 30 min expiry
+  this.passwordReset.attempts = 0; // Reset attempts
+  return token;
 };
 
 // Instance method: Increment login attempts and lock if necessary
