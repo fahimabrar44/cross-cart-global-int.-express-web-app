@@ -1,5 +1,47 @@
+import type { Metadata } from 'next'
 import PageHeader from '@/utilities/PageHeader'
 import React from 'react'
+
+export const metadata: Metadata = {
+  title: 'Refund Policy',
+  description:
+    'Review the Cross Cart Global International Express refund policy — eligibility, non-refundable cases, refund amount and methods for cancelled, lost or undelivered shipments from Bangladesh.',
+  keywords: [
+    'courier refund policy',
+    'shipping refund Bangladesh',
+    'Cross Cart Global refund',
+    'parcel refund eligibility',
+  ],
+  alternates: {
+    canonical: 'https://crosscartglobal.com/about/refund-policy',
+  },
+  openGraph: {
+    title: 'Refund Policy | Cross Cart Global International Express',
+    description:
+      'Fair and transparent refund policy for cancelled, lost or undelivered shipments with Cross Cart Global International Express from Bangladesh.',
+    url: 'https://crosscartglobal.com/about/refund-policy',
+    siteName: 'Cross Cart Global International Express',
+    type: 'website',
+    locale: 'en_US',
+    images: [
+      {
+        url: '/logo.png',
+        width: 1200,
+        height: 630,
+        alt: 'Cross Cart Global International Express',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@crosscartglobal',
+    creator: '@crosscartglobal',
+    title: 'Refund Policy | Cross Cart Global International Express',
+    description:
+      'Fair and transparent refund policy for cancelled, lost or undelivered shipments with Cross Cart Global International Express from Bangladesh.',
+    images: ['/logo.png'],
+  },
+};
 
 const RefundPolicy = () => {
   return (

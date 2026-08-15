@@ -1,6 +1,49 @@
-﻿import PageHeader from '@/utilities/PageHeader';
+﻿import type { Metadata } from "next";
+import PageHeader from '@/utilities/PageHeader';
 import Link from "next/link";
 import { Building2, Users, Globe, Award, TrendingUp, Shield, CheckCircle, ArrowRight, Calendar, MapPin } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Corporate Solutions",
+  description:
+    "Corporate courier and logistics solutions from Cross Cart Global International Express — enterprise logistics, B2B shipping, volume discounts and API integration for businesses in Bangladesh.",
+  keywords: [
+    "corporate courier Bangladesh",
+    "B2B shipping solutions",
+    "business logistics Dhaka",
+    "enterprise shipping",
+    "Cross Cart corporate",
+  ],
+  alternates: {
+    canonical: "https://crosscartglobal.com/crosscart-corporate",
+  },
+  openGraph: {
+    title: "Corporate Solutions | Cross Cart Global International Express",
+    description:
+      "Enterprise logistics and B2B shipping solutions with volume discounts, dedicated account management and API integration for Bangladeshi businesses.",
+    url: "https://crosscartglobal.com/crosscart-corporate",
+    siteName: "Cross Cart Global International Express",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Cross Cart Global International Express",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@crosscartglobal",
+    creator: "@crosscartglobal",
+    title: "Corporate Solutions | Cross Cart Global International Express",
+    description:
+      "Enterprise logistics and B2B shipping solutions with volume discounts, dedicated account management and API integration for Bangladeshi businesses.",
+    images: ["/logo.png"],
+  },
+};
 
 const CrossCartCorporate = () => {
   const stats = [

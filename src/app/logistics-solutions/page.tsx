@@ -1,6 +1,49 @@
-﻿import PageHeader from "@/utilities/PageHeader";
+﻿import type { Metadata } from "next";
+import PageHeader from "@/utilities/PageHeader";
 import Link from "next/link";
 import { Truck, Globe, Shield, Clock, Users, CheckCircle } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Logistics Solutions",
+  description:
+    "Business, e-commerce and industry-specific logistics solutions from Cross Cart Global International Express — supply chain management, B2B shipping, order fulfillment and returns management in Bangladesh.",
+  keywords: [
+    "logistics solutions Bangladesh",
+    "business shipping solutions",
+    "e-commerce fulfillment",
+    "industry logistics",
+    "supply chain management courier",
+  ],
+  alternates: {
+    canonical: "https://crosscartglobal.com/logistics-solutions",
+  },
+  openGraph: {
+    title: "Logistics Solutions | Cross Cart Global International Express",
+    description:
+      "Business, e-commerce and industry-specific logistics solutions — supply chain management, fulfillment and B2B shipping from Bangladesh.",
+    url: "https://crosscartglobal.com/logistics-solutions",
+    siteName: "Cross Cart Global International Express",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Cross Cart Global International Express",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@crosscartglobal",
+    creator: "@crosscartglobal",
+    title: "Logistics Solutions | Cross Cart Global International Express",
+    description:
+      "Business, e-commerce and industry-specific logistics solutions — supply chain management, fulfillment and B2B shipping from Bangladesh.",
+    images: ["/logo.png"],
+  },
+};
 
 const LogisticsSolutions = () => {
   const solutions = [

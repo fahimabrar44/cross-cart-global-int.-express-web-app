@@ -1,7 +1,52 @@
 import PageHeader from "@/utilities/PageHeader";
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { Mail, MessageCircle, Phone } from "lucide-react";
+
+const siteName = "Cross Cart Global International Express";
+const pageUrl = "https://crosscartglobal.com/contact";
+
+export const metadata: Metadata = {
+  title: "Contact Us",
+  description:
+    "Get in touch with Cross Cart Global International Express. Contact our support team by email or phone for international courier and parcel delivery inquiries from Bangladesh.",
+  keywords: [
+    "contact Cross Cart Global",
+    "courier customer support Bangladesh",
+    "international shipping inquiry",
+    "cross cart global contact",
+  ],
+  alternates: {
+    canonical: pageUrl,
+  },
+  openGraph: {
+    title: "Contact Us | Cross Cart Global International Express",
+    description:
+      "Reach the support team at Cross Cart Global International Express for all your international courier and shipping needs.",
+    url: pageUrl,
+    siteName,
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: siteName,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@crosscartglobal",
+    creator: "@crosscartglobal",
+    title: "Contact Us | Cross Cart Global International Express",
+    description:
+      "Reach the support team at Cross Cart Global International Express for all your international courier and shipping needs.",
+    images: ["/logo.png"],
+  },
+};
 
 const Contact = () => {
   const contactData = {
@@ -21,8 +66,25 @@ const Contact = () => {
     chatLink: "Start Chat",
   };
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    name: "Contact Cross Cart Global International Express",
+    url: pageUrl,
+    mainEntity: {
+      "@type": "Organization",
+      name: siteName,
+      email: "mailto:cross.cart.bd@gmail.com",
+      telephone: "+8801410144466",
+    },
+  };
+
   return (
     <div className="w-full h-auto bg-soft-green overflow-x-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <PageHeader
         title="CONTACT US"
         subtitle="CONTACT US"

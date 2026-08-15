@@ -1,4 +1,5 @@
-﻿import PageHeader from "@/utilities/PageHeader";
+﻿import type { Metadata } from "next";
+import PageHeader from "@/utilities/PageHeader";
 import {
   ArrowRight,
   BarChart3,
@@ -10,6 +11,48 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "E-Commerce Solutions",
+  description:
+    "E-commerce shipping solutions from Cross Cart Global International Express — order fulfillment, returns management, API integration and shipping analytics for online retailers in Bangladesh.",
+  keywords: [
+    "e-com shipping Bangladesh",
+    "online store fulfillment",
+    "e-commerce logistics",
+    "returns management courier",
+    "marketplace shipping API",
+  ],
+  alternates: {
+    canonical: "https://crosscartglobal.com/logistics-solutions/e-commerce-solutions",
+  },
+  openGraph: {
+    title: "E-Commerce Solutions | Cross Cart Global International Express",
+    description:
+      "Order fulfillment, returns management, API integration and shipping analytics built for online retailers in Bangladesh.",
+    url: "https://crosscartglobal.com/logistics-solutions/e-commerce-solutions",
+    siteName: "Cross Cart Global International Express",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Cross Cart Global International Express",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@crosscartglobal",
+    creator: "@crosscartglobal",
+    title: "E-Commerce Solutions | Cross Cart Global International Express",
+    description:
+      "Order fulfillment, returns management, API integration and shipping analytics built for online retailers in Bangladesh.",
+    images: ["/logo.png"],
+  },
+};
 
 const ECommerceSolutions = () => {
   const services = [

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import PageHeader from "@/utilities/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,48 @@ import {
   Webhook,
 } from "lucide-react";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "API Integration",
+  description:
+    "Integrate CrossCart Global International Express shipping APIs into your website, app or system. Track shipments and calculate delivery prices with a simple REST API and your own API key.",
+  keywords: [
+    "shipping API Bangladesh",
+    "courier API integration",
+    "shipment tracking API",
+    "price calculation API",
+    "CrossCart shipping API",
+  ],
+  alternates: {
+    canonical: "https://crosscartglobal.com/api-integration",
+  },
+  openGraph: {
+    title: "API Integration | Cross Cart Global International Express",
+    description:
+      "Track shipments and calculate delivery prices with CrossCart shipping REST APIs and your own API key.",
+    url: "https://crosscartglobal.com/api-integration",
+    siteName: "Cross Cart Global International Express",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Cross Cart Global International Express",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@crosscartglobal",
+    creator: "@crosscartglobal",
+    title: "API Integration | Cross Cart Global International Express",
+    description:
+      "Track shipments and calculate delivery prices with CrossCart shipping REST APIs and your own API key.",
+    images: ["/logo.png"],
+  },
+};
 
 const CodeBlock = ({ code }: { code: string }) => (
   <pre className="overflow-x-auto rounded-lg bg-foreground text-background p-4 text-sm leading-relaxed">

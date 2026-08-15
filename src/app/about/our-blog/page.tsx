@@ -1,5 +1,48 @@
-﻿import PageHeader from "@/utilities/PageHeader";
+﻿import type { Metadata } from "next";
+import PageHeader from "@/utilities/PageHeader";
 import { Globe, Mail, Package, PenTool, Plane, TrendingUp } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Our Blog",
+  description:
+    "The Cross Cart Global International Express blog — shipping tips, customs guides, e-commerce advice and success stories to help Bangladeshi sellers grow globally.",
+  keywords: [
+    "international shipping tips",
+    "courier blog Bangladesh",
+    "e-commerce shipping guide",
+    "customs documentation guide",
+    "Cross Cart Global blog",
+  ],
+  alternates: {
+    canonical: "https://crosscartglobal.com/about/our-blog",
+  },
+  openGraph: {
+    title: "Our Blog | Cross Cart Global International Express",
+    description:
+      "Shipping tips, customs guides and success stories to help Bangladeshi sellers grow globally with Cross Cart Global International Express.",
+    url: "https://crosscartglobal.com/about/our-blog",
+    siteName: "Cross Cart Global International Express",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Cross Cart Global International Express",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@crosscartglobal",
+    creator: "@crosscartglobal",
+    title: "Our Blog | Cross Cart Global International Express",
+    description:
+      "Shipping tips, customs guides and success stories to help Bangladeshi sellers grow globally with Cross Cart Global International Express.",
+    images: ["/logo.png"],
+  },
+};
 
 const OurBlog = () => {
   // Sample blog posts data

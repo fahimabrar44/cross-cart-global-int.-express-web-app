@@ -1,4 +1,5 @@
-﻿import PageHeader from "@/utilities/PageHeader";
+﻿import type { Metadata } from "next";
+import PageHeader from "@/utilities/PageHeader";
 import {
   ArrowRight,
   BarChart3,
@@ -9,6 +10,48 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Business Solutions",
+  description:
+    "Business logistics and B2B shipping solutions from Cross Cart Global International Express — supply chain management, volume discounts, dedicated account managers and global network access.",
+  keywords: [
+    "business courier Bangladesh",
+    "B2B shipping",
+    "corporate logistics Dhaka",
+    "volume shipping discounts",
+    "supply chain solutions",
+  ],
+  alternates: {
+    canonical: "https://crosscartglobal.com/logistics-solutions/bussiness-solution",
+  },
+  openGraph: {
+    title: "Business Solutions | Cross Cart Global International Express",
+    description:
+      "Business logistics and B2B shipping with supply chain management, volume discounts and dedicated account managers from Bangladesh.",
+    url: "https://crosscartglobal.com/logistics-solutions/bussiness-solution",
+    siteName: "Cross Cart Global International Express",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Cross Cart Global International Express",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@crosscartglobal",
+    creator: "@crosscartglobal",
+    title: "Business Solutions | Cross Cart Global International Express",
+    description:
+      "Business logistics and B2B shipping with supply chain management, volume discounts and dedicated account managers from Bangladesh.",
+    images: ["/logo.png"],
+  },
+};
 
 function BussinessSolution() {
   const services = [

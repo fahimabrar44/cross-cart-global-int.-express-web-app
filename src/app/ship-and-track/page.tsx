@@ -1,6 +1,49 @@
-﻿import PageHeader from "@/utilities/PageHeader";
+﻿import type { Metadata } from "next";
+import PageHeader from "@/utilities/PageHeader";
 import Link from "next/link";
 import { Calculator, Package, MapPin, Clock, Shield, Globe, ArrowRight, CheckCircle } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Ship and Track",
+  description:
+    "Ship anywhere and track everything with Cross Cart Global International Express — calculate shipping charges, create shipments with doorstep pickup, and track parcels in real time from Bangladesh.",
+  keywords: [
+    "ship package Bangladesh",
+    "track shipment",
+    "create shipment online",
+    "calculate shipping charge",
+    "doorstep pickup courier",
+  ],
+  alternates: {
+    canonical: "https://crosscartglobal.com/ship-and-track",
+  },
+  openGraph: {
+    title: "Ship and Track | Cross Cart Global International Express",
+    description:
+      "Calculate shipping rates, create shipments with doorstep pickup and track your parcels in real time from Bangladesh.",
+    url: "https://crosscartglobal.com/ship-and-track",
+    siteName: "Cross Cart Global International Express",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Cross Cart Global International Express",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@crosscartglobal",
+    creator: "@crosscartglobal",
+    title: "Ship and Track | Cross Cart Global International Express",
+    description:
+      "Calculate shipping rates, create shipments with doorstep pickup and track your parcels in real time from Bangladesh.",
+    images: ["/logo.png"],
+  },
+};
 
 const ShipAndTrack = () => {
   const services = [
