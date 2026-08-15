@@ -66,7 +66,8 @@ export const createAddressColumns = ({
       );
     },
     cell: ({ row }) => {
-      const address = row.original;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const address: any = row.original;
       return (
         <div className="flex items-center space-x-2">
           <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -77,9 +78,9 @@ export const createAddressColumns = ({
                 <Star className="h-3 w-3 text-yellow-500 fill-current" />
               )}
             </div>
-            {showUserInfo && address.phone && (
+            {showUserInfo && (address.phone || address.user?.phone) && (
               <div className="text-sm text-muted-foreground">
-                {address.phone}
+                {address.user?.phone || address.phone}
               </div>
             )}
           </div>
@@ -90,11 +91,8 @@ export const createAddressColumns = ({
   {
     accessorKey: "address",
     header: "Address",
-    cell: ({row}) => {
-      console.log(row);
-      
+    cell: ({ row }) => {
       const address = row.original;
-console.log(address);
 
       return (
         <div className="max-w-xs">
@@ -115,23 +113,19 @@ console.log(address);
     accessorKey: "contactPerson",
     header: "Contact Person",
     cell: ({ row }) => {
-      const  contactPerson  = row.original;
-      
-      if (!contactPerson) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const address: any = row.original;
+      const name = address.name || address.contactPerson?.name;
+      const phone = address.phone || address.contactPerson?.phone;
+
+      if (!name && !phone) {
         return <span className="text-muted-foreground">-</span>;
       }
-      
+
       return (
         <div>
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
-          <div className="font-medium">{contactPerson.name}</div>
-          <div className="text-sm text-muted-foreground">{contactPerson.phone}</div>
-          
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
-          {contactPerson.email && (<div className="text-sm text-muted-foreground">{contactPerson.email}</div>
-          )}
+          {name && <div className="font-medium">{name}</div>}
+          {phone && <div className="text-sm text-muted-foreground">{phone}</div>}
         </div>
       );
     },
@@ -139,14 +133,20 @@ console.log(address);
   {
     accessorKey: "address",
     header: "Country",
-    cell: ({ row }) => (
-      <Badge variant="outline" data-testid={`address-country-${row.original._id}`}>
-        
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
-        {row.original.address?.country?.name}
-      </Badge>
-    ),
+    cell: ({ row }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const countryFromAddress = (row.original as any).address?.country?.name;
+      const countryName =
+        row.original.country?.name || countryFromAddress || "-";
+      return (
+        <Badge
+          variant="outline"
+          data-testid={`address-country-${row.original._id}`}
+        >
+          {countryName}
+        </Badge>
+      );
+    },
   },
   {
     accessorKey: "isDefault",

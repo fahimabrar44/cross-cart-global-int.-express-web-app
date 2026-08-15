@@ -90,6 +90,20 @@ class AddressService {
     return api.get<UserAddress[]>("/address", params);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async createGlobalAddress(data: any): Promise<ApiResponse<UserAddress>> {
+    return api.post<UserAddress>("/address", data);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async updateGlobalAddress(addressId: string, data: any): Promise<ApiResponse<UserAddress>> {
+    return api.put<UserAddress>(`/address/${addressId}`, data);
+  }
+
+  async deleteGlobalAddress(addressId: string): Promise<ApiResponse<void>> {
+    return api.delete<void>(`/address/${addressId}`);
+  }
+
   // Address validation
   async validateAddress(address: Address): Promise<ApiResponse<{
     isValid: boolean;

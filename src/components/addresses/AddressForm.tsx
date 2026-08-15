@@ -81,7 +81,7 @@ export function AddressForm({ address, onSubmit, onCancel, loading = false }: Ad
             city: address.city || "",
             state: address.state || "",
             zipCode: address.zipCode || "",
-            country: address.country || "",
+            country: address.country?._id || address.country || "",
           },
           contactPerson: {
             name: address.name || "",
