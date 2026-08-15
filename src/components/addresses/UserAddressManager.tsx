@@ -383,7 +383,21 @@ export function UserAddressManager() {
           <DialogHeader>
             <DialogTitle data-testid="view-address-modal-title">Address Details</DialogTitle>
           </DialogHeader>
-          {selectedAddress && (
+          {selectedAddress && (() => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const a: any = selectedAddress;
+            const street = a.addressLine || a.address?.street || "-";
+            const city = a.city || a.address?.city || "";
+            const state = a.state || a.address?.state || "";
+            const zip = a.zipCode || a.address?.zipCode || "";
+            const country =
+              a.country?.name || a.address?.country || "";
+            const contactName = a.name || a.contactPerson?.name || "-";
+            const contactPhone = a.phone || a.contactPerson?.phone || "-";
+            const contactEmail = a.contactPerson?.email || "";
+            const label = a.label || a.address?.label || "Address";
+
+            return (
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
                 <div className="p-2 rounded-full bg-primary/10">
@@ -391,44 +405,43 @@ export function UserAddressManager() {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold flex items-center space-x-2">
-                    <span>{selectedAddress?.label}</span>
-                    {selectedAddress?.isDefault && (
+                    <span>{label}</span>
+                    {a.isDefault && (
                       <Star className="h-4 w-4 text-yellow-500 fill-current" />
                     )}
                   </h3>
-                  <Badge variant="outline">{selectedAddress?.address?.country}</Badge>
+                  {country && <Badge variant="outline">{country}</Badge>}
                 </div>
               </div>
 
               <div>
                 <h4 className="font-semibold mb-2">Address</h4>
                 <div className="space-y-1 text-muted-foreground">
-                  <div>{selectedAddress?.address?.street}</div>
+                  <div>{street}</div>
                   <div>
-                    {selectedAddress.address?.city}, {selectedAddress.address?.state && `${selectedAddress.address?.state}, `}
-                    {selectedAddress.address?.country}
+                    {city}
+                    {state && `, ${state}`}
+                    {country && `, ${country}`}
                   </div>
-                  {selectedAddress.address?.zipCode && <div>ZIP: {selectedAddress.address?.zipCode}</div>}
-                  {selectedAddress.address?.landmark && (
-                    <div className="text-sm">Landmark: {selectedAddress.address?.landmark}</div>
-                  )}
+                  {zip && <div>ZIP: {zip}</div>}
                 </div>
               </div>
 
-              {selectedAddress.contactPerson && (
+              {(contactName !== "-" || contactPhone !== "-") && (
                 <div>
                   <h4 className="font-semibold mb-2">Contact Person</h4>
                   <div className="space-y-1 text-muted-foreground">
-                    <div><strong>Name:</strong> {selectedAddress.contactPerson.name}</div>
-                    <div><strong>Phone:</strong> {selectedAddress.contactPerson.phone}</div>
-                    {selectedAddress.contactPerson.email && (
-                      <div><strong>Email:</strong> {selectedAddress.contactPerson.email}</div>
+                    <div><strong>Name:</strong> {contactName}</div>
+                    <div><strong>Phone:</strong> {contactPhone}</div>
+                    {contactEmail && (
+                      <div><strong>Email:</strong> {contactEmail}</div>
                     )}
                   </div>
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
@@ -446,7 +459,15 @@ export function UserAddressManager() {
               )}
               {selectedAddress && (
                 <div className="mt-2 p-2 bg-muted rounded">
-                  <strong>Address:</strong> {selectedAddress?.label} - {selectedAddress.address?.street}, {selectedAddress.address?.city}
+                  <strong>Address:</strong>{" "}
+                  {selectedAddress.label || "Address"} -{" "}
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(selectedAddress as any).addressLine ||
+                    selectedAddress.address?.street ||
+                    ""}
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(selectedAddress as any).city ||
+                    selectedAddress.address?.city}
                 </div>
               )}
             </AlertDialogDescription>

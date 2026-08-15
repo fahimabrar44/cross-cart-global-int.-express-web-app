@@ -380,7 +380,22 @@ export default function AddressBookPage() {
               Address Details
             </DialogTitle>
           </DialogHeader>
-          {selectedAddress && (
+          {selectedAddress && (() => {
+            const a = selectedAddress;
+            const street = a.addressLine || a.address?.street || "-";
+            const area = a.area || a.address?.area || "";
+            const subCity = a.subCity || a.address?.subCity || "";
+            const city = a.city || a.address?.city || "";
+            const state = a.state || a.address?.state || "";
+            const zip = a.zipCode || a.address?.zipCode || "";
+            const country = a.country?.name || a.address?.country || "";
+            const contactName = a.name || a.contactPerson?.name || "-";
+            const contactPhone = a.phone || a.contactPerson?.phone || "-";
+            const contactEmail = a.contactPerson?.email || "";
+            const ownerName = a.user?.name || a.user?.phone || "-";
+            const ownerPhone = a.user?.phone || a.phone || "-";
+
+            return (
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
                 <div className="p-2 rounded-full bg-primary/10">
@@ -388,18 +403,15 @@ export default function AddressBookPage() {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold flex items-center space-x-2">
-                    <span>{selectedAddress.label}</span>
-                    {selectedAddress.isDefault && (
+                    <span>{a.label || "Address"}</span>
+                    {a.isDefault && (
                       <Badge className="bg-yellow-100 text-yellow-800">
                         Default
                       </Badge>
                     )}
                   </h3>
                   <p className="text-muted-foreground">
-                    User: {selectedAddress.user?.name || "-"} (
-                    {selectedAddress.user?.phone || selectedAddress.phone ||
-                      "-"}
-                    )
+                    User: {ownerName} ({ownerPhone})
                   </p>
                 </div>
               </div>
@@ -407,45 +419,50 @@ export default function AddressBookPage() {
               <div>
                 <h4 className="font-semibold mb-2">Address</h4>
                 <div className="space-y-1 text-muted-foreground">
-                  <div>{selectedAddress.addressLine || "-"}</div>
+                  <div>{street}</div>
+                  {area && <div>{area}</div>}
+                  {subCity && <div>{subCity}</div>}
                   <div>
-                    {selectedAddress.city || ""}
-                    {selectedAddress.state &&
-                      `, ${selectedAddress.state}`}
-                    {selectedAddress.country?.name
-                      ? `, ${selectedAddress.country.name}`
-                      : ""}
+                    {city}
+                    {state && `, ${state}`}
+                    {country && `, ${country}`}
                   </div>
-                  {selectedAddress.zipCode && (
-                    <div>ZIP: {selectedAddress.zipCode}</div>
-                  )}
+                  {zip && <div>ZIP: {zip}</div>}
                 </div>
               </div>
 
-              <div>
-                <h4 className="font-semibold mb-2">Contact Person</h4>
-                <div className="space-y-1 text-muted-foreground">
-                  <div>
-                    <strong>Name:</strong> {selectedAddress.name || "-"}
-                  </div>
-                  <div>
-                    <strong>Phone:</strong> {selectedAddress.phone || "-"}
+              {(contactName !== "-" || contactPhone !== "-") && (
+                <div>
+                  <h4 className="font-semibold mb-2">Contact Person</h4>
+                  <div className="space-y-1 text-muted-foreground">
+                    <div>
+                      <strong>Name:</strong> {contactName}
+                    </div>
+                    <div>
+                      <strong>Phone:</strong> {contactPhone}
+                    </div>
+                    {contactEmail && (
+                      <div>
+                        <strong>Email:</strong> {contactEmail}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="text-xs text-muted-foreground">
                 <div>
                   Created:{" "}
-                  {new Date(selectedAddress.createdAt).toLocaleString()}
+                  {new Date(a.createdAt).toLocaleString()}
                 </div>
                 <div>
                   Updated:{" "}
-                  {new Date(selectedAddress.updatedAt).toLocaleString()}
+                  {new Date(a.updatedAt).toLocaleString()}
                 </div>
               </div>
             </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
