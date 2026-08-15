@@ -25,9 +25,11 @@ export async function GET(
     const { id } = await params;
 
     // Support both Mongo ObjectId and URL-friendly slug lookups
-    const blog = mongoose.Types.ObjectId.isValid(id)
+    const blog = (mongoose.Types.ObjectId.isValid(id)
       ? await Blog.findById(id).lean()
-      : await Blog.findOne({ slug: id }).lean();
+      : await Blog.findOne({ slug: id }).lean()) as
+      | (Record<string, unknown> & { status?: string })
+      | null;
 
     if (!blog) {
       return errorResponse({ status: 404, message: "Blog not found", req });

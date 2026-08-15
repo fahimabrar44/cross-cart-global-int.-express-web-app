@@ -283,17 +283,15 @@ const userSchema = new Schema<IUser>(
   { 
     timestamps: true,
     toJSON: {
-      transform: function(doc, ret) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      transform: function(doc: any, ret: any) {
         // Remove sensitive fields from JSON output
-        
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
-        delete ret.password;
-        delete ret.refreshTokens;
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
-        delete ret.emailVerification.code;
-        delete ret.registrationIP;
+        if (ret) {
+          delete ret.password;
+          delete ret.refreshTokens;
+          if (ret.emailVerification) delete ret.emailVerification.code;
+          delete ret.registrationIP;
+        }
         return ret;
       }
     }

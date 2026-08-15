@@ -1,5 +1,6 @@
 import connectDB from "@/config/db";
-import { Blog, IBlog, dropLegacyBlogTextIndex } from "@/server/models/Blog.model";
+import { Blog, dropLegacyBlogTextIndex } from "@/server/models/Blog.model";
+import { User } from "@/server/models/User.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { NextRequest } from "next/server";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
@@ -70,9 +71,35 @@ export async function GET(req: NextRequest) {
 
     const total = await Blog.countDocuments(query);
 
-    const blogs: IBlog[] = await Blog.find(query)
-      .populate("author", "name email")
+    const blogs = await Blog.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
+
+    // Manually populate authors as plain objects (avoids mongoose Document
+    // toJSON serialization which crashes on the User model's transform)
+    const authorIds = Array.from(
+      new Set(
+        (blogs as Array<{ author?: unknown }>)
+          .map((b) => b.author)
+          .filter(Boolean)
+          .map((id) => id?.toString())
+      )
+    );
+    const userMap = new Map<string, { name?: string; email?: string }>();
+    if (authorIds.length > 0) {
+      const users = (await User.find({ _id: { $in: authorIds } })
+        .select("name email")
+        .lean()) as Array<{ _id: unknown; name?: string; email?: string }>;
+      for (const u of users) {
+        userMap.set(String(u._id), { name: u.name, email: u.email });
+      }
+    }
+    for (const b of blogs as Array<{ author?: unknown }>) {
+      const idStr = b.author?.toString();
+      b.author = idStr ? userMap.get(idStr) || null : null;
+    }
 
     return successResponse({
       status: 200,
