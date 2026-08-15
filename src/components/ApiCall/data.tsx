@@ -112,6 +112,7 @@ export const AdminData = {
         { title: "All Contact", url: "/dashboard/contact" },
         { title: "Blog Posts", url: "/dashboard/contents/blogs" },
         { title: "Team Members", url: "/dashboard/contents/team-members" },
+        { title: "FAQs", url: "/dashboard/contents/faqs" },
       ],
     },
     {

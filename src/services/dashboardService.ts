@@ -231,6 +231,46 @@ export class TeamMemberService {
   }
 }
 
+// FAQ Management Service
+export class FaqService {
+  static async getFaqs(params?: {
+    isActive?: boolean;
+    category?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }): Promise<ApiResponse<any[]>> {
+    return apiService.get("/faqs", {
+      isActive: params?.isActive === undefined ? undefined : params.isActive,
+      category: params?.category,
+      search: params?.search,
+      page: params?.page,
+      limit: params?.limit,
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static async getFaq(faqId: string): Promise<ApiResponse<any>> {
+    return apiService.get(`/faqs/${faqId}`);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static async createFaq(data: any): Promise<ApiResponse<any>> {
+    return apiService.post("/faqs", data);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static async updateFaq(faqId: string, data: any): Promise<ApiResponse<any>> {
+    return apiService.put(`/faqs/${faqId}`, data);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static async deleteFaq(faqId: string): Promise<ApiResponse<any>> {
+    return apiService.delete(`/faqs/${faqId}`);
+  }
+}
+
 // Notification Service
 export class NotificationService {
   static async getNotifications(params?: {

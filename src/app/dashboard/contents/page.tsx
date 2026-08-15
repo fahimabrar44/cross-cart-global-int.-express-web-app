@@ -2,14 +2,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { RoleGuard } from "@/middleware/roleGuard";
-import { ContentService, TeamMemberService } from "@/services/dashboardService";
-import { BookOpen, Mail, Plus, Users } from "lucide-react";
+import {
+  ContentService,
+  FaqService,
+  TeamMemberService,
+} from "@/services/dashboardService";
+import { BookOpen, HelpCircle, Mail, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function ContentsPage() {
   const [blogCount, setBlogCount] = useState(0);
   const [memberCount, setMemberCount] = useState<number | null>(null);
+  const [faqCount, setFaqCount] = useState<number | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -24,6 +29,12 @@ export default function ContentsPage() {
           includeInactive: true,
         });
         if (members.success) setMemberCount((members.data as unknown[])?.length || 0);
+      } catch {
+        /* noop */
+      }
+      try {
+        const faqs = await FaqService.getFaqs({ limit: 1 });
+        if (faqs.success) setFaqCount(faqs.meta?.total || 0);
       } catch {
         /* noop */
       }
@@ -52,6 +63,13 @@ export default function ContentsPage() {
       icon: <Users className="h-6 w-6 text-primary" />,
       href: "/dashboard/contents/team-members",
       count: memberCount,
+    },
+    {
+      title: "FAQs",
+      description: "Create and manage frequently asked questions",
+      icon: <HelpCircle className="h-6 w-6 text-primary" />,
+      href: "/dashboard/contents/faqs",
+      count: faqCount,
     },
   ];
 
