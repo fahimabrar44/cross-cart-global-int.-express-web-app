@@ -91,6 +91,10 @@ export async function GET(req: NextRequest) {
   } catch (error: unknown) {
     console.error("GET /api/v1/blogs error:", error);
     const msg = error instanceof Error ? error.message : "Failed to fetch blogs";
-    return errorResponse({ status: 500, message: msg, error, req });
+    const detail =
+      error instanceof Error && error.stack
+        ? { message: msg, stack: error.stack }
+        : error;
+    return errorResponse({ status: 500, message: msg, error: detail, req });
   }
 }

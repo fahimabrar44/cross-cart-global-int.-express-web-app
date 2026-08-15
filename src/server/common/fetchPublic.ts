@@ -3,9 +3,23 @@
  * Always fetches fresh data on each request (`cache: "no-store"`) so the
  * server-rendered HTML includes current API data for SEO.
  */
-export async function fetchPublicData<T>(path: string): Promise<T[]> {
-  const base = process.env.PUBLIC_APP_URL || "http://localhost:3000/";
+import { headers } from "next/headers";
+
+async function getBaseUrl(): Promise<string> {
   try {
+    const h = await headers();
+    const host = h.get("host");
+    const proto = h.get("x-forwarded-proto") || "https";
+    if (host) return `${proto}://${host}/`;
+  } catch {
+    // headers() throws when called outside a request scope (e.g. during build)
+  }
+  return process.env.PUBLIC_APP_URL || "http://localhost:3000/";
+}
+
+export async function fetchPublicData<T>(path: string): Promise<T[]> {
+  try {
+    const base = await getBaseUrl();
     const res = await fetch(`${base}api/v1/${path}`, {
       cache: "no-store",
     });
@@ -18,8 +32,8 @@ export async function fetchPublicData<T>(path: string): Promise<T[]> {
 }
 
 export async function fetchPublicObject<T>(path: string): Promise<T | null> {
-  const base = process.env.PUBLIC_APP_URL || "http://localhost:3000/";
   try {
+    const base = await getBaseUrl();
     const res = await fetch(`${base}api/v1/${path}`, {
       cache: "no-store",
     });
