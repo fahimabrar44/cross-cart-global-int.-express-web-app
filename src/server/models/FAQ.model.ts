@@ -22,5 +22,6 @@ const faqSchema = new Schema<IFAQ>(
 );
 
 faqSchema.index({ category: 1, order: 1, isActive: 1 });
+faqSchema.index({ question: "text", answer: "text" });
 
 export const FAQ = models.FAQ || model<IFAQ>("FAQ", faqSchema);

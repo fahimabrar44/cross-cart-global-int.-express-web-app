@@ -2,6 +2,7 @@
 import { AuthProvider } from "@/hooks/AuthContext";
 import SiteLayout from "@/utilities/SiteLayout";
 import Script from "next/script";
+import ChatWidget from "@/components/Chat/ChatWidget";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -645,6 +646,7 @@ export default function RootLayout({
           <SiteLayout>{children}</SiteLayout>
         </AuthProvider>
         <PwaRegister />
+        <ChatWidget />
 
         {/* Google Tag Manager */}
         <Script id="gtm-script" strategy="afterInteractive">
