@@ -1,5 +1,5 @@
 import connectDB from "@/config/db";
-import { Blog, IBlog } from "@/server/models/Blog.model";
+import { Blog, IBlog, dropLegacyBlogTextIndex } from "@/server/models/Blog.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { NextRequest } from "next/server";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
@@ -10,6 +10,9 @@ import { createModeratorHandler } from "@/server/common/apiWrapper";
 export const POST = createModeratorHandler(async ({ req, user }) => {
   try {
     await connectDB();
+    // Remove any legacy text index that includes the array field `tags`
+    await dropLegacyBlogTextIndex();
+
     const body = await req.json();
 
     // author is always the authenticated admin/moderator, never client-supplied

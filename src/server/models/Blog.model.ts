@@ -109,5 +109,26 @@ blogSchema.index({ tags: 1 });
 blogSchema.index({ category: 1, createdAt: -1 });
 blogSchema.index({ status: 1, createdAt: -1 });
 
+// Drop the legacy compound text index that included the array field `tags`
+// (e.g. `title_text_content_text_tags_1`). It was created by an older schema
+// and makes every insert/update fail with:
+// "Field 'tags' of text index contains an array". Idempotent + non-fatal.
+export async function dropLegacyBlogTextIndex(): Promise<void> {
+  try {
+    const indexes = await Blog.collection.indexes();
+    for (const index of indexes) {
+      const keys: Record<string, unknown> = (index.key as Record<string, unknown>) || {};
+      const hasText = Object.values(keys).some((v) => v === "text");
+      const hasTags = "tags" in keys;
+      if (hasText && hasTags && index.name) {
+        // eslint-disable-next-line no-await-in-loop
+        await Blog.collection.dropIndex(index.name).catch(() => {});
+      }
+    }
+  } catch {
+    // index introspection/drop failure is non-fatal
+  }
+}
+
 // Export Blog Model
 export const Blog = models.Blog || model<IBlog>("Blog", blogSchema);

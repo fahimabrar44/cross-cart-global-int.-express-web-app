@@ -1,6 +1,6 @@
 import connectDB from "@/config/db";
 import { errorResponse, successResponse } from "@/server/common/response";
-import { Blog } from "@/server/models/Blog.model";
+import { Blog, dropLegacyBlogTextIndex } from "@/server/models/Blog.model";
 import { verifyAuth } from "@/middleware/auth";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
@@ -62,6 +62,7 @@ export async function GET(
 export const PUT = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
+    await dropLegacyBlogTextIndex();
 
     const id = extractId(req);
     const body = await req.json();
