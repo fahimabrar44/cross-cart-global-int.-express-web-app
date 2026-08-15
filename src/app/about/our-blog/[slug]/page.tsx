@@ -11,6 +11,7 @@ interface BlogPost {
   slug: string;
   content: string;
   image?: string;
+  images?: string[];
   category?: string;
   excerpt?: string;
   metaDescription?: string;
@@ -85,6 +86,13 @@ const BlogDetail = async ({ params }: BlogDetailPageProps) => {
       day: "numeric",
     });
 
+  const galleryImages = (blog.images && blog.images.length > 0
+    ? blog.images
+    : blog.image
+      ? [blog.image]
+      : []) as string[];
+  const coverImage = galleryImages[0];
+
   return (
     <>
       <div className="w-full h-auto bg-soft-green overflow-x-hidden">
@@ -106,14 +114,28 @@ const BlogDetail = async ({ params }: BlogDetailPageProps) => {
             Back to Blog
           </Link>
 
-          {blog.image && (
+          {coverImage && (
             <div className="rounded-lg overflow-hidden mb-8 shadow-md">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={blog.image}
+                src={coverImage}
                 alt={blog.title}
                 className="w-full h-72 md:h-96 object-cover"
               />
+            </div>
+          )}
+
+          {galleryImages.length > 1 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+              {galleryImages.slice(1).map((img: string, index: number) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={index}
+                  src={img}
+                  alt={`${blog.title} gallery image ${index + 2}`}
+                  className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                />
+              ))}
             </div>
           )}
 

@@ -8,6 +8,7 @@ export interface IBlog extends Document {
   content: string;
   excerpt?: string; // short summary for blog cards / SEO
   image?: string;
+  images?: string[]; // gallery of images
   author: Types.ObjectId;
   category: string; // service, news, update, promotion
   tags?: string[]; // SEO tags / keywords
@@ -35,6 +36,7 @@ const blogSchema = new Schema<IBlog>(
     content: { type: String, required: true },
     excerpt: { type: String, default: "" },
     image: { type: String, default: "" },
+    images: { type: [String], default: [] },
 
     author: { type: Schema.Types.ObjectId, ref: "User", required: true },
 

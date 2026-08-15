@@ -52,6 +52,7 @@ interface BlogPost {
   slug: string;
   content: string;
   image?: string;
+  images?: string[];
   category?: string;
   excerpt?: string;
   tags?: string[];
@@ -143,17 +144,19 @@ const OurBlog = async () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {blogPosts.map((post) => (
+                {blogPosts.map((post) => {
+                  const cover = post.image || post.images?.[0];
+                  return (
                   <Link
                     key={post._id}
                     href={`/about/our-blog/${post.slug}`}
                     className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden flex flex-col"
                   >
-                    {post.image ? (
+                    {cover ? (
                       <div className="w-full h-48 overflow-hidden bg-gray-100">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={post.image}
+                          src={cover}
                           alt={post.title}
                           className="w-full h-full object-cover"
                         />
@@ -187,7 +190,8 @@ const OurBlog = async () => {
                       </div>
                     </div>
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

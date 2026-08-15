@@ -26,6 +26,7 @@ interface BlogFormData {
   content: string;
   excerpt: string;
   image: string;
+  images: string[];
   category: "service" | "news" | "update" | "promotion";
   tags: string;
   status: "draft" | "published";
@@ -37,6 +38,7 @@ interface BlogRow {
   content?: string;
   excerpt?: string;
   image?: string;
+  images?: string[];
   category?: string;
   tags?: string[];
   author?: { name?: string; email?: string } | null;
@@ -69,6 +71,7 @@ export default function BlogsPage() {
       content: "",
       excerpt: "",
       image: "",
+      images: [],
       category: "service",
       tags: "",
       status: "draft",
@@ -77,6 +80,7 @@ export default function BlogsPage() {
 
   const contentValue = watch("content");
   const imageValue = watch("image");
+  const imagesValue = watch("images") || [];
 
   useEffect(() => {
     fetchBlogs();
@@ -114,6 +118,14 @@ export default function BlogsPage() {
     setValue("content", blog.content || "");
     setValue("excerpt", blog.excerpt || "");
     setValue("image", blog.image || "");
+    setValue(
+      "images",
+      Array.isArray(blog.images)
+        ? blog.images
+        : blog.image
+          ? [blog.image]
+          : []
+    );
     setValue("category", blog.category || "service");
     setValue(
       "tags",
@@ -179,44 +191,69 @@ export default function BlogsPage() {
     }
   };
 
-  const handleImageUpload = (file: File) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
-      return;
-    }
-    if (file.size > 3 * 1024 * 1024) {
-      toast.error("Image must be under 3MB");
-      return;
-    }
+  const fileToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+
+  const handleImagesUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const selected = Array.from(files).filter((file) => {
+      if (!file.type.startsWith("image/")) {
+        toast.error(`"${file.name}" is not an image file`);
+        return false;
+      }
+      if (file.size > 3 * 1024 * 1024) {
+        toast.error(`"${file.name}" is larger than 3MB`);
+        return false;
+      }
+      return true;
+    });
+
+    if (selected.length === 0) return;
 
     setUploading(true);
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const dataUrl = reader.result as string;
-      try {
-        const res = await apiService.post("/uploads", { dataUrl });
-        const uploadedUrl = (res.data as { url?: string } | undefined)?.url;
-        if (res.success && uploadedUrl) {
-          setValue("image", uploadedUrl);
-          toast.success("Image uploaded successfully");
-        } else {
-          toast.error(res.message || "Image upload failed");
-        }
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "An error occurred"
-        );
-      } finally {
-        setUploading(false);
-        if (imageInputRef.current) imageInputRef.current.value = "";
+    try {
+      const dataUrls: string[] = [];
+      for (const file of selected) {
+        dataUrls.push(await fileToDataUrl(file));
       }
-    };
-    reader.onerror = () => {
+
+      const res = await apiService.post("/uploads", { dataUrls });
+      const urls = (res.data as { urls?: string[] } | undefined)?.urls || [];
+
+      if (!res.success || urls.length === 0) {
+        toast.error(res.message || "Image upload failed");
+        return;
+      }
+
+      const currentImages = watch("images") || [];
+      const newList = [...currentImages, ...urls];
+      setValue("images", newList);
+
+      if (!watch("image") && newList.length > 0) {
+        setValue("image", newList[0]);
+      }
+
+      toast.success(`${urls.length} image(s) uploaded successfully`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "An error occurred");
+    } finally {
       setUploading(false);
-      toast.error("Failed to read the selected file");
-    };
-    reader.readAsDataURL(file);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
+
+  const removeImage = (url: string) => {
+    const newList = (watch("images") || []).filter((img) => img !== url);
+    setValue("images", newList);
+    if (watch("image") === url) {
+      setValue("image", newList.length > 0 ? newList[0] : "");
+    }
   };
 
   const getStatusBadge = (status: string) => (
@@ -287,17 +324,27 @@ export default function BlogsPage() {
         {getStatusBadge(blog.status)}
       </div>
 
-      {blog.image && (
+      {((blog.image && blog.image) || blog.images?.length) && (
         <div>
           <Label className="text-sm font-medium text-gray-500">
-            Featured Image
+            Images ({blog.images?.length || 1})
           </Label>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={blog.image}
-            alt={blog.title}
-            className="mt-1 w-full max-w-sm h-48 object-cover rounded-md border border-gray-200"
-          />
+          <div className="mt-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {(Array.isArray(blog.images) && blog.images.length > 0
+              ? blog.images
+              : blog.image
+                ? [blog.image]
+                : []
+            ).map((img: string, index: number) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={index}
+                src={img}
+                alt={`${blog.title} image ${index + 1}`}
+                className="w-full h-32 object-cover rounded-md border border-gray-200"
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -528,18 +575,16 @@ export default function BlogsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Featured Image</Label>
+                  <Label>Images (Featured Image Gallery)</Label>
                   <div className="flex flex-col gap-3">
                     <input
                       ref={imageInputRef}
                       type="file"
                       accept="image/*"
+                      multiple
                       className="hidden"
                       data-testid="blog-image-input"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(file);
-                      }}
+                      onChange={(e) => handleImagesUpload(e.target.files)}
                     />
                     <div className="flex flex-wrap items-center gap-3">
                       <Button
@@ -554,32 +599,61 @@ export default function BlogsPage() {
                         ) : (
                           <ImagePlus className="h-4 w-4 mr-2" />
                         )}
-                        {uploading ? "Uploading..." : "Upload Image"}
+                        {uploading ? "Uploading..." : "Upload Images"}
                       </Button>
-                      {imageValue && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() => setValue("image", "")}
-                        >
-                          Remove
-                        </Button>
+                      {imageValue && imagesValue.length > 0 && (
+                        <span className="text-xs text-gray-500">
+                          First image or selected cover shows as the featured
+                          image.
+                        </span>
                       )}
                     </div>
-                    <Input
-                      {...register("image")}
-                      placeholder="Or paste an image URL directly"
-                      data-testid="blog-image-url-input"
-                    />
-                    {imageValue && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={imageValue}
-                        alt="Blog featured image preview"
-                        className="w-full max-w-sm h-40 object-cover rounded-md border border-gray-200"
-                        data-testid="blog-image-preview"
-                      />
+
+                    {imagesValue.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {imagesValue.map((url, index) => (
+                          <div
+                            key={index}
+                            className={`relative rounded-md border overflow-hidden group ${
+                              imageValue === url
+                                ? "border-primary ring-2 ring-primary"
+                                : "border-gray-200"
+                            }`}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={url}
+                              alt={`Blog image ${index + 1}`}
+                              className="w-full h-24 object-cover"
+                            />
+                            {imageValue === url && (
+                              <span className="absolute top-1 left-1 bg-primary text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">
+                                Cover
+                              </span>
+                            )}
+                            <div className="absolute inset-x-0 bottom-0 flex justify-between p-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/70 to-transparent">
+                              {imageValue !== url && (
+                                <button
+                                  type="button"
+                                  title="Set as cover"
+                                  onClick={() => setValue("image", url)}
+                                  className="text-white text-[10px] font-medium px-1.5 py-0.5 rounded hover:bg-white/20"
+                                >
+                                  Cover
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                title="Remove image"
+                                onClick={() => removeImage(url)}
+                                className="text-white text-[10px] font-medium px-1.5 py-0.5 rounded hover:bg-white/20 ml-auto"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -590,6 +664,7 @@ export default function BlogsPage() {
                     key={`${dialogMode}-${selectedBlog?._id || "new"}`}
                     value={contentValue}
                     onChange={(html) => setValue("content", html)}
+                    gallery={imagesValue}
                   />
                   {errors.content && (
                     <p className="text-sm text-red-600">
