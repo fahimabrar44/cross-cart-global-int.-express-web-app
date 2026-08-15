@@ -22,16 +22,14 @@ export async function GET(
 
     const { id } = await params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return errorResponse({ status: 400, message: "Invalid blog ID", req });
-    }
+    // Support both Mongo ObjectId and URL-friendly slug lookups
+    const blog = mongoose.Types.ObjectId.isValid(id)
+      ? await Blog.findById(id)
+      : await Blog.findOne({ slug: id });
 
-    const blog = await Blog.findById(id)
-      .populate("author", "name email")
-      .populate("relatedService", "name");
-
-    if (!blog)
+    if (!blog) {
       return errorResponse({ status: 404, message: "Blog not found", req });
+    }
 
     return successResponse({
       status: 200,

@@ -16,3 +16,17 @@ export async function fetchPublicData<T>(path: string): Promise<T[]> {
     return [];
   }
 }
+
+export async function fetchPublicObject<T>(path: string): Promise<T | null> {
+  const base = process.env.PUBLIC_APP_URL || "http://localhost:3000/";
+  try {
+    const res = await fetch(`${base}api/v1/${path}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.data && !Array.isArray(json.data) ? (json.data as T) : null;
+  } catch {
+    return null;
+  }
+}

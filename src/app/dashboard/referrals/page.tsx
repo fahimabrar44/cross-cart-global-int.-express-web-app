@@ -52,6 +52,21 @@ export default function ReferralsPage() {
     }
   };
 
+  const markRewarded = async (referralId: string) => {
+    if (!confirm("Mark this referral as rewarded?")) return;
+    try {
+      const res = await apiService.put("/referrals/list", { referralId });
+      if (res.success) {
+        toast.success("Referral marked as rewarded");
+        fetchData();
+      } else {
+        toast.error(res.message || "Failed to update referral");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "An error occurred");
+    }
+  };
+
   const baseOrigin =
     typeof window !== "undefined" ? window.location.origin : "https://crosscartglobal.com";
   const rewardsText = `Use my CrossCart referral code ${myInfo?.referralCode || ""} and get exclusive shipping discounts! Sign up here: ${baseOrigin}/auth/signup?ref=${myInfo?.referralCode || ""}`;
@@ -170,7 +185,8 @@ export default function ReferralsPage() {
                         <th className="py-3 pr-4">Referred User</th>
                         <th className="py-3 pr-4">Status</th>
                         <th className="py-3 pr-4">Reward</th>
-                        <th className="py-3">Date</th>
+                        <th className="py-3 pr-4">Date</th>
+                        <th className="py-3">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -199,8 +215,25 @@ export default function ReferralsPage() {
                           <td className="py-3 pr-4">
                             {r.rewardAmount > 0 ? r.rewardAmount : "—"}
                           </td>
-                          <td className="py-3">
+                          <td className="py-3 pr-4">
                             {new Date(r.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="py-3">
+                            {r.status === "pending" ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-primary text-primary hover:bg-primary hover:text-white"
+                                onClick={() => markRewarded(r._id)}
+                              >
+                                <Gift className="h-4 w-4 mr-1" />
+                                Mark Rewarded
+                              </Button>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">
+                                {r.status === "rewarded" ? "Rewarded" : "—"}
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))}

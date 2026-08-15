@@ -1,6 +1,8 @@
 ﻿import type { Metadata } from "next";
+import Link from "next/link";
 import PageHeader from "@/utilities/PageHeader";
-import { Globe, Mail, Package, PenTool, Plane, TrendingUp } from "lucide-react";
+import { fetchPublicData } from "@/server/common/fetchPublic";
+import { Mail, Package, PenTool } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Our Blog",
@@ -44,46 +46,38 @@ export const metadata: Metadata = {
   },
 };
 
-const OurBlog = () => {
-  // Sample blog posts data
-  const blogPosts = [
-    {
-      id: 1,
-      title: "How to Save on International Shipping",
-      excerpt:
-        "Discover cost-effective strategies for Bangladeshi businesses to reduce shipping expenses while maintaining quality service.",
-      icon: <Package className="w-6 h-6 text-[#12352A]" />,
-      date: "Coming Soon",
-      category: "Cost Saving",
-    },
-    {
-      id: 2,
-      title: "Behind the Scenes: How Cross Cart Global International Express Partners with Global Couriers",
-      excerpt:
-        "Learn about our partnerships with DHL, FedEx, UPS, and more to deliver reliable shipping solutions.",
-      icon: <Globe className="w-6 h-6 text-[#12352A]" />,
-      date: "Coming Soon",
-      category: "Partnerships",
-    },
-    {
-      id: 3,
-      title: "How Small Businesses in Bangladesh Are Going Global",
-      excerpt:
-        "Success stories from local entrepreneurs who expanded their reach with CrossCart Global Int Express's shipping solutions.",
-      icon: <TrendingUp className="w-6 h-6 text-[#12352A]" />,
-      date: "Coming Soon",
-      category: "Success Stories",
-    },
-    {
-      id: 4,
-      title: "Step-by-Step Customs & Documentation Guides",
-      excerpt:
-        "Navigate international shipping regulations with our comprehensive customs documentation guide.",
-      icon: <Plane className="w-6 h-6 text-[#12352A]" />,
-      date: "Coming Soon",
-      category: "Documentation",
-    },
-  ];
+interface BlogPost {
+  _id: string;
+  title: string;
+  slug: string;
+  content: string;
+  image?: string;
+  category?: string;
+  excerpt?: string;
+  tags?: string[];
+  author?: { name?: string; email?: string } | null;
+  status: string;
+  createdAt: string;
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  service: "Service",
+  news: "News",
+  update: "Update",
+  promotion: "Promotion",
+};
+
+const OurBlog = async () => {
+  const blogPosts = await fetchPublicData<BlogPost>(
+    "blogs?status=published&limit=100"
+  );
+
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
 
   return (
     <>
@@ -103,13 +97,17 @@ const OurBlog = () => {
               Our Blog
             </h1>
             <p className="text-lg text-gray-700 leading-relaxed mb-8 text-center max-w-4xl mx-auto">
-              Welcome to the <span className="italic">Cross Cart Global International Express Blog</span> — your
-              destination for delivery insights, eCommerce tips, and global
-              shipping updates.
+              Welcome to the{" "}
+              <span className="italic">
+                Cross Cart Global International Express Blog
+              </span>{" "}
+              — your destination for delivery insights, eCommerce tips, and
+              global shipping updates.
             </p>
             <p className="text-lg text-gray-700 leading-relaxed text-center max-w-4xl mx-auto">
-              At Cross Cart Global International Express, we believe knowledge empowers small businesses. Our blog
-              shares helpful guides, stories, and updates to help{" "}
+              At Cross Cart Global International Express, we believe knowledge
+              empowers small businesses. Our blog shares helpful guides,
+              stories, and updates to help{" "}
               <span className="italic">Bangladeshi sellers grow globally</span>{" "}
               — from packaging tips to courier comparisons and success stories
               from local entrepreneurs.
@@ -130,38 +128,68 @@ const OurBlog = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-8">
-              Stay tuned for upcoming topics:
+              Latest Articles
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {blogPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
-                >
-                  <div className="p-6">
-                    <div className="flex items-center justify-center w-12 h-12 bg-soft-green rounded-full mb-4">
-                      {post.icon}
+            {blogPosts.length === 0 ? (
+              <div className="text-center py-12 bg-section rounded-lg">
+                <p className="text-lg text-gray-600 mb-2">
+                  No articles published yet.
+                </p>
+                <p className="text-gray-500">
+                  Stay tuned — new shipping guides and success stories are on
+                  the way.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {blogPosts.map((post) => (
+                  <Link
+                    key={post._id}
+                    href={`/about/our-blog/${post.slug}`}
+                    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden flex flex-col"
+                  >
+                    {post.image ? (
+                      <div className="w-full h-48 overflow-hidden bg-gray-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={post.image}
+                          alt={post.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-48 bg-soft-green flex items-center justify-center">
+                        <Package className="w-10 h-10 text-[#12352A]" />
+                      </div>
+                    )}
+                    <div className="p-6 flex flex-col flex-1">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-semibold text-primary uppercase tracking-wide">
+                          {post.category
+                            ? CATEGORY_LABELS[post.category] || post.category
+                            : "General"}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {formatDate(post.createdAt)}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3 line-clamp-2">
+                        {post.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                        {post.excerpt || "Read this article to learn more."}
+                      </p>
+                      <div className="mt-auto flex items-center justify-between">
+                        <span className="text-[#12352A] text-sm font-medium hover:text-primary transition-colors">
+                          Read More →
+                        </span>
+                      </div>
                     </div>
-                    <div className="mb-2">
-                      <span className="text-xs font-semibold text-primary uppercase tracking-wide">
-                        {post.category}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                      {post.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-4">{post.excerpt}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">{post.date}</span>
-<button className="text-[#12352A] text-sm font-medium hover:text-primary transition-colors">
-                        Read More →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="bg-[#12352A] text-white rounded-lg p-8 text-center">
@@ -183,7 +211,8 @@ const OurBlog = () => {
               </a>
             </div>
             <p className="text-gray-300 mt-2">
-              to get featured on the Cross Cart Global International Express Blog.
+              to get featured on the Cross Cart Global International Express
+              Blog.
             </p>
           </div>
 
@@ -192,8 +221,8 @@ const OurBlog = () => {
               Subscribe to Our Newsletter
             </h3>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Get the latest shipping tips, industry insights, and Cross Cart Global International Express updates
-              delivered to your inbox.
+              Get the latest shipping tips, industry insights, and Cross Cart
+              Global International Express updates delivered to your inbox.
             </p>
             <div className="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
               <input

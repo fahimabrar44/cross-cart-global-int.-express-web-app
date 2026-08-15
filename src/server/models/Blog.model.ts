@@ -6,6 +6,7 @@ export interface IBlog extends Document {
   title: string;
   slug: string; // URL-friendly slug
   content: string;
+  excerpt?: string; // short summary for blog cards / SEO
   image?: string;
   author: Types.ObjectId;
   category: string; // service, news, update, promotion
@@ -32,6 +33,7 @@ const blogSchema = new Schema<IBlog>(
     title: { type: String, required: true, trim: true },
     slug: { type: String, required: true, trim: true, unique: true },
     content: { type: String, required: true },
+    excerpt: { type: String, default: "" },
     image: { type: String, default: "" },
 
     author: { type: Schema.Types.ObjectId, ref: "User", required: true },

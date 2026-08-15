@@ -1,5 +1,6 @@
 ﻿"use client";
 import { DataTable } from "@/components/Dashboard/DataTable";
+import BlogRichEditor from "@/components/Dashboard/BlogRichEditor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,9 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RoleGuard } from "@/middleware/roleGuard";
+import { apiService } from "@/services/apiService";
 import { ContentService } from "@/services/dashboardService";
-import { BookOpen, Edit, Eye, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { BookOpen, Edit, Eye, ImagePlus, Loader2, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -23,23 +25,42 @@ interface BlogFormData {
   title: string;
   content: string;
   excerpt: string;
+  image: string;
+  category: "service" | "news" | "update" | "promotion";
   tags: string;
   status: "draft" | "published";
+}
+
+interface BlogRow {
+  _id: string;
+  title: string;
+  content?: string;
+  excerpt?: string;
+  image?: string;
+  category?: string;
+  tags?: string[];
+  author?: { name?: string; email?: string } | null;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export default function BlogsPage() {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedBlog, setSelectedBlog] = useState(null);
+  const [selectedBlog, setSelectedBlog] = useState<BlogRow | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | "view">(
     "create"
   );
+  const [uploading, setUploading] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     reset,
     formState: { errors },
   } = useForm<BlogFormData>({
@@ -47,10 +68,15 @@ export default function BlogsPage() {
       title: "",
       content: "",
       excerpt: "",
+      image: "",
+      category: "service",
       tags: "",
       status: "draft",
     },
   });
+
+  const contentValue = watch("content");
+  const imageValue = watch("image");
 
   useEffect(() => {
     fetchBlogs();
@@ -87,11 +113,13 @@ export default function BlogsPage() {
     setValue("title", blog.title || "");
     setValue("content", blog.content || "");
     setValue("excerpt", blog.excerpt || "");
+    setValue("image", blog.image || "");
+    setValue("category", blog.category || "service");
     setValue(
       "tags",
       Array.isArray(blog.tags) ? blog.tags.join(", ") : blog.tags || ""
     );
-    setValue("status", blog.status || "draft");
+    setValue("status", blog.status === "published" ? "published" : "draft");
     setIsDialogOpen(true);
   };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,12 +155,11 @@ export default function BlogsPage() {
           .split(",")
           .map((tag) => tag.trim())
           .filter(Boolean),
+        isPublished: data.status === "published",
       };
 
       let response;
       if (dialogMode === "edit" && selectedBlog) {
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
         response = await ContentService.updateBlog(selectedBlog._id, blogData);
       } else {
         response = await ContentService.createBlog(blogData);
@@ -150,6 +177,46 @@ export default function BlogsPage() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
     }
+  };
+
+  const handleImageUpload = (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error("Image must be under 3MB");
+      return;
+    }
+
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      try {
+        const res = await apiService.post("/uploads", { dataUrl });
+        const uploadedUrl = (res.data as { url?: string } | undefined)?.url;
+        if (res.success && uploadedUrl) {
+          setValue("image", uploadedUrl);
+          toast.success("Image uploaded successfully");
+        } else {
+          toast.error(res.message || "Image upload failed");
+        }
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "An error occurred"
+        );
+      } finally {
+        setUploading(false);
+        if (imageInputRef.current) imageInputRef.current.value = "";
+      }
+    };
+    reader.onerror = () => {
+      setUploading(false);
+      toast.error("Failed to read the selected file");
+    };
+    reader.readAsDataURL(file);
   };
 
   const getStatusBadge = (status: string) => (
@@ -219,6 +286,29 @@ export default function BlogsPage() {
         <h2 className="text-2xl font-bold">{blog.title}</h2>
         {getStatusBadge(blog.status)}
       </div>
+
+      {blog.image && (
+        <div>
+          <Label className="text-sm font-medium text-gray-500">
+            Featured Image
+          </Label>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={blog.image}
+            alt={blog.title}
+            className="mt-1 w-full max-w-sm h-48 object-cover rounded-md border border-gray-200"
+          />
+        </div>
+      )}
+
+      {blog.category && (
+        <div>
+          <Label className="text-sm font-medium text-gray-500">Category</Label>
+          <p className="mt-1 text-sm capitalize text-gray-700">
+            {blog.category}
+          </p>
+        </div>
+      )}
 
       {blog.excerpt && (
         <div>
@@ -438,15 +528,68 @@ export default function BlogsPage() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label>Featured Image</Label>
+                  <div className="flex flex-col gap-3">
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      data-testid="blog-image-input"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file);
+                      }}
+                    />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploading}
+                        onClick={() => imageInputRef.current?.click()}
+                        data-testid="blog-image-upload-btn"
+                      >
+                        {uploading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <ImagePlus className="h-4 w-4 mr-2" />
+                        )}
+                        {uploading ? "Uploading..." : "Upload Image"}
+                      </Button>
+                      {imageValue && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => setValue("image", "")}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    <Input
+                      {...register("image")}
+                      placeholder="Or paste an image URL directly"
+                      data-testid="blog-image-url-input"
+                    />
+                    {imageValue && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={imageValue}
+                        alt="Blog featured image preview"
+                        className="w-full max-w-sm h-40 object-cover rounded-md border border-gray-200"
+                        data-testid="blog-image-preview"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="content">Content</Label>
-                  <Textarea
-                    id="content"
-                    {...register("content", {
-                      required: "Content is required",
-                    })}
-                    placeholder="Blog post content (HTML allowed)"
-                    rows={12}
-                    data-testid="blog-content-input"
+                  <BlogRichEditor
+                    key={`${dialogMode}-${selectedBlog?._id || "new"}`}
+                    value={contentValue}
+                    onChange={(html) => setValue("content", html)}
                   />
                   {errors.content && (
                     <p className="text-sm text-red-600">
@@ -456,6 +599,20 @@ export default function BlogsPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <select
+                      {...register("category")}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                      data-testid="blog-category-select"
+                    >
+                      <option value="service">Service</option>
+                      <option value="news">News</option>
+                      <option value="update">Update</option>
+                      <option value="promotion">Promotion</option>
+                    </select>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="tags">Tags</Label>
                     <Input
@@ -468,18 +625,18 @@ export default function BlogsPage() {
                       Separate tags with commas
                     </p>
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <select
-                      {...register("status")}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                      data-testid="blog-status-select"
-                    >
-                      <option value="draft">Draft</option>
-                      <option value="published">Published</option>
-                    </select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <select
+                    {...register("status")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    data-testid="blog-status-select"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                  </select>
                 </div>
 
                 <div className="flex flex-wrap justify-end space-x-2 pt-4">
