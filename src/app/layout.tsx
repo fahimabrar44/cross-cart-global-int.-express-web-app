@@ -3,6 +3,8 @@ import { AuthProvider } from "@/hooks/AuthContext";
 import SiteLayout from "@/utilities/SiteLayout";
 import Script from "next/script";
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -738,6 +740,9 @@ export default function RootLayout({
             alt=""
           />
         </noscript>
+
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
