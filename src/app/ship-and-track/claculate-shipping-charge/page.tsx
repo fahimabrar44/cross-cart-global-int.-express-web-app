@@ -27,7 +27,7 @@ interface Rate {
   profitPercentage: number;
   gift: number;
   fuel: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   price: Record<string, number>;
 }
 
@@ -77,7 +77,7 @@ const CalculateShippingCharge = () => {
     const fetchCountries = async () => {
       try {
         const response = await getRequestSend<CountryOption[]>(
-          `${ROOT_API}countrys?isActive=true&limit=250&sortBy=name&sortOrder=asc`
+          `${ROOT_API}countrys?isActive=true&limit=250&sortBy=name&sortOrder=asc`,
         );
         if (response.status === 200 && Array.isArray(response.data)) {
           setCountries(response.data);
@@ -95,7 +95,7 @@ const CalculateShippingCharge = () => {
     const fetchZones = async () => {
       try {
         const response = await getRequestSend<ZoneOption[]>(
-          `${ROOT_API}zones?isActive=true&limit=100&sortBy=name&sortOrder=asc`
+          `${ROOT_API}zones?isActive=true&limit=100&sortBy=name&sortOrder=asc`,
         );
         if (response.status === 200 && Array.isArray(response.data)) {
           setZones(response.data);
@@ -113,7 +113,8 @@ const CalculateShippingCharge = () => {
   const getCountryName = (id: string) =>
     countries.find((c) => c._id === id)?.name || "";
 
-  const getZoneName = (id: string) => zones.find((z) => z._id === id)?.name || "";
+  const getZoneName = (id: string) =>
+    zones.find((z) => z._id === id)?.name || "";
 
   const handleCalculate = async () => {
     setError("");
@@ -133,13 +134,17 @@ const CalculateShippingCharge = () => {
         to: toZone,
       });
       const response = await getRequestSend<PriceData[]>(
-        `${ROOT_API}prices?${params.toString()}`
+        `${ROOT_API}prices?${params.toString()}`,
       );
-      if (response.status === 200 && Array.isArray(response.data) && response.data.length > 0) {
+      if (
+        response.status === 200 &&
+        Array.isArray(response.data) &&
+        response.data.length > 0
+      ) {
         setPriceData(response.data[0]);
       } else {
         setError(
-          "No pricing found for this route yet. Please contact our support team."
+          "No pricing found for this route yet. Please contact our support team.",
         );
       }
     } catch {
@@ -151,7 +156,11 @@ const CalculateShippingCharge = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const priceWithFees = (base: any, rate: any) =>
-    Number(base * (1 + (rate.fuel || 0) / 100) * (1 + (rate.profitPercentage || 0) / 100)).toFixed(3);
+    Number(
+      base *
+        (1 + (rate.fuel || 0) / 100) *
+        (1 + (rate.profitPercentage || 0) / 100),
+    ).toFixed(3);
   const carriers = [
     {
       name: "DHL Express",
@@ -216,8 +225,8 @@ const CalculateShippingCharge = () => {
               Calculate Shipping Charges
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Select origin country, destination zone and shipment type (B2B
-              or B2C) to get instant shipping quotes.
+              Select origin country, destination zone and shipment type (B2B or
+              B2C) to get instant shipping quotes.
             </p>
           </div>
 
@@ -245,7 +254,9 @@ const CalculateShippingCharge = () => {
                     onChange={(e) => setFromCountry(e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   >
-                    {countries.length === 0 && <option value="">Select Country</option>}
+                    {countries.length === 0 && (
+                      <option value="">Select Country</option>
+                    )}
                     {countries.map((c) => (
                       <option key={c._id} value={c._id}>
                         {c.name}
@@ -332,13 +343,15 @@ const CalculateShippingCharge = () => {
                               {r.name}
                             </div>
                             <div className="text-sm text-gray-500">
-                              Profit: {r.profitPercentage ?? 0}% • Gift:{" "}
-                              {r.gift ?? 0} • Fuel: {r.fuel ?? 0}%
+                              Gift: {r.gift ?? 0}
                             </div>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
                             {Object.entries(r.price || {})
-                              .filter(([, v]) => typeof v === "number" && Number(v) > 0)
+                              .filter(
+                                ([, v]) =>
+                                  typeof v === "number" && Number(v) > 0,
+                              )
                               .map(([k, v]) => (
                                 <div
                                   key={k}

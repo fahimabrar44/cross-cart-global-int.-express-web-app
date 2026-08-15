@@ -158,15 +158,7 @@ export async function GET(req: NextRequest) {
       .skip(skip)
       .limit(limit)
       .lean();
-
-    const finalPrice = prices.map((price) => ({
-      ...price,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      rate: price.rate.map((rate: any) => {
-        const { profitPercentage, ...rest } = rate;
-        return rest;
-      }),
-    }));
+ 
 
     // For public / API-key consumers apply profit % then fuel surcharge onto
     // every rate field so the returned values are the final chargeable prices.
@@ -195,7 +187,7 @@ export async function GET(req: NextRequest) {
     return successResponse({
       status: 200,
       message: "Prices fetched successfully",
-      data: finalPrice,
+      data: prices,
       meta: {
         page,
         limit,
