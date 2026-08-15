@@ -70,8 +70,10 @@ const blogSchema = new Schema<IBlog>(
   { timestamps: true }
 );
 
-// Slug auto-generation from title (handles special chars + duplicate titles)
-blogSchema.pre("save", async function (next) {
+// Slug auto-generation from title (handles special chars + duplicate titles).
+// Runs on "validate" because "save" hooks run AFTER validation, so a required
+// slug would fail validation before this could set it.
+blogSchema.pre("validate", async function (next) {
   if (!this.isModified("title")) return next();
 
   const base =

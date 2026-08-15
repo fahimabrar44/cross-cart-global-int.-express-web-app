@@ -70,6 +70,10 @@ export const PUT = createModeratorHandler(async ({ req }) => {
       return errorResponse({ status: 400, message: "Invalid blog ID", req });
     }
 
+    // author and slug are managed server-side
+    delete body.author;
+    delete body.slug;
+
     const blog = await Blog.findByIdAndUpdate(id, body, { new: true });
 
     if (!blog)

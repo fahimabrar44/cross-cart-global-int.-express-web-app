@@ -7,12 +7,16 @@ import { createModeratorHandler } from "@/server/common/apiWrapper";
 // =========================
 // POST - Create Blog
 // =========================
-export const POST = createModeratorHandler(async ({ req }) => {
+export const POST = createModeratorHandler(async ({ req, user }) => {
   try {
     await connectDB();
     const body = await req.json();
 
-    const blog = new Blog(body);
+    // author is always the authenticated admin/moderator, never client-supplied
+    const blog = new Blog({
+      ...body,
+      author: user?.id,
+    });
     await blog.save();
 
     return successResponse({
