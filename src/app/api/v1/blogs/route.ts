@@ -72,9 +72,6 @@ export async function GET(req: NextRequest) {
 
     const blogs: IBlog[] = await Blog.find(query)
       .populate("author", "name email")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
       .lean();
 
     return successResponse({
