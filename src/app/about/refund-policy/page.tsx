@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     images: [
       {
-        url: '/logo.png',
+        url: '/full-logo.png',
         width: 1200,
         height: 630,
         alt: 'Cross Cart Global International Express',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     title: 'Refund Policy | Cross Cart Global International Express',
     description:
       'Fair and transparent refund policy for cancelled, lost or undelivered shipments with Cross Cart Global International Express from Bangladesh.',
-    images: ['/logo.png'],
+    images: ['/full-logo.png', '/logo.png'],
   },
 };
 

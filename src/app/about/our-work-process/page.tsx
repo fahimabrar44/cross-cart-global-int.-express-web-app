@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     images: [
       {
-        url: '/logo.png',
+        url: '/full-logo.png',
         width: 1200,
         height: 630,
         alt: 'Cross Cart Global International Express',
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     title: 'Our Work Process | Cross Cart Global International Express',
     description:
       'See how Cross Cart Global International Express handles your shipment from doorstep pickup to worldwide delivery, with tracking at every step.',
-    images: ['/logo.png'],
+    images: ['/full-logo.png', '/logo.png'],
   },
 };
 

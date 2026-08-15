@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     title: "Corporate Solutions | Cross Cart Global International Express",
     description:
       "Enterprise logistics and B2B shipping solutions with volume discounts, dedicated account management and API integration for Bangladeshi businesses.",
-    images: ["/logo.png"],
+    images: ["/full-logo.png", "/logo.png"],
   },
 };
 

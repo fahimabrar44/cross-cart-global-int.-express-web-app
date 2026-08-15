@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: "/logo.png",
+        url: "/full-logo.png",
         width: 1200,
         height: 630,
         alt: "Cross Cart Global International Express",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     title: "Business Solutions | Cross Cart Global International Express",
     description:
       "Business logistics and B2B shipping with supply chain management, volume discounts and dedicated account managers from Bangladesh.",
-    images: ["/logo.png"],
+    images: ["/full-logo.png", "/logo.png"],
   },
 };
 

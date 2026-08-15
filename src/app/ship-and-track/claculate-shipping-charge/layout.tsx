@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: "/logo.png",
+        url: "/full-logo.png",
         width: 1200,
         height: 630,
         alt: "Cross Cart Global International Express",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     title: "Calculate Shipping Charge | Cross Cart Global International Express",
     description:
       "Get instant, transparent international shipping quotes from Bangladesh to any destination with Cross Cart Global International Express.",
-    images: ["/logo.png"],
+    images: ["/full-logo.png", "/logo.png"],
   },
 };
 

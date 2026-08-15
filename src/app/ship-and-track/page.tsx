@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: "/logo.png",
+        url: "/full-logo.png",
         width: 1200,
         height: 630,
         alt: "Cross Cart Global International Express",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     title: "Ship and Track | Cross Cart Global International Express",
     description:
       "Calculate shipping rates, create shipments with doorstep pickup and track your parcels in real time from Bangladesh.",
-    images: ["/logo.png"],
+    images: ["/full-logo.png", "/logo.png"],
   },
 };
 

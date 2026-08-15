@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     images: [
       {
-        url: '/logo.png',
+        url: '/full-logo.png',
         width: 1200,
         height: 630,
         alt: 'Cross Cart Global International Express',
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     title: 'Industry Solutions | Cross Cart Global International Express',
     description:
       'Specialized logistics for healthcare, automotive, electronics, fashion and manufacturing sectors from Bangladesh.',
-    images: ['/logo.png'],
+    images: ['/full-logo.png', '/logo.png'],
   },
 };
 

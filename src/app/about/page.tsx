@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: "/logo.png",
+        url: "/full-logo.png",
         width: 1200,
         height: 630,
         alt: siteName,
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     title: "About Us | Cross Cart Global International Express",
     description:
       "Discover how Cross Cart Global International Express makes international courier services more affordable and reliable in Bangladesh.",
-    images: ["/logo.png"],
+    images: ["/full-logo.png", "/logo.png"],
   },
 };
 
