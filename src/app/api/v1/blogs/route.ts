@@ -40,6 +40,9 @@ export const POST = createModeratorHandler(async ({ req, user }) => {
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
+    // Drop the legacy text index (if present) BEFORE the first query triggers
+    // mongoose auto-indexing, otherwise index creation conflicts and fails.
+    await dropLegacyBlogTextIndex();
 
     const url = new URL(req.url);
     const category = url.searchParams.get("category");
@@ -69,7 +72,6 @@ export async function GET(req: NextRequest) {
 
     const blogs: IBlog[] = await Blog.find(query)
       .populate("author", "name email")
-      .populate("relatedService", "name")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -87,6 +89,7 @@ export async function GET(req: NextRequest) {
       req,
     });
   } catch (error: unknown) {
+    console.error("GET /api/v1/blogs error:", error);
     const msg = error instanceof Error ? error.message : "Failed to fetch blogs";
     return errorResponse({ status: 500, message: msg, error, req });
   }

@@ -20,6 +20,7 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     await connectDB();
+    await dropLegacyBlogTextIndex();
 
     const { id } = await params;
 
@@ -51,6 +52,7 @@ export async function GET(
       req,
     });
   } catch (error: unknown) {
+    console.error("GET /api/v1/blogs/[id] error:", error);
     const msg = error instanceof Error ? error.message : "Failed to fetch blog";
     return errorResponse({ status: 500, message: msg, error, req });
   }
