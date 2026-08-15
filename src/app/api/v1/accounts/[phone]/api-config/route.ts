@@ -95,13 +95,21 @@ export async function POST(
     }
     const body: ApiConfigBody = await req.json();
 
+    if (!body.name || typeof body.name !== "string" || body.name.trim().length < 3) {
+      return errorResponse({
+        status: 400,
+        message: "A config name of at least 3 characters is required",
+        req,
+      });
+    }
+
     const user = await User.findOne({ phone });
     if (!user)
       return errorResponse({ status: 404, message: "User not found", req });
 
     const newConfig = new ApiConfig({
       user: user._id,
-      name: body.name,
+      name: body.name.trim(),
       allowedIPs: body.allowedIPs || [],
       isActive: body.isActive ?? true,
       expiresAt: body.expiresAt ? new Date(body.expiresAt) : undefined,
@@ -113,7 +121,18 @@ export async function POST(
       },
     });
 
-    await newConfig.save();
+    // Save, retrying once on a duplicate API-key (E11000) collision
+    try {
+      await newConfig.save();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (saveErr: any) {
+      if (saveErr?.code === 11000) {
+        newConfig.generateNewKey();
+        await newConfig.save();
+      } else {
+        throw saveErr;
+      }
+    }
 
     // Send notification
     await notificationService
@@ -146,6 +165,8 @@ export async function POST(
   } catch (error: unknown) {
     const msg =
       error instanceof Error ? error.message : "Failed to create API config";
+    // eslint-disable-next-line no-console
+    console.error("Create API config error:", error);
     return errorResponse({ status: 500, message: msg, error, req });
   }
 }

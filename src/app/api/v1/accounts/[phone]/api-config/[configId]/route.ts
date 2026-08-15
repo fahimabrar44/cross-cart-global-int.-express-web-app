@@ -55,7 +55,17 @@ export async function PATCH(
     }
 
     config.generateNewKey();
-    await config.save();
+    try {
+      await config.save();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (saveErr: any) {
+      if (saveErr?.code === 11000) {
+        config.generateNewKey();
+        await config.save();
+      } else {
+        throw saveErr;
+      }
+    }
 
     // Send notification
     await notificationService
