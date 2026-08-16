@@ -3,7 +3,6 @@ import { RoleGuard } from "@/middleware/roleGuard";
 import { apiService } from "@/services/apiService";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Briefcase, Loader2, Plus, Trash2, Eye } from "lucide-react";
+import { Loader2, Plus, Trash2, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 

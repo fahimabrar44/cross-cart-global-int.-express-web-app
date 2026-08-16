@@ -1,7 +1,6 @@
 import connectDB from "@/config/db";
 import { JobApplication } from "@/server/models/JobApplication.model";
 import { successResponse, errorResponse } from "@/server/common/response";
-import { NextRequest } from "next/server";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 
 // GET /api/v1/job-applications - list applications (moderator/admin)

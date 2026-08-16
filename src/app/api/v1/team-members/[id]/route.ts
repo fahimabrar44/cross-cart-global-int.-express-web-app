@@ -2,7 +2,6 @@ import connectDB from "@/config/db";
 import { TeamMember } from "@/server/models/TeamMember.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import mongoose from "mongoose";
-import { NextRequest, NextResponse } from "next/server";
 import { createModeratorHandler, createPublicHandler } from "@/server/common/apiWrapper";
 
 const extractId = (req: Request): string => {

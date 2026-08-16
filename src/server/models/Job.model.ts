@@ -51,8 +51,7 @@ jobSchema.pre("validate", async function (next) {
 
   let candidate = base;
   let suffix = 2;
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
+  while (true) {
     const existing = await (
       this.constructor as typeof mongoose.Model
     ).findOne({ slug: candidate, _id: { $ne: this._id } });

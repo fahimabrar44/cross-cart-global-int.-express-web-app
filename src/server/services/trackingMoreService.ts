@@ -321,7 +321,6 @@ export async function selectCourier(
   detected: Array<{ courier_code?: string }>,
   destinationCountryIso2?: string
 ): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const codes = (detected || [])
     .map((c) => c?.courier_code)
     .filter((c): c is string => Boolean(c));
@@ -345,12 +344,10 @@ export async function selectCourier(
     if (all.length) {
       const required = new Map(
         all.map(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (c) => [c.courier_code, (c.tracking_required_fields || []) as string[]]
         )
       );
       const noRequired = codes.find(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (c) => !(required.get(c) || ([] as string[])).length
       );
       if (noRequired) return noRequired;

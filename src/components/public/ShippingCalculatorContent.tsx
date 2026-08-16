@@ -29,7 +29,6 @@ interface FetchedZone {
   _id: string;
   name: string;
   code?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   countryIds: { _id: string; name: string; code?: string; isActive?: boolean }[];
 }
 

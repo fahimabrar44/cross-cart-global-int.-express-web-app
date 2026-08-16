@@ -37,7 +37,6 @@ interface TeamMemberFormData {
   isActive: boolean;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface TeamMemberRow {
   _id: string;
   name: string;
@@ -247,7 +246,6 @@ export default function TeamMembersPage() {
     {
       key: "image",
       label: "Photo",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       render: (value: string) =>
         value ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -277,20 +275,17 @@ export default function TeamMembersPage() {
     {
       key: "location",
       label: "Location",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       render: (value: string) => value || "-",
     },
     {
       key: "order",
       label: "Order",
       sortable: true,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       render: (value: number) => value ?? 0,
     },
     {
       key: "isActive",
       label: "Status",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       render: (value: boolean) => getStatusBadge(value),
     },
   ];

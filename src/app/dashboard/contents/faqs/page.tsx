@@ -27,7 +27,6 @@ interface FaqFormData {
   isActive: boolean;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface FaqRow {
   _id: string;
   question: string;
@@ -175,20 +174,17 @@ export default function FaqsPage() {
     {
       key: "category",
       label: "Category",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       render: (value: string) => <Badge variant="outline">{value}</Badge>,
     },
     {
       key: "order",
       label: "Order",
       sortable: true,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       render: (value: number) => value ?? 0,
     },
     {
       key: "isActive",
       label: "Status",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       render: (value: boolean) => getStatusBadge(value),
     },
   ];

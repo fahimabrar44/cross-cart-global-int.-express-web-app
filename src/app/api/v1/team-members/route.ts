@@ -1,7 +1,6 @@
 import connectDB from "@/config/db";
 import { TeamMember } from "@/server/models/TeamMember.model";
 import { successResponse, errorResponse } from "@/server/common/response";
-import { NextRequest } from "next/server";
 import { createModeratorHandler, createPublicHandler } from "@/server/common/apiWrapper";
 
 // =========================

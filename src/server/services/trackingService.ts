@@ -428,7 +428,6 @@ export async function buildCreateTrackingPayload(input: {
     );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const receiver: any = (order as any)?.parcel?.receiver;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const address = receiver?.address || {};
 
     const postal = String(address?.zipCode || "").trim();

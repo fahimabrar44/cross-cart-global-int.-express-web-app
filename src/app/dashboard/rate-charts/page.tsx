@@ -223,7 +223,6 @@ export default function RateChartsPage() {
   };
 
 
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   const columns = createPriceColumns({userRole: user?.role || "user",
     onView: handleViewPrice,
     onEdit: handleEditClick,

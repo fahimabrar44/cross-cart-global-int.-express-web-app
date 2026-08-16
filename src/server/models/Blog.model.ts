@@ -86,7 +86,6 @@ blogSchema.pre("validate", async function (next) {
 
   let candidate = base;
   let suffix = 2;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const existing = await (
       this.constructor as typeof mongoose.Model
@@ -121,7 +120,6 @@ export async function dropLegacyBlogTextIndex(): Promise<void> {
       const hasText = Object.values(keys).some((v) => v === "text");
       const hasTags = "tags" in keys;
       if (hasText && hasTags && index.name) {
-        // eslint-disable-next-line no-await-in-loop
         await Blog.collection.dropIndex(index.name).catch(() => {});
       }
     }

@@ -5,7 +5,7 @@ import { NextRequest } from "next/server";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 
 // POST /api/v1/jobs - create a job (moderator/admin)
-export const POST = createModeratorHandler(async ({ req, user }) => {
+export const POST = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
     const body = await req.json();
