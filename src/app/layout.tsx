@@ -662,7 +662,7 @@ export default function RootLayout({
         </Script>
 
         {/* Microsoft Clarity */}
-        <Script
+        {/* <Script
           id="microsoft-clarity"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
@@ -674,7 +674,7 @@ export default function RootLayout({
               })(window, document, "clarity", "script", "w8fn60boix");
             `,
           }}
-        />
+        /> */}
 
         {/* Facebook Pixel */}
         <Script id="facebook-pixel" strategy="afterInteractive">

@@ -3,6 +3,11 @@ import CreateShipmentForm, {
   type ZoneOption,
 } from "@/components/public/CreateShipmentForm";
 import { fetchPublicData } from "@/server/common/fetchPublic";
+export const metadata = {
+  title: "Create Shipment | Cross Cart Global International Express",
+  description: "Create a new international shipment with Cross Cart Global in a few simple steps.",
+};
+
 
 export const dynamic = "force-dynamic";
 

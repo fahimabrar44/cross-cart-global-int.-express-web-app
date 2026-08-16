@@ -3,6 +3,11 @@ import TrackShipmentContent, {
   type TrackingData,
 } from "@/components/public/TrackShipmentContent";
 
+export const metadata = {
+  title: "Track Shipment | Cross Cart Global International Express",
+  description: "Track your Cross Cart Global shipment in real time using your tracking ID.",
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function TrackShipmentPage({

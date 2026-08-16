@@ -1,8 +1,13 @@
-﻿import ShippingCalculatorContent, {
+import ShippingCalculatorContent, {
   type CountryOption,
   type ZoneOption,
 } from "@/components/public/ShippingCalculatorContent";
 import { fetchPublicData } from "@/server/common/fetchPublic";
+export const metadata = {
+  title: "Calculate Shipping Charge | Cross Cart Global International Express",
+  description: "Calculate international courier and shipping charges instantly with the Cross Cart Global rate calculator.",
+};
+
 
 export const dynamic = "force-dynamic";
 
