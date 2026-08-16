@@ -24,7 +24,7 @@ interface TrackingEvent {
   createdAt?: string;
 }
 
-const TYPE_COLORS: Record<string, string> = {
+const TYPE_COLORS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   page_view: "default",
   page_leave: "secondary",
   event: "outline",
@@ -147,7 +147,7 @@ export default function ActivityPage() {
                   events.map((ev) => (
                     <TableRow key={ev._id}>
                       <TableCell>
-                        <Badge variant={(TYPE_COLORS[ev.type] as any) || "outline"}>
+                        <Badge variant={TYPE_COLORS[ev.type] || "outline"}>
                           {ev.type}
                         </Badge>
                       </TableCell>
