@@ -1,7 +1,5 @@
 import crypto from "crypto";
-
-const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "26093014930391502";
-const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN || "";
+import { getMarketingConfig } from "@/server/services/marketingConfigService";
 
 function sha256(value?: string): string | undefined {
   if (!value) return undefined;
@@ -42,9 +40,16 @@ export async function sendMetaCapiEvent(
   user: MetaCapiUser,
   options?: MetaCapiOptions
 ): Promise<void> {
-  if (!ACCESS_TOKEN || !PIXEL_ID) return;
-
   try {
+    const cfg = await getMarketingConfig();
+    const PIXEL_ID =
+      cfg?.metaPixelId ||
+      process.env.NEXT_PUBLIC_META_PIXEL_ID ||
+      "26093014930391502";
+    const ACCESS_TOKEN =
+      cfg?.metaCapiToken || process.env.META_CAPI_ACCESS_TOKEN || "";
+    if (!ACCESS_TOKEN || !PIXEL_ID) return;
+
     const req = options?.req as Request | undefined;
     const headers = req?.headers;
     const userAgent = headers?.get("user-agent") || undefined;

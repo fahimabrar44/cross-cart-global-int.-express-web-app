@@ -23,11 +23,16 @@ declare global {
   }
 }
 
-const GOOGLE_ADS_SEND_TO = process.env.NEXT_PUBLIC_GOOGLE_ADS_SEND_TO || "";
+let googleAdsSendTo = process.env.NEXT_PUBLIC_GOOGLE_ADS_SEND_TO || "";
 
 function marketingConsent(): boolean {
   const consent = getConsent();
   return Boolean(consent?.marketing);
+}
+
+/** Override the Google Ads conversion label/id at runtime (e.g. from DB config). */
+export function setGoogleAdsSendTo(value: string): void {
+  googleAdsSendTo = value || process.env.NEXT_PUBLIC_GOOGLE_ADS_SEND_TO || "";
 }
 
 /**
@@ -64,9 +69,9 @@ export function trackMarketingEvent(
     /* ignore */
   }
   try {
-    if (typeof window.gtag === "function" && GOOGLE_ADS_SEND_TO) {
+    if (typeof window.gtag === "function" && googleAdsSendTo) {
       window.gtag("event", "conversion", {
-        send_to: GOOGLE_ADS_SEND_TO,
+        send_to: googleAdsSendTo,
         event_name: name,
         ...p,
       });
