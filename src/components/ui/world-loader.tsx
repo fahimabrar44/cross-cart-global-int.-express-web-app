@@ -13,7 +13,7 @@ export default function WorldLoader({
 }: WorldLoaderProps) {
   const globe = (
     <img
-      src="/world.svg"
+      src="/loading-world.svg"
       alt="Loading"
       className={cn("h-48 w-48", className)}
     />
