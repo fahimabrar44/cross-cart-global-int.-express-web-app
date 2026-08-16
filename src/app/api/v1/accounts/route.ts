@@ -185,7 +185,23 @@ export async function POST(req: NextRequest) {
       isVerified: typeof isVerified === "boolean" ? isVerified : false,
     });
 
-    await newUser.save();
+    // Persist, retrying on a referral-code (E11000) collision. The pre-save
+    // hook regenerates referralCode on each attempt until the insert succeeds.
+    let saved = false;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        await newUser.save();
+        saved = true;
+        break;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (saveErr: any) {
+        if (saveErr?.code === 11000) continue;
+        throw saveErr;
+      }
+    }
+    if (!saved) {
+      throw new Error("Could not create user (referral code conflict). Please try again.");
+    }
 
     const created = await User.findById(newUser._id)
       .select("-password -refreshTokens")

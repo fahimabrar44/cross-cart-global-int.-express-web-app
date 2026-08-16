@@ -344,6 +344,31 @@ userSchema.pre("save", async function (next) {
   }
 });
 
+// Generate a unique referral code for new users. This keeps the unique
+// `referralCode` index satisfied (a null referralCode would otherwise collide
+// with the existing non-sparse index) and powers the referral feature.
+// Collisions are retried by the caller (isNew stays true after a failed insert,
+// so this hook regenerates the code on the next save attempt).
+function generateReferralCode(name?: string): string {
+  const base =
+    (name || "user").replace(/[^a-zA-Z]/g, "").slice(0, 4).toUpperCase() ||
+    "CCG";
+  const rand = crypto
+    .randomBytes(4)
+    .toString("base64url")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .slice(0, 6)
+    .toUpperCase();
+  return `${base}${rand}`;
+}
+
+userSchema.pre("save", async function (next) {
+  if (this.isNew && !this.referralCode) {
+    this.referralCode = generateReferralCode(this.name);
+  }
+  next();
+});
+
 // Update profile completion on save
 userSchema.pre("save", function (next) {
   this.updateProfileCompletion();

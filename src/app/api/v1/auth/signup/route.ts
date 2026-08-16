@@ -193,7 +193,25 @@ export const POST = createRateLimitedHandler(
       });
 
       const verificationCode = newUser.generateVerificationCode();
-      await newUser.save();
+
+      // Persist the user, retrying on a referral-code (E11000) collision.
+      // The pre-save hook regenerates referralCode on each attempt (isNew
+      // stays true until the insert succeeds).
+      let saved = false;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          await newUser.save();
+          saved = true;
+          break;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (saveErr: any) {
+          if (saveErr?.code === 11000) continue;
+          throw saveErr;
+        }
+      }
+      if (!saved) {
+        throw new Error("Could not create account (referral code conflict). Please try again.");
+      }
 
       // Optional referral code: link new user to referrer
       if (referralCode) {
