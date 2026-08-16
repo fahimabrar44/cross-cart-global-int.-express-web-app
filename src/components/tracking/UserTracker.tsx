@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/AuthContext";
 import { CountryPhoneInput } from "@/components/ui/phone-input";
 import { validatePhone } from "@/lib/phoneCountries";
+import { hasConsent } from "@/lib/visitor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,10 +70,24 @@ export default function UserTracker() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Track visits per page entry (independent of consent gating).
   useEffect(() => {
     trackVisit();
+  }, [pathname]);
 
-    // Don't show for logged-in users, on the dashboard, or on auth pages.
+  // Wait for cookie consent before showing the lead modal so the cookie
+  // banner appears first. For returning visitors consent already exists.
+  const [consentDecided, setConsentDecided] = useState(false);
+  useEffect(() => {
+    setConsentDecided(hasConsent());
+    const onConsent = () => setConsentDecided(true);
+    window.addEventListener("ccg-consent-set", onConsent);
+    return () => window.removeEventListener("ccg-consent-set", onConsent);
+  }, []);
+
+  useEffect(() => {
+    // Don't show for logged-in users, on the dashboard, or on auth pages,
+    // and only after the visitor has responded to the cookie banner.
     const isDashboard = pathname?.startsWith("/dashboard");
     const isAuth = pathname?.startsWith("/auth");
 
@@ -83,12 +98,12 @@ export default function UserTracker() {
       submitted = false;
     }
 
-    if (loading || user || submitted || isDashboard || isAuth) {
+    if (loading || user || submitted || isDashboard || isAuth || !consentDecided) {
       setShow(false);
       return;
     }
     setShow(true);
-  }, [pathname, user, loading]);
+  }, [pathname, user, loading, consentDecided]);
 
   // Lock background scroll while the mandatory modal is open.
   useEffect(() => {

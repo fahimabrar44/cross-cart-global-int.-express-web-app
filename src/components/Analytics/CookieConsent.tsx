@@ -95,6 +95,9 @@ export default function CookieConsent() {
     setPrefs(next);
     setShow(false);
     setOpenPrefs(false);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("ccg-consent-set"));
+    }
   };
 
   const acceptAll = () =>
