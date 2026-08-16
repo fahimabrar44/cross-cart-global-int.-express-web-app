@@ -89,10 +89,12 @@ export const GET = createAuthHandler(async ({ req, user }) => {
     
     // Role-based filtering
     if (user?.role === "user") {
-      // Regular users can only see orders they created or where they're the sender
+      // Regular users can see orders where they're the sender or the receiver
       query.$or = [
         { "parcel.sender.phone": user.phone },
-        { "parcel.sender.email": user.email }
+        { "parcel.sender.email": user.email },
+        { "parcel.receiver.phone": user.phone },
+        { "parcel.receiver.email": user.email },
       ];
     }
     // Admin and moderator can see all orders (no additional filter needed)
@@ -125,11 +127,18 @@ export const GET = createAuthHandler(async ({ req, user }) => {
 
     if (q.search) {
       const s = q.search.trim();
-      query.$or = [
+      const searchOr = [
         { trackId: { $regex: s, $options: "i" } },
         { "parcel.sender.name": { $regex: s, $options: "i" } },
         { "parcel.receiver.name": { $regex: s, $options: "i" } },
       ];
+      if (user?.role === "user") {
+        // Keep the user's own-orders restriction even while searching
+        query.$and = [{ $or: query.$or }, { $or: searchOr }];
+        delete query.$or;
+      } else {
+        query.$or = searchOr;
+      }
     }
 
     // Sorting
