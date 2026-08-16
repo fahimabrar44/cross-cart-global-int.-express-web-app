@@ -20,6 +20,7 @@ import { CountryPhoneInput } from "@/components/ui/phone-input";
 import { validatePhone } from "@/lib/phoneCountries";
 import { trackClarityEvent, setClarityTag } from "@/lib/clarity";
 import { gaEvent } from "@/lib/ga";
+import { trackMarketingEvent } from "@/lib/marketing";
 
 export interface CountryOption {
   _id: string;
@@ -466,6 +467,9 @@ export default function CreateShipmentForm({
         trackClarityEvent("shipment_created");
         setClarityTag("shipment_service", String(formData.parcel.serviceType || "standard"));
         gaEvent("shipment_created", {
+          service: String(formData.parcel.serviceType || "standard"),
+        });
+        trackMarketingEvent("shipment_created", {
           service: String(formData.parcel.serviceType || "standard"),
         });
         // Reset form

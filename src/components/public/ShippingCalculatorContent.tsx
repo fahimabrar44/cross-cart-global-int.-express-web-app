@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { trackClarityEvent, setClarityTag } from "@/lib/clarity";
 import { gaEvent } from "@/lib/ga";
+import { trackMarketingEvent } from "@/lib/marketing";
 
 export interface CountryOption {
   _id: string;
@@ -163,12 +164,18 @@ export default function ShippingCalculatorContent({
         trackClarityEvent("quote_calculated");
         setClarityTag("quote_route", `${fromCountry} -> ${toZone}`);
         gaEvent("quote_calculated", { route: `${fromCountry} -> ${toZone}` });
+        trackMarketingEvent("quote_calculated", {
+          route: `${fromCountry} -> ${toZone}`,
+        });
       } else {
         setError(
           "No pricing found for this route yet. Please contact our support team.",
         );
         setClarityTag("quote_result", "no_price");
         gaEvent("quote_no_price", { route: `${fromCountry} -> ${toZone}` });
+        trackMarketingEvent("quote_no_price", {
+          route: `${fromCountry} -> ${toZone}`,
+        });
       }
     } catch {
       setError("Failed to fetch prices. Please try again.");

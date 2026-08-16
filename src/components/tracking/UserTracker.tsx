@@ -13,6 +13,7 @@ import {
   syncClarityConsent,
 } from "@/lib/clarity";
 import { gaEvent, gaSetUserId, gaSetUserProperty } from "@/lib/ga";
+import { trackMarketingEvent } from "@/lib/marketing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -184,6 +185,7 @@ export default function UserTracker() {
     trackClarityEvent("lead_submitted");
     setClarityTag("lead_service", serviceType);
     gaEvent("lead_submitted", { service: serviceType });
+    trackMarketingEvent("lead_submitted", { service: serviceType });
     setSubmitting(false);
     setShow(false);
   };

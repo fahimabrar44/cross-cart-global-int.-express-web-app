@@ -5,6 +5,7 @@ import { Order } from "@/server/models/Order.model";
 import { Track } from "@/server/models/Track.model";
 import { Coupon } from "@/server/models/Coupon.model";
 import { notificationService } from "@/services/notificationService";
+import { sendMetaCapiEvent } from "@/server/lib/metaCapi";
 
 type GetQuery = {
   trackId?: string;
@@ -437,6 +438,19 @@ export const POST = createPublicHandler(async ({ req, user }) => {
     // Construct order document and save
     const order = new Order(body);
     await order.save();
+
+    void sendMetaCapiEvent(
+      "Purchase",
+      { email: parcel.sender?.email, phone: parcel.sender?.phone },
+      {
+        req,
+        customData: {
+          trackId: order.trackId,
+          value: Number(body.payment?.pAmount || 0),
+          currency: "USD",
+        },
+      }
+    );
 
     const track = new Track({
         order: order._id, // Link to the newly created order

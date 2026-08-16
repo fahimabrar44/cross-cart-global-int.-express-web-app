@@ -3,6 +3,7 @@ import { Job } from "@/server/models/Job.model";
 import { JobApplication } from "@/server/models/JobApplication.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { uploadBase64ToCloudinary } from "@/server/common/cloudinary";
+import { sendMetaCapiEvent } from "@/server/lib/metaCapi";
 import { NextRequest } from "next/server";
 import { Types } from "mongoose";
 
@@ -114,6 +115,12 @@ export async function POST(
       status: "new",
     });
     await application.save();
+
+    void sendMetaCapiEvent(
+      "CompleteRegistration",
+      { email, phone },
+      { req, customData: { jobTitle: (job as { title?: string }).title || "" } }
+    );
 
     return successResponse({
       status: 201,

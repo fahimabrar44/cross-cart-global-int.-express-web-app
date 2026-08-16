@@ -1,6 +1,7 @@
 import connectDB from "@/config/db";
 import { Lead } from "@/server/models/Lead.model";
 import { successResponse, errorResponse } from "@/server/common/response";
+import { sendMetaCapiEvent } from "@/server/lib/metaCapi";
 import {
   createPublicHandler,
   createModeratorHandler,
@@ -52,6 +53,12 @@ export const POST = createPublicHandler(async ({ req }) => {
       submittedAt: new Date(),
     });
     await lead.save();
+
+    void sendMetaCapiEvent(
+      "Lead",
+      { email, phone },
+      { req, customData: { serviceType } }
+    );
 
     return successResponse({
       status: 201,
