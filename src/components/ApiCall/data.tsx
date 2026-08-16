@@ -133,6 +133,7 @@ export const AdminData = {
         { title: "Blog Posts", url: "/dashboard/contents/blogs" },
         { title: "Team Members", url: "/dashboard/contents/team-members" },
         { title: "FAQs", url: "/dashboard/contents/faqs" },
+        { title: "Careers", url: "/dashboard/contents/careers" },
       ],
     },
     {
