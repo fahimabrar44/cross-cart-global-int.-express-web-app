@@ -235,9 +235,9 @@ export default function ShippingCalculatorContent({
 
       {/* World Country Zone List Section */}
       <div className="w-full bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-10">
+        <div className="container mx-auto px-4 py-10 pb-16">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-[#12352A] mb-3">
+            <h2 className="text-4xl font-bold text-[#12352A] mb-3">
               World Country Zone List
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
@@ -341,7 +341,7 @@ export default function ShippingCalculatorContent({
 
           {/* Calculator Form */}
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-3">
+            <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-4">
               <div className="flex items-center mb-4">
                 <Calculator
                   className="w-8 h-8 text-primary mr-3"

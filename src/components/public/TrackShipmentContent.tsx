@@ -539,7 +539,7 @@ export default function TrackShipmentContent({
 
           {/* Tracking Form */}
           <div className="max-w-4xl mx-auto mb-16">
-            <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-8">
+            <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-4">
               <div className="flex items-center mb-6">
                 <Search
                   className="w-8 h-8 text-primary mr-3"
