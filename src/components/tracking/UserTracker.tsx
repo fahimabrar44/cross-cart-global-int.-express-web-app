@@ -6,6 +6,12 @@ import { useAuth } from "@/hooks/AuthContext";
 import { CountryPhoneInput } from "@/components/ui/phone-input";
 import { validatePhone } from "@/lib/phoneCountries";
 import { hasConsent } from "@/lib/visitor";
+import {
+  trackClarityEvent,
+  identifyClarity,
+  setClarityTag,
+  syncClarityConsent,
+} from "@/lib/clarity";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -105,6 +111,15 @@ export default function UserTracker() {
     setShow(true);
   }, [pathname, user, loading, consentDecided]);
 
+  // Identify logged-in users in Clarity (only records once consent is granted).
+  useEffect(() => {
+    if (!loading && user) {
+      syncClarityConsent();
+      identifyClarity(user.id, user.name);
+      if (user.role) setClarityTag("user_role", user.role);
+    }
+  }, [user, loading]);
+
   // Lock background scroll while the mandatory modal is open.
   useEffect(() => {
     if (!show) return;
@@ -163,6 +178,8 @@ export default function UserTracker() {
     } catch {
       // ignore storage errors
     }
+    trackClarityEvent("lead_submitted");
+    setClarityTag("lead_service", serviceType);
     setSubmitting(false);
     setShow(false);
   };

@@ -18,6 +18,7 @@ import {
 import { useEffect, useState } from "react";
 import { CountryPhoneInput } from "@/components/ui/phone-input";
 import { validatePhone } from "@/lib/phoneCountries";
+import { trackClarityEvent, setClarityTag } from "@/lib/clarity";
 
 export interface CountryOption {
   _id: string;
@@ -461,6 +462,8 @@ export default function CreateShipmentForm({
       if (response.status === 201 && response.data) {
         setSuccess(response.data);
         setError("");
+        trackClarityEvent("shipment_created");
+        setClarityTag("shipment_service", String(formData.parcel.serviceType || "standard"));
         // Reset form
         setFormData({
           parcel: {

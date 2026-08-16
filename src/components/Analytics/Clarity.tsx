@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
-import Clarity from "@microsoft/clarity";
-
-const projectId = process.env.NEXT_PUBLIC_CLARITY_ID || "y378uietdz";
+import { syncClarityConsent } from "@/lib/clarity";
 
 export default function ClarityAnalytics() {
   useEffect(() => {
-    if (projectId) {
-      Clarity.init(projectId);
-    }
+    syncClarityConsent();
+
+    const onConsent = () => syncClarityConsent();
+    window.addEventListener("ccg-consent-set", onConsent);
+    return () => window.removeEventListener("ccg-consent-set", onConsent);
   }, []);
 
   return null;

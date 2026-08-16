@@ -6,6 +6,7 @@ import PageHeader from "@/utilities/PageHeader";
 import { Calculator, Clock, DollarSign, Globe, Loader2, Search } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { trackClarityEvent, setClarityTag } from "@/lib/clarity";
 
 export interface CountryOption {
   _id: string;
@@ -158,10 +159,13 @@ export default function ShippingCalculatorContent({
         response.data.length > 0
       ) {
         setPriceData(response.data[0]);
+        trackClarityEvent("quote_calculated");
+        setClarityTag("quote_route", `${fromCountry} -> ${toZone}`);
       } else {
         setError(
           "No pricing found for this route yet. Please contact our support team.",
         );
+        setClarityTag("quote_result", "no_price");
       }
     } catch {
       setError("Failed to fetch prices. Please try again.");

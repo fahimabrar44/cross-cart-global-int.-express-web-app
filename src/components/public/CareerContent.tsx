@@ -3,6 +3,7 @@ import { Briefcase, Clock, GraduationCap, HeartHandshake, MapPin, Sparkles } fro
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { apiService } from "@/services/apiService";
+import { trackClarityEvent, setClarityTag } from "@/lib/clarity";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -93,6 +94,8 @@ export default function CareerContent() {
     setApplyJob(job);
     setForm({ name: "", email: "", phone: "", resume: null, coverLetterFile: null });
     setIsApplyOpen(true);
+    trackClarityEvent("apply_opened");
+    setClarityTag("apply_job", job.title);
   };
 
   const submitApplication = async () => {
@@ -123,6 +126,8 @@ export default function CareerContent() {
       });
       if (res.success) {
         toast.success("Application submitted successfully!");
+        trackClarityEvent("application_submitted");
+        setClarityTag("apply_job", applyJob.title);
         setIsApplyOpen(false);
       } else {
         toast.error(res.message || "Failed to submit application");
