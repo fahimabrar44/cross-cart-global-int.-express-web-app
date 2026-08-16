@@ -15,7 +15,7 @@ export default function WorldLoader({
     <img
       src="/world.svg"
       alt="Loading"
-      className={cn("h-12 w-12", className)}
+      className={cn("h-48 w-48", className)}
     />
   );
 
