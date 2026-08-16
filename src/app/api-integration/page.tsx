@@ -376,7 +376,7 @@ const ApiIntegrationPage = () => {
             </Card>
 
             {/* Price List */}
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Badge variant="default">GET</Badge>
@@ -453,7 +453,7 @@ curl -X GET "https://<your-domain>/api/v1/prices?fromName=Bangladesh&toName=EURO
                   per-kilogram rates for those weight ranges.
                 </p>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Price Calculate */}
             <Card>

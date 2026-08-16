@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import WorldLoader from "@/components/ui/world-loader";
 import { Search, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
@@ -181,10 +182,7 @@ export function DataTable({
                     colSpan={columns.length + (hasActions ? 1 : 0)}
                     className="text-center py-8"
                   >
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
-                      <span className="ml-2">Loading...</span>
-                    </div>
+                      <WorldLoader className="h-10 w-10" />
                   </TableCell>
                 </TableRow>
               ) : paginatedData.length === 0 ? (

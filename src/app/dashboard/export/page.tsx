@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/AuthContext";
 import { FileDown, FileSpreadsheet, Download } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import WorldLoader from "@/components/ui/world-loader";
 
 export default function ExportPage() {
   const { user } = useAuth();
@@ -19,9 +20,9 @@ export default function ExportPage() {
 
   if (!isStaff) {
     return (
-      <RoleGuard allowedRoles={["admin", "moderator"]}>
-        <p>Loading...</p>
-      </RoleGuard>
+        <RoleGuard allowedRoles={["admin", "moderator"]}>
+          <WorldLoader />
+        </RoleGuard>
     );
   }
 

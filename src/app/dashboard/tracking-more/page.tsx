@@ -139,7 +139,14 @@ export default function TrackingMorePage() {
         </div>
         <Button variant="outline" onClick={loadCouriers} disabled={loading}>
           <Truck className="h-4 w-4 mr-2" />
-          {loading ? "Loading..." : "Refresh Couriers"}
+          {loading ? (
+            <>
+              <img src="/world.svg" alt="" className="h-4 w-4" />
+              Refreshing...
+            </>
+          ) : (
+            "Refresh Couriers"
+          )}
         </Button>
       </div>
 

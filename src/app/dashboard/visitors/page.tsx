@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import WorldLoader from "@/components/ui/world-loader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface Lead {
@@ -116,9 +117,9 @@ export default function VisitorsPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                      Loading...
-                    </TableCell>
+                      <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                        <WorldLoader />
+                      </TableCell>
                   </TableRow>
                 ) : leads.length === 0 ? (
                   <TableRow>

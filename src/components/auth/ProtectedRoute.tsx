@@ -3,6 +3,7 @@
 import { useAuth } from "@/hooks/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, ReactNode } from "react";
+import WorldLoader from "@/components/ui/world-loader";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -39,10 +40,7 @@ export function ProtectedRoute({
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
+        <WorldLoader />
       </div>
     );
   }
@@ -51,10 +49,7 @@ export function ProtectedRoute({
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="text-gray-600">Redirecting...</p>
-        </div>
+        <WorldLoader label="Redirecting..." />
       </div>
     );
   }
