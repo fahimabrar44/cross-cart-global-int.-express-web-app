@@ -61,7 +61,9 @@ export async function GET(
       (sum: number, it: { totalPrice?: number }) => sum + (Number(it.totalPrice) || 0),
       0
     );
-    const boxCount = Array.isArray(order.parcel?.box) ? order.parcel.box.length : 0;
+    const boxCount = order.parcel?.boxCount || 0;
+    const packagingType = order.parcel?.packagingType || "—";
+    const dimensions = order.parcel?.dimensions || {};
     const insurance = order.parcel?.insurance || {};
     const insuranceCharge = Number(insurance.charge) || 0;
 
@@ -135,8 +137,10 @@ export async function GET(
       <p class="label">Shipment Details</p>
       <p>Service: ${order.parcel?.serviceType || "-"}</p>
       <p>Priority: ${order.parcel?.priority || "normal"}</p>
-      <p>Weight: ${order.parcel?.weight || "0"} kg</p>
-      <p>Boxes: ${boxCount}</p>
+       <p>Weight: ${order.parcel?.weight || "0"} kg</p>
+       <p>Packaging: ${packagingType}</p>
+       <p>Boxes: ${boxCount}</p>
+       <p>Dimensions: ${dimensions.length || 0} × ${dimensions.width || 0} × ${dimensions.height || 0} cm</p>
     </div>
   </div>
 

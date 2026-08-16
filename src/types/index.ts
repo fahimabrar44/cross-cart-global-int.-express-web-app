@@ -156,6 +156,8 @@ export interface Parcel {
   from: string;
   to: string;
   weight: number;
+  packagingType?: string;
+  boxCount?: number;
   dimensions?: {
     length?: number;
     width?: number;
@@ -164,6 +166,7 @@ export interface Parcel {
   orderType: "standard" | "express" | "overnight" | "international";
   priority: "low" | "normal" | "high" | "urgent";
   description?: string;
+  customerNote?: string;
   sender: ContactInfo;
   receiver: ContactInfo;
   item?: ParcelItem[];

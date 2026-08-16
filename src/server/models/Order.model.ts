@@ -47,6 +47,13 @@ const parcelSchema = new Schema({
   receiver: { type: userInfoSchema, default: () => ({}) },
   box: { type: [boxSchema], default: [] },
   weight: { type: String, required: true },
+  packagingType: { type: String, default: "" },
+  boxCount: { type: Number, default: 0 },
+  dimensions: {
+    length: { type: Number, default: 0 },
+    width: { type: Number, default: 0 },
+    height: { type: Number, default: 0 },
+  },
   serviceType: { type: String, default: "" },
   priority: {
     type: String,

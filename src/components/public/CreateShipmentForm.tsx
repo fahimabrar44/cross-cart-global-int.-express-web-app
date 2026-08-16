@@ -61,6 +61,9 @@ interface OrderFormData {
       };
     };
     weight: string;
+    packagingType: string;
+    boxCount: number;
+    dimensions: { length: number; width: number; height: number };
     serviceType: string;
     priority: "normal" | "express" | "super-express";
     orderType: "document" | "parcel" | "e-commerce";
@@ -132,6 +135,9 @@ export default function CreateShipmentForm({
         },
       },
       weight: "",
+      packagingType: "",
+      boxCount: 0,
+      dimensions: { length: 0, width: 0, height: 0 },
       serviceType: "standard",
       priority: "normal",
       orderType: "parcel",
@@ -473,6 +479,9 @@ export default function CreateShipmentForm({
               address: { address: "", city: "", zipCode: "", country: "" },
             },
             weight: "",
+            packagingType: "",
+            boxCount: 0,
+            dimensions: { length: 0, width: 0, height: 0 },
             serviceType: "standard",
             priority: "normal",
             orderType: "parcel",
@@ -984,6 +993,116 @@ export default function CreateShipmentForm({
                           updateParcelField("customerNote", e.target.value)
                         }
                         placeholder="Any special instructions"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Box / Packaging Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6 p-4 border border-gray-200 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Packaging Type
+                      </label>
+                      <select
+                        value={formData.parcel.packagingType}
+                        onChange={(e) =>
+                          updateParcelField("packagingType", e.target.value)
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                      >
+                        <option value="">Select</option>
+                        <option value="Box">Box</option>
+                        <option value="Carton">Carton</option>
+                        <option value="Envelope">Envelope</option>
+                        <option value="Pallet">Pallet</option>
+                        <option value="Crate">Crate</option>
+                        <option value="Custom">Custom</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Number of Boxes
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={formData.parcel.boxCount}
+                        onChange={(e) =>
+                          updateParcelField(
+                            "boxCount",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Length (cm)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formData.parcel.dimensions.length}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            parcel: {
+                              ...prev.parcel,
+                              dimensions: {
+                                ...prev.parcel.dimensions,
+                                length: parseFloat(e.target.value) || 0,
+                              },
+                            },
+                          }))
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Width (cm)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formData.parcel.dimensions.width}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            parcel: {
+                              ...prev.parcel,
+                              dimensions: {
+                                ...prev.parcel.dimensions,
+                                width: parseFloat(e.target.value) || 0,
+                              },
+                            },
+                          }))
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Height (cm)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formData.parcel.dimensions.height}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            parcel: {
+                              ...prev.parcel,
+                              dimensions: {
+                                ...prev.parcel.dimensions,
+                                height: parseFloat(e.target.value) || 0,
+                              },
+                            },
+                          }))
+                        }
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                       />
                     </div>

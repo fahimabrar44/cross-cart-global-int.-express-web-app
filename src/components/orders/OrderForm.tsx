@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -66,15 +66,15 @@ const orderFormSchema = z.object({
     from: z.string().min(1, "Origin country is required"),
     to: z.string().min(1, "Destination country is required"),
     weight: z.number().min(0.1, "Weight must be at least 0.1 kg"),
-    dimensions: z
-      .object({
-        length: z.number().optional(),
-        width: z.number().optional(),
-        height: z.number().optional(),
-      })
-      .optional(),
+    dimensions: z.object({
+      length: z.number(),
+      width: z.number(),
+      height: z.number(),
+    }),
     orderType: z.enum(["document", "parcel", "e-commerce"]),
     priority: z.enum(["normal", "express", "super-express", "tax-paid"]),
+    packagingType: z.string(),
+    boxCount: z.number(),
     customerNote: z.string().optional(),
     sender: contactSchema,
     receiver: contactSchema,
@@ -100,23 +100,25 @@ export function OrderForm({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [countries, setCountries] = useState<any[]>([]);
 
-  const form = useForm<OrderFormData>({
+  const form = useForm<OrderFormData, unknown, OrderFormData>({
     resolver: zodResolver(orderFormSchema),
-    
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
+    // @ts-expect-error - orderType vocabulary differs from model on edit
     defaultValues: order
       ? {
           parcel: {
             from: order.parcel.from,
             to: order.parcel.to,
             weight: order.parcel.weight,
-            dimensions: order.parcel.dimensions || {},
+            dimensions: order.parcel.dimensions || {
+              length: 0,
+              width: 0,
+              height: 0,
+            },
+            packagingType: order.parcel.packagingType || "",
+            boxCount: order.parcel.boxCount || 0,
             orderType: order.parcel.orderType,
             priority: order.parcel.priority,
             
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
             customerNote: order.parcel.customerNote || "",
             sender: order.parcel.sender,
             receiver: order.parcel.receiver,
@@ -128,6 +130,9 @@ export function OrderForm({
             from: "",
             to: "",
             weight: 0,
+            packagingType: "",
+            boxCount: 0,
+            dimensions: { length: 0, width: 0, height: 0 },
             orderType: "standard",
             priority: "normal",
             customerNote: "",
@@ -184,8 +189,7 @@ export function OrderForm({
       });
     }
 
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
+    // @ts-expect-error - OrderFormData item shape differs from CreateOrderData
     onSubmit(data);
   };
 
@@ -193,8 +197,6 @@ export function OrderForm({
     <Form {...form}>
       <form 
       
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
       onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Parcel Information */}
         <Card data-testid="parcel-info-card">
@@ -205,8 +207,6 @@ export function OrderForm({
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="parcel.from"
                 render={({ field }) => (
@@ -235,8 +235,6 @@ export function OrderForm({
               />
 
               <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="parcel.to"
                 render={({ field }) => (
@@ -267,8 +265,6 @@ export function OrderForm({
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="parcel.weight"
                 render={({ field }) => (
@@ -292,8 +288,6 @@ export function OrderForm({
               />
 
               <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="parcel.orderType"
                 render={({ field }) => (
@@ -320,8 +314,6 @@ export function OrderForm({
               />
 
               <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="parcel.priority"
                 render={({ field }) => (
@@ -352,8 +344,6 @@ export function OrderForm({
             </div>
 
             <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
               control={form.control}
               name="parcel.customerNote"
               render={({ field }) => (
@@ -374,6 +364,129 @@ export function OrderForm({
 
             <div className="space-y-2">
       <div className="flex items-center justify-between">
+        <div className="rounded-lg border p-4 space-y-4">
+          <p className="text-base font-semibold">Box / Packaging Information</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="parcel.packagingType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Packaging Type</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger data-testid="packaging-type-select">
+                        <SelectValue placeholder="Select packaging" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Box">Box</SelectItem>
+                      <SelectItem value="Carton">Carton</SelectItem>
+                      <SelectItem value="Envelope">Envelope</SelectItem>
+                      <SelectItem value="Pallet">Pallet</SelectItem>
+                      <SelectItem value="Crate">Crate</SelectItem>
+                      <SelectItem value="Custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="parcel.boxCount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Number of Boxes</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0}
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseInt(e.target.value) || 0)
+                      }
+                      data-testid="box-count"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="parcel.dimensions.length"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Length (cm)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="parcel.dimensions.width"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Width (cm)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="parcel.dimensions.height"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Height (cm)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value) || 0)
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
         <FormLabel className="text-base font-semibold">Parcel Items</FormLabel>
         <button
           type="button"
@@ -396,8 +509,6 @@ export function OrderForm({
             className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end border p-3 rounded-lg"
           >
             <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
               control={form.control}
               name={`parcel.item.${index}.name`}
               render={({ field }) => (
@@ -411,8 +522,6 @@ export function OrderForm({
             />
 
             <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
               control={form.control}
               name={`parcel.item.${index}.quantity`}
               render={({ field }) => (
@@ -426,9 +535,7 @@ export function OrderForm({
                         const value = parseInt(e.target.value) || 0;
                   
                         field.onChange(value);
-                        const items = form.getValues("parcel.item");
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
+                        const items = form.getValues("parcel.item") ?? [];
                         const unit = items[index]?.unitPrice || 0;
                         form.setValue(
                           `parcel.item.${index}.totalPrice`,
@@ -442,8 +549,6 @@ export function OrderForm({
             />
 
             <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
               control={form.control}
               name={`parcel.item.${index}.unitPrice`}
               render={({ field }) => (
@@ -457,9 +562,7 @@ export function OrderForm({
                       onChange={(e) => {
                         const value = parseFloat(e.target.value) || 0;
                         field.onChange(value);
-                        const items = form.getValues("parcel.item");
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
+                        const items = form.getValues("parcel.item") ?? [];
                         const qty = items[index]?.quantity || 0;
                         form.setValue(
                           `parcel.item.${index}.totalPrice`,
@@ -473,8 +576,6 @@ export function OrderForm({
             />
 
             <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
               control={form.control}
               name={`parcel.item.${index}.totalPrice`}
               render={({ field }) => (
@@ -521,8 +622,6 @@ export function OrderForm({
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="parcel.sender.name"
                 render={({ field }) => (
@@ -541,8 +640,6 @@ export function OrderForm({
               />
 
               <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="parcel.sender.phone"
                 render={({ field }) => (
@@ -563,8 +660,6 @@ export function OrderForm({
             </div>
 
             <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
               control={form.control}
               name="parcel.sender.email"
               render={({ field }) => (
@@ -587,8 +682,6 @@ export function OrderForm({
               <h4 className="text-sm font-medium">Sender Address</h4>
               <div className="grid grid-cols-1 gap-4">
                 <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                   control={form.control}
                   name="parcel.sender.address.address"
                   render={({ field }) => (
@@ -608,8 +701,6 @@ export function OrderForm({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                     control={form.control}
                     name="parcel.sender.address.city"
                     render={({ field }) => (
@@ -628,8 +719,6 @@ export function OrderForm({
                   />
 
                   <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                     control={form.control}
                     name="parcel.sender.address.zipCode"
                     render={({ field }) => (
@@ -648,8 +737,6 @@ export function OrderForm({
                   />
 
                   <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                     control={form.control}
                     name="parcel.sender.address.country"
                     render={({ field }) => (
@@ -691,8 +778,6 @@ export function OrderForm({
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="parcel.receiver.name"
                 render={({ field }) => (
@@ -711,8 +796,6 @@ export function OrderForm({
               />
 
               <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="parcel.receiver.phone"
                 render={({ field }) => (
@@ -733,8 +816,6 @@ export function OrderForm({
             </div>
 
             <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
               control={form.control}
               name="parcel.receiver.email"
               render={({ field }) => (
@@ -757,8 +838,6 @@ export function OrderForm({
               <h4 className="text-sm font-medium">Receiver Address</h4>
               <div className="grid grid-cols-1 gap-4">
                 <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                   control={form.control}
                   name="parcel.receiver.address.address"
                   render={({ field }) => (
@@ -778,8 +857,6 @@ export function OrderForm({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                     control={form.control}
                     name="parcel.receiver.address.city"
                     render={({ field }) => (
@@ -798,8 +875,6 @@ export function OrderForm({
                   />
 
                   <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                     control={form.control}
                     name="parcel.receiver.address.zipCode"
                     render={({ field }) => (
@@ -818,8 +893,6 @@ export function OrderForm({
                   />
 
                   <FormField
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                     control={form.control}
                     name="parcel.receiver.address.country"
                     render={({ field }) => (

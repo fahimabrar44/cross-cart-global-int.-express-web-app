@@ -311,6 +311,9 @@ export default function TrackShipmentContent({
             ${parcel.weight ? `<tr><td style="background:#f4f4f7;">Weight</td><td>${escapeReceiptHtml(parcel.weight)}</td></tr>` : ""}
             ${parcel.serviceType ? `<tr><td style="background:#f4f4f7;">Service Type</td><td>${escapeReceiptHtml(parcel.serviceType)}</td></tr>` : ""}
             ${parcel.priority ? `<tr><td style="background:#f4f4f7;">Priority</td><td>${escapeReceiptHtml(parcel.priority)}</td></tr>` : ""}
+            ${parcel.packagingType ? `<tr><td style="background:#f4f4f7;">Packaging Type</td><td>${escapeReceiptHtml(parcel.packagingType)}</td></tr>` : ""}
+            ${parcel.boxCount || parcel.boxCount === 0 ? `<tr><td style="background:#f4f4f7;">Number of Boxes</td><td>${escapeReceiptHtml(parcel.boxCount)}</td></tr>` : ""}
+            ${parcel.dimensions && (parcel.dimensions.length || parcel.dimensions.width || parcel.dimensions.height) ? `<tr><td style="background:#f4f4f7;">Dimensions (cm)</td><td>${escapeReceiptHtml(`${parcel.dimensions.length || 0} × ${parcel.dimensions.width || 0} × ${parcel.dimensions.height || 0}`)}</td></tr>` : ""}
           </table>
 
           <h3>Parcel Details</h3>

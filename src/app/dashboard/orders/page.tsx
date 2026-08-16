@@ -924,6 +924,26 @@ export default function OrdersPage() {
                   </Badge>
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <h3 className="font-semibold">Packaging Type</h3>
+                  <p>{selectedOrder.parcel.packagingType || "—"}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold">Number of Boxes</h3>
+                  <p>{selectedOrder.parcel.boxCount || 0}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold">Dimensions (cm)</h3>
+                  <p>
+                    {selectedOrder.parcel.dimensions?.length || 0} ×{" "}
+                    {selectedOrder.parcel.dimensions?.width || 0} ×{" "}
+                    {selectedOrder.parcel.dimensions?.height || 0}
+                  </p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 {selectedOrder.parcel.insurance?.enabled && (
                   <div>
