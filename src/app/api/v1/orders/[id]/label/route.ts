@@ -4,17 +4,10 @@ import { Order } from "@/server/models/Order.model";
 import { verifyAuth } from "@/middleware/auth";
 import { Types } from "mongoose";
 
-function money(n: number | undefined): string {
-  return (Number(n) || 0).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
 /**
  * GET /api/v1/orders/[id]/label
- * Returns a printable shipping label (2 copies on A4 landscape).
- * Access via auth OR ?track=<trackId>.
+ * Returns a printable shipping label (browser "Print to PDF").
+ * Access: auth OR ?track=<trackId>.
  */
 export async function GET(
   req: NextRequest,
@@ -40,7 +33,7 @@ export async function GET(
     const authResult = await verifyAuth(req);
     if (
       !authResult.success &&
-      !(trackQuery && order && order.trackId === trackQuery)
+      !(trackQuery && (order && order.trackId === trackQuery))
     ) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -48,98 +41,175 @@ export async function GET(
     if (!order) return new NextResponse("Order not found", { status: 404 });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const from = order.parcel?.from as any;
+    const from = (order.parcel as any)?.from;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const to = order.parcel?.to as any;
+    const to = (order.parcel as any)?.to;
     const sender = order.parcel?.sender || {};
     const receiver = order.parcel?.receiver || {};
-    const payment = order.payment || {};
-    const boxCount = order.parcel?.boxCount || 0;
-    const packagingType = order.parcel?.packagingType || "—";
-    const dimensions = order.parcel?.dimensions || {};
-    const insurance = order.parcel?.insurance || {};
-    const awb = order.awb || "";
+    const awb = order?.awb || "";
+    const trackId = order.trackId || "";
+    const weight = order.parcel?.weight || "";
+    const serviceType = order.parcel?.serviceType || "";
+    const priority = order.parcel?.priority || "normal";
+    const orderDate = order.orderDate
+      ? new Date(order.orderDate).toLocaleDateString("en-GB")
+      : "";
+
+    // AWB number (barcode value) = the tracking number. Never show anything else.
+    const awbNumber = awb || trackId;
+    const trackingUrl = `${(process.env.PUBLIC_APP_URL || "").replace(/\/+$/, "")}/ship-and-track/track-shipment?trackId=${encodeURIComponent(trackId)}`;
 
     const card = `
     <div class="label">
-      <div class="label-head">
-        <img class="logo" src="/full-logo.png" alt="CrossCart Global" />
-        <div class="head-right">
-          <div class="ship">SHIPPING LABEL</div>
-          <div class="track">${order.trackId}</div>
+      <div class="top">
+        <div>
+          <img class="brand-logo" src="/full-logo.png" alt="CrossCart Global" />
+          <div class="tagline">Global Int. Express</div>
+        </div>
+        <div class="awb">
+          <div class="lbl">AWB No.</div>
+          <div class="num">${awbNumber}</div>
         </div>
       </div>
-      <div class="barcode" aria-hidden="true"></div>
-      <div class="addr">
-        <div class="from">
-          <span class="tag">FROM</span>
-          <div class="name">${sender.name || "-"}</div>
-          <div>${sender.phone || ""}</div>
-          <div>${from?.name || ""}${sender.address?.city ? ` - ${sender.address.city}` : ""}</div>
+
+      <div class="sections">
+        <div class="section">
+          <h4>From (Sender)</h4>
+          <p>${sender.name || "-"}<br />${sender.phone || ""}<br />${sender.address?.address || ""}<br />${sender.address?.city || ""}, ${from?.name || ""}</p>
         </div>
-        <div class="to">
-          <span class="tag">TO</span>
-          <div class="name">${receiver.name || "-"}</div>
-          <div>${receiver.phone || ""}</div>
-          <div>${to?.name || ""}${receiver.address?.city ? ` - ${receiver.address.city}` : ""}</div>
+        <div class="section">
+          <h4>To (Receiver)</h4>
+          <p>${receiver.name || "-"}<br />${receiver.phone || ""}<br />${receiver.address?.address || ""}<br />${receiver.address?.city || ""}, ${to?.name || ""}</p>
         </div>
       </div>
-      <div class="info">
-        <span>Service: ${order.parcel?.serviceType || "-"}</span>
-        <span>Priority: ${order.parcel?.priority || "normal"}</span>
-        <span>Weight: ${order.parcel?.weight || "0"} kg</span>
-        <span>Packaging: ${packagingType}</span>
-        <span>Boxes: ${boxCount}</span>
-        <span>Dim: ${dimensions.length || 0} × ${dimensions.width || 0} × ${dimensions.height || 0} cm</span>
-        ${awb ? `<span>AWB: ${awb}</span>` : ""}
-        ${insurance.enabled ? `<span>Insurance: Yes</span>` : ""}
-        <span>Amount: ${money(payment.pAmount)}</span>
+
+      <div class="route">
+        <div class="line">${from?.name || "?"} → ${to?.name || "?"}</div>
+        <div class="sub">${serviceType || "Standard"} Delivery</div>
       </div>
-      <div class="foot">CrossCart Global Int Express · +8801622541719 · ${order.orderDate ? new Date(order.orderDate).toDateString() : ""}</div>
+
+      <div class="meta">
+        <span><b>Track ID</b><span class="val">${trackId}</span></span>
+        <span><b>Weight</b><span class="val">${weight} KG</span></span>
+        <span><b>Priority</b><span class="val">${priority}</span></span>
+        <span><b>Date</b><span class="val">${orderDate}</span></span>
+      </div>
+
+      <div class="barcode-area">
+        <div class="lbl">Tracking Number (Barcode)</div>
+        <div class="bars"><svg class="barcode-svg"></svg></div>
+      </div>
+
+      <div class="qr-row">
+        <div class="qr-cell">
+          <div class="qrcode"></div>
+          <div class="lbl">Scan to Track</div>
+        </div>
+        <div class="qr-hint">
+          <b>Scan the QR code</b> to view live tracking status for this shipment.
+          <br />Or track online at <b>crosscartglobal.com</b>.
+        </div>
+      </div>
+
+      <div class="footer">Cross Cart Global International Express • Pickup: Dhaka, BD • crosscartglobal.com</div>
     </div>`;
 
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Shipping Label ${order.trackId}</title>
+  <title>Shipping Label ${trackId}</title>
   <style>
-    @page { size: A4 landscape; margin: 6mm; }
-    * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a202c; margin: 0; padding: 0; }
-    .sheet { display: flex; gap: 6mm; width: 100%; height: calc(210mm - 12mm); }
-    .label { flex: 1; border: 2px solid #006B45; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
-    .label-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #006B45; padding-bottom: 6px; }
-    .logo { height: 36px; width: auto; object-fit: contain; }
-    .head-right { text-align: right; }
-    .ship { font-weight: 800; color: #006B45; letter-spacing: 1px; font-size: 13px; }
-    .track { font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700; letter-spacing: 1px; }
-    .barcode { height: 36px; background: repeating-linear-gradient(90deg, #111 0 2px, #fff 2px 4px, #111 4px 5px, #fff 5px 9px, #111 9px 12px, #fff 12px 14px); border: 1px solid #111; border-radius: 3px; }
-    .addr { display: flex; gap: 10px; }
-    .from, .to { flex: 1; border: 1px solid #ddd; border-radius: 6px; padding: 8px; }
-    .tag { background: #006B45; color: #fff; display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 4px; }
-    .name { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
-    .info { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; }
-    .info span { background: #f3faf7; border: 1px solid #cfe9df; border-radius: 4px; padding: 3px 8px; }
-    .foot { margin-top: auto; font-size: 10px; color: #718096; text-align: center; border-top: 1px dashed #ccc; padding-top: 5px; }
-    .print-btn { position: fixed; top: 8px; right: 8px; padding: 10px 18px; background: #006B45; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; z-index: 10; }
-    @media print { .print-btn { display: none; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #000; }
+    .sheet { display: flex; gap: 6mm; justify-content: center; padding: 6mm; }
+    .label { border: 2px solid #006B45; padding: 14px; width: 4in; min-height: 6in; }
+    .brand-logo { height: 30px; width: auto; display: block; }
+    .top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #006B45; padding-bottom: 10px; }
+    .tagline { font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase; color: #777; margin-top: 3px; }
+    .awb { text-align: right; }
+    .awb .lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: #777; }
+    .awb .num { font-size: 18px; font-weight: 800; letter-spacing: 2px; color: #006B45; }
+    .sections { display: flex; gap: 12px; margin-top: 12px; }
+    .section { flex: 1; }
+    .section h4 { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; background: #EAF3EE; color: #006B45; padding: 4px 6px; border-left: 3px solid #F5C400; margin-bottom: 5px; }
+    .section p { font-size: 11px; line-height: 1.5; color: #222; }
+    .route { text-align: center; margin: 14px 0; padding: 10px 0; border-top: 1px dashed #006B45; border-bottom: 1px dashed #006B45; }
+    .route .line { font-size: 20px; font-weight: 800; letter-spacing: 1px; color: #006B45; }
+    .route .sub { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #777; }
+    .meta { display: flex; justify-content: space-between; font-size: 10px; padding: 8px 0; }
+    .meta b { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #777; margin-bottom: 2px; }
+    .meta .val { font-weight: 700; font-size: 12px; color: #222; }
+    .barcode-area { text-align: center; margin-top: 8px; border-top: 1px solid #E4EEEA; padding-top: 10px; }
+    .barcode-area .lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: #777; margin-bottom: 6px; }
+    .bars svg, .bars img { max-width: 100%; height: 50px; }
+    .qr-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #E4EEEA; }
+    .qr-cell .qrcode, .qr-cell canvas { width: 100px; height: 100px; }
+    .qr-cell .lbl { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #777; text-align: center; margin-top: 4px; }
+    .qr-hint { font-size: 10px; color: #555; line-height: 1.5; width: 66%; }
+    .qr-hint b { color: #006B45; }
+    .footer { margin-top: 12px; font-size: 8px; text-align: center; color: #777; text-transform: uppercase; letter-spacing: 1.5px; }
+    .print-btn { position: fixed; top: 16px; right: 16px; padding: 10px 18px; background: #006B45; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    @media print {
+      .print-btn { display: none; }
+      @page { size: A4 landscape; margin: 6mm; }
+    }
   </style>
 </head>
 <body>
-  <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+  <button class="print-btn" onclick="window.print()">Print Label</button>
   <div class="sheet">
     ${card}
     ${card}
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script>
+    (function () {
+      var awb = ${JSON.stringify(awbNumber)};
+      var trackUrl = ${JSON.stringify(trackingUrl)};
+      var fallbackTrack = ${JSON.stringify(trackId)};
+      document.querySelectorAll('.barcode-svg').forEach(function (svg) {
+        try {
+          JsBarcode(svg, awb, {
+            format: "CODE128",
+            width: 2,
+            height: 42,
+            displayValue: true,
+            fontSize: 14,
+            font: "monospace",
+            margin: 4,
+          });
+        } catch (e) {
+          svg.outerHTML = '<div style="font-size:16px;font-weight:700;color:#006B45;letter-spacing:3px;">' + awb + '</div>';
+        }
+      });
+      document.querySelectorAll('.qrcode').forEach(function (q) {
+        try {
+          new QRCode(q, {
+            text: trackUrl,
+            width: 100,
+            height: 100,
+            correctLevel: QRCode.CorrectLevel.M,
+          });
+        } catch (e) {
+          q.outerHTML = '<div style="font-size:9px;color:#555;">Tracking: ' + fallbackTrack + '</div>';
+        }
+      });
+    })();
+  </script>
+  <script>window.addEventListener("load", function () { window.print(); });</script>
 </body>
 </html>`;
 
     return new NextResponse(html, {
+      status: 200,
       headers: { "Content-Type": "text/html; charset=utf-8" },
     });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Failed to generate label";
+    const msg =
+      error instanceof Error ? error.message : "Failed to generate label";
     return new NextResponse(`<pre>${msg}</pre>`, { status: 500 });
   }
 }
