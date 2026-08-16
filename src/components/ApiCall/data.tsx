@@ -19,6 +19,7 @@ import {
   TicketPercent,
   UserPlus,
   Users,
+  Activity,
   FileDown,
 } from "lucide-react";
 
@@ -103,6 +104,12 @@ export const AdminData = {
       title: "Visitors",
       url: "/dashboard/visitors",
       icon: Users,
+      items: [],
+    },
+    {
+      title: "Activity",
+      url: "/dashboard/activity",
+      icon: Activity,
       items: [],
     },
     {
@@ -244,6 +251,12 @@ export const ModeratorData = {
       title: "Visitors",
       url: "/dashboard/visitors",
       icon: Users,
+      items: [],
+    },
+    {
+      title: "Activity",
+      url: "/dashboard/activity",
+      icon: Activity,
       items: [],
     },
     {

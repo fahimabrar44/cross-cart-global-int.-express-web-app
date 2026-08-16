@@ -1,6 +1,8 @@
 ﻿import PwaRegister from "@/components/PWA/PwaRegister";
 import UserTracker from "@/components/tracking/UserTracker";
 import ClarityAnalytics from "@/components/Analytics/Clarity";
+import CookieConsent from "@/components/Analytics/CookieConsent";
+import ActivityTracker from "@/components/Analytics/ActivityTracker";
 import { AuthProvider } from "@/hooks/AuthContext";
 import SiteLayout from "@/utilities/SiteLayout";
 import Script from "next/script";
@@ -649,6 +651,8 @@ export default function RootLayout({
           <SiteLayout>{children}</SiteLayout>
           <UserTracker />
           <ClarityAnalytics />
+          <CookieConsent />
+          <ActivityTracker />
         </AuthProvider>
         <PwaRegister />
 
