@@ -8,15 +8,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PriceChart } from "@/types";
+import { PriceChart, Role } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
 interface PriceColumnsProps {
-  userRole: "admin" | "user";
+  userRole: Role;
   onView: (price: PriceChart) => void;
   onEdit: (price: PriceChart) => void;
   onDelete: (price: PriceChart) => void;
+  onToggleStatus?: (price: PriceChart) => void;
+  onCalculate?: (price: PriceChart) => void;
 }
 
 export const createPriceColumns = ({
@@ -90,9 +92,11 @@ export const createPriceColumns = ({
             <DropdownMenuItem onClick={() => onView(price)}>
               View
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(price)}>
-              Edit
-            </DropdownMenuItem>
+            {(userRole === "admin" || userRole === "moderator") && (
+              <DropdownMenuItem onClick={() => onEdit(price)}>
+                Edit
+              </DropdownMenuItem>
+            )}
             {userRole === "admin" && (
               <DropdownMenuItem
                 onClick={() => onDelete(price)}

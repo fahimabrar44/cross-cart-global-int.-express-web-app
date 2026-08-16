@@ -129,7 +129,16 @@ export default function PickupsPage() {
       console.log(response);
 
       if (response.status == 200) {
-        setPickups(response.data || []);
+        const all = (response.data as Pickup[]) || [];
+        // Regular users only see pickups they created
+        const visible =
+          user?.role === "user"
+            ? all.filter(
+                (p) =>
+                  p.user?._id === user?.id || p.user?.phone === user?.phone
+              )
+            : all;
+        setPickups(visible);
       } else {
         toast.error(response.message || "Failed to fetch pickups");
       }
@@ -140,7 +149,7 @@ export default function PickupsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const fetchAddresses = useCallback(async () => {
     try {

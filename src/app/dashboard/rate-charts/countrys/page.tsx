@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/AuthContext";
 import { CountryFilters, countryService } from "@/services/countryService";
-import { Country, hasPermission } from "@/types";
+import { Country } from "@/types";
 import { DollarSign, Globe, Loader2, MapPin, TrendingUp } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -355,11 +355,11 @@ export default function CountriesPage() {
             onSearch={handleSearch}
             onRefresh={handleRefresh}
             onCreateNew={
-              hasPermission(user.role, "orders", "create")
+              (user.role === "admin" || user.role === "moderator")
                 ? () => setIsCreateModalOpen(true)
                 : undefined
             }
-            showCreateNew={hasPermission(user.role, "orders", "create")}
+            showCreateNew={(user.role === "admin" || user.role === "moderator")}
             createNewLabel="Add Country"
             emptyMessage="No countries found"
             pagination={{

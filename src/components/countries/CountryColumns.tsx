@@ -154,33 +154,37 @@ export const createCountryColumns = ({
               View Details
             </DropdownMenuItem>
 
-            <DropdownMenuItem
-              onClick={() => onEdit(country)}
-              data-testid={`edit-country-${country._id}`}
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Country
-            </DropdownMenuItem>
+            {(userRole === "admin" || userRole === "moderator") && (
+              <DropdownMenuItem
+                onClick={() => onEdit(country)}
+                data-testid={`edit-country-${country._id}`}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Country
+              </DropdownMenuItem>
+            )}
 
-            <DropdownMenuItem
-              onClick={() => onToggleStatus(country)}
-              data-testid={`toggle-status-${country._id}`}
-            >
-              {country.isActive ? (
-                <>
-                  <Eye className="mr-2 h-4 w-4" />
-                  Deactivate
-                </>
-              ) : (
-                <>
-                  <Eye className="mr-2 h-4 w-4" />
-                  Activate
-                </>
-              )}
-            </DropdownMenuItem>
+            {(userRole === "admin" || userRole === "moderator") && (
+              <DropdownMenuItem
+                onClick={() => onToggleStatus(country)}
+                data-testid={`toggle-status-${country._id}`}
+              >
+                {country.isActive ? (
+                  <>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Deactivate
+                  </>
+                ) : (
+                  <>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Activate
+                  </>
+                )}
+              </DropdownMenuItem>
+            )}
 
-            {/* Delete option only for admin */}
-            {userRole === "admin" && (
+            {/* Delete option only for staff */}
+            {(userRole === "admin" || userRole === "moderator") && (
               <DropdownMenuItem
                 onClick={() => onDelete(country)}
                 className="text-red-600 focus:text-red-600"

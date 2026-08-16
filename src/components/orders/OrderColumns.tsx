@@ -196,13 +196,15 @@ export const createOrderColumns = ({
               Edit Order
             </DropdownMenuItem>
 
-            <DropdownMenuItem
-              onClick={() => onTrackingUpdate(order)}
-              data-testid={`tracking-update-${order._id}`}
-            >
-              <PackageSearch className="mr-2 h-4 w-4" />
-              Tracking Update
-            </DropdownMenuItem>
+            {(userRole === "admin" || userRole === "moderator") && (
+              <DropdownMenuItem
+                onClick={() => onTrackingUpdate(order)}
+                data-testid={`tracking-update-${order._id}`}
+              >
+                <PackageSearch className="mr-2 h-4 w-4" />
+                Tracking Update
+              </DropdownMenuItem>
+            )}
             
             
 

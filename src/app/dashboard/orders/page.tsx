@@ -145,10 +145,9 @@ export default function OrdersPage() {
     totalPages: 0,
   });
 
-  // Check if user has payment permission 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  const canProcessPayment = hasPermission(user?.role, "orders", "update");
+  // Payment, rider assignment and courier tracking are staff-only (admin/moderator)
+  const isStaff = user?.role === "admin" || user?.role === "moderator";
+  const canProcessPayment = isStaff;
 
   // Load orders and stats
   const loadOrders = useCallback(async () => {
@@ -157,15 +156,29 @@ export default function OrdersPage() {
       const response = await orderService.getOrders(filters);
 
       if (response.status == 200 && response.data) {
-        setOrders(
-          Array.isArray(response.data) ? response.data : [response.data]
-        );
+        const all = Array.isArray(response.data)
+          ? (response.data as Order[])
+          : [response.data as Order];
+        // Regular users only see parcels where their phone matches sender or receiver
+        const visible =
+          user?.role === "user"
+            ? all.filter(
+                (o: Order) =>
+                  o.parcel?.sender?.phone === user?.phone ||
+                  o.parcel?.receiver?.phone === user?.phone
+              )
+            : all;
+        setOrders(visible);
         if (response.meta) {
           setPagination({
             page: response.meta.page || 1,
             limit: response.meta.limit || 10,
-            total: response.meta.total || 0,
-            totalPages: response.meta.totalPages || 0,
+            total:
+              user?.role === "user"
+                ? visible.length
+                : response.meta.total || 0,
+            totalPages:
+              user?.role === "user" ? 1 : response.meta.totalPages || 0,
           });
         }
       }
@@ -175,7 +188,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, user]);
 
   useEffect(() => {
     loadOrders();
@@ -926,6 +939,7 @@ export default function OrdersPage() {
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4">
+                {isStaff && (
                 <div>
                   <h3 className="font-semibold">Assigned Rider</h3>
                   {typeof selectedOrder.assignment?.rider === "object" &&
@@ -964,6 +978,7 @@ export default function OrdersPage() {
                     </div>
                   )}
                 </div>
+                )}
                 <div>
                   <h3 className="font-semibold">Coupon</h3>
                   {selectedOrder.parcel.couponCode ? (
@@ -1095,7 +1110,8 @@ export default function OrdersPage() {
                   )}
                 </div>
 
-                {/* Payment Table */}
+                {/* Payment Table — restricted to staff (admin/moderator) */}
+                {isStaff && (
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                     <h3 className="font-semibold">Payment Details</h3>
@@ -1207,6 +1223,7 @@ export default function OrdersPage() {
                     </Table>
                   </div>
                 </div>
+                )}
               </div>
             </div>
           )}

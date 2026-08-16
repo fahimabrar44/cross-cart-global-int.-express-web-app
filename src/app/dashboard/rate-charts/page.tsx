@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/AuthContext";
 import { PriceFilters, priceService } from "@/services/priceService";
-import { PriceChart, hasPermission } from "@/types";
+import { PriceChart } from "@/types";
 import {
   ArrowUpDown,
   DollarSign,
@@ -224,7 +224,6 @@ export default function RateChartsPage() {
 
 
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
   const columns = createPriceColumns({userRole: user?.role || "user",
     onView: handleViewPrice,
     onEdit: handleEditClick,
@@ -338,11 +337,11 @@ export default function RateChartsPage() {
             onSearch={handleSearch}
             onRefresh={handleRefresh}
             onCreateNew={
-              hasPermission(user.role, "orders", "create")
+              (user.role === "admin" || user.role === "moderator")
                 ? () => setIsCreateModalOpen(true)
                 : undefined
             }
-            showCreateNew={hasPermission(user.role, "orders", "create")}
+            showCreateNew={(user.role === "admin" || user.role === "moderator")}
             createNewLabel="Create Price Chart"
             emptyMessage="No price charts found"
             pagination={{

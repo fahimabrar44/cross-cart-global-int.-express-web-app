@@ -40,6 +40,12 @@ export const AdminData = {
       ],
     },
     {
+      title: "Profile",
+      url: "/dashboard/profile",
+      icon: CircleUserRound,
+      items: [],
+    },
+    {
       title: "Pickups",
       url: "/dashboard/pickups",
       icon: Package,
@@ -162,6 +168,12 @@ export const ModeratorData = {
       items: [],
     },
     {
+      title: "Profile",
+      url: "/dashboard/profile",
+      icon: CircleUserRound,
+      items: [],
+    },
+    {
       title: "Pickups",
       url: "/dashboard/pickups",
       icon: Package,
@@ -271,6 +283,12 @@ export const UserData = {
       items: [],
     },
     {
+      title: "Profile",
+      url: "/dashboard/profile",
+      icon: CircleUserRound,
+      items: [],
+    },
+    {
       title: "Pickups",
       url: "/dashboard/pickups",
       icon: Package,
@@ -291,16 +309,6 @@ export const UserData = {
       icon: Boxes,
       items: [
         { title: "My Orders", url: "/dashboard/orders" },
-        { title: "Track Orders", url: "/dashboard/parcel-tracking" },
-      ],
-    },
-    {
-      title: "Reviews",
-      url: "/dashboard/reviews",
-      icon: UserStar,
-      items: [
-        { title: "My Reviews", url: "/dashboard/reviews" },
-        { title: "Write Review", url: "/dashboard/reviews/new" },
       ],
     },
     {

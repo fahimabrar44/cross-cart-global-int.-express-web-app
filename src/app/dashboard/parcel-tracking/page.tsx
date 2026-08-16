@@ -46,6 +46,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 // Updated Track interface to match the API response
@@ -188,6 +189,14 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 export default function ParcelTrackingPage() {
   const { user } = useAuth();
+  const router = useRouter();
+
+  // Regular users should not access the parcel-tracking management panel
+  useEffect(() => {
+    if (user?.role === "user") {
+      router.replace("/dashboard");
+    }
+  }, [user, router]);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);

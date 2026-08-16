@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/AuthContext";
 import { ZoneFilters, zoneService } from "@/services/zoneService";
-import { Zone, hasPermission } from "@/types";
+import { Zone } from "@/types";
 import { Globe2, Layers, Loader2, MapPinned, TrendingUp } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -299,11 +299,11 @@ export default function ZonesPage() {
             onSearch={handleSearch}
             onRefresh={handleRefresh}
             onCreateNew={
-              hasPermission(user.role, "orders", "create")
+              (user.role === "admin" || user.role === "moderator")
                 ? () => setIsCreateModalOpen(true)
                 : undefined
             }
-            showCreateNew={hasPermission(user.role, "orders", "create")}
+            showCreateNew={(user.role === "admin" || user.role === "moderator")}
             createNewLabel="Add Zone"
             emptyMessage="No zones found"
             pagination={{
