@@ -1,4 +1,5 @@
 ﻿import PwaRegister from "@/components/PWA/PwaRegister";
+import UserTracker from "@/components/tracking/UserTracker";
 import { AuthProvider } from "@/hooks/AuthContext";
 import SiteLayout from "@/utilities/SiteLayout";
 import Script from "next/script";
@@ -645,6 +646,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <SiteLayout>{children}</SiteLayout>
+          <UserTracker />
         </AuthProvider>
         <PwaRegister />
 
