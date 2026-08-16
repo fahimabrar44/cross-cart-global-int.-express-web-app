@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { apiService } from "@/services/apiService";
 import { trackClarityEvent, setClarityTag } from "@/lib/clarity";
+import { gaEvent } from "@/lib/ga";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -96,6 +97,7 @@ export default function CareerContent() {
     setIsApplyOpen(true);
     trackClarityEvent("apply_opened");
     setClarityTag("apply_job", job.title);
+    gaEvent("apply_opened", { job: job.title });
   };
 
   const submitApplication = async () => {
@@ -128,6 +130,7 @@ export default function CareerContent() {
         toast.success("Application submitted successfully!");
         trackClarityEvent("application_submitted");
         setClarityTag("apply_job", applyJob.title);
+        gaEvent("application_submitted", { job: applyJob.title });
         setIsApplyOpen(false);
       } else {
         toast.error(res.message || "Failed to submit application");

@@ -1,6 +1,7 @@
 ﻿import PwaRegister from "@/components/PWA/PwaRegister";
 import UserTracker from "@/components/tracking/UserTracker";
 import ClarityAnalytics from "@/components/Analytics/Clarity";
+import GoogleAnalytics from "@/components/Analytics/GoogleAnalytics";
 import CookieConsent from "@/components/Analytics/CookieConsent";
 import ActivityTracker from "@/components/Analytics/ActivityTracker";
 import { AuthProvider } from "@/hooks/AuthContext";
@@ -651,6 +652,7 @@ export default function RootLayout({
           <SiteLayout>{children}</SiteLayout>
           <UserTracker />
           <ClarityAnalytics />
+          <GoogleAnalytics />
           <CookieConsent />
           <ActivityTracker />
         </AuthProvider>
@@ -661,9 +663,29 @@ export default function RootLayout({
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+i+dl:'';j.async=true;j.src=
             'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
             })(window,document,'script','dataLayer','GTM-TDP9QDWF');
+          `}
+        </Script>
+
+        {/* Google Analytics (gtag.js) */}
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-554K530WCW"
+        />
+        <Script id="google-analytics-config" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('consent', 'default', {
+              analytics_storage: 'denied',
+              ad_storage: 'denied',
+              wait_for_update: 500
+            });
+            gtag('config', 'G-554K530WCW');
           `}
         </Script>
 

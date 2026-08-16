@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import { CountryPhoneInput } from "@/components/ui/phone-input";
 import { validatePhone } from "@/lib/phoneCountries";
 import { trackClarityEvent, setClarityTag } from "@/lib/clarity";
+import { gaEvent } from "@/lib/ga";
 
 export interface CountryOption {
   _id: string;
@@ -464,6 +465,9 @@ export default function CreateShipmentForm({
         setError("");
         trackClarityEvent("shipment_created");
         setClarityTag("shipment_service", String(formData.parcel.serviceType || "standard"));
+        gaEvent("shipment_created", {
+          service: String(formData.parcel.serviceType || "standard"),
+        });
         // Reset form
         setFormData({
           parcel: {

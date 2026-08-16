@@ -21,6 +21,7 @@ import Link from "next/link";
 import { CountryPhoneInput } from "@/components/ui/phone-input";
 import { validatePhone } from "@/lib/phoneCountries";
 import { trackClarityEvent, setClarityTag } from "@/lib/clarity";
+import { gaEvent } from "@/lib/ga";
 
 export interface RequiredField {
   name: string;
@@ -111,6 +112,7 @@ export default function TrackShipmentContent({
         setError("");
         trackClarityEvent("tracking_searched");
         setClarityTag("tracking_result", "found");
+        gaEvent("tracking_searched", { result: "found" });
       } else if (
         response.meta?.needsFields &&
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -123,11 +125,13 @@ export default function TrackShipmentContent({
         setNeededFields(response.meta.requiredFields);
         setError("");
         setClarityTag("tracking_result", "needs_fields");
+        gaEvent("tracking_needs_fields");
       } else {
         setError(response.message || "Tracking number not found");
         setTrackingData(null);
         trackClarityEvent("tracking_not_found");
         setClarityTag("tracking_result", "not_found");
+        gaEvent("tracking_not_found", { result: "not_found" });
       }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {

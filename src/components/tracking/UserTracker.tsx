@@ -12,6 +12,7 @@ import {
   setClarityTag,
   syncClarityConsent,
 } from "@/lib/clarity";
+import { gaEvent, gaSetUserId, gaSetUserProperty } from "@/lib/ga";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -111,12 +112,14 @@ export default function UserTracker() {
     setShow(true);
   }, [pathname, user, loading, consentDecided]);
 
-  // Identify logged-in users in Clarity (only records once consent is granted).
+  // Identify logged-in users in analytics (only records once consent is granted).
   useEffect(() => {
     if (!loading && user) {
       syncClarityConsent();
       identifyClarity(user.id, user.name);
       if (user.role) setClarityTag("user_role", user.role);
+      gaSetUserId(user.id);
+      if (user.role) gaSetUserProperty("user_role", user.role);
     }
   }, [user, loading]);
 
@@ -180,6 +183,7 @@ export default function UserTracker() {
     }
     trackClarityEvent("lead_submitted");
     setClarityTag("lead_service", serviceType);
+    gaEvent("lead_submitted", { service: serviceType });
     setSubmitting(false);
     setShow(false);
   };
