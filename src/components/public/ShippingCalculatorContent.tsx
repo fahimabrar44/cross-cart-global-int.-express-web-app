@@ -3,7 +3,7 @@
 import { getRequestSend } from "@/components/ApiCall/methord";
 import { ROOT_API } from "@/components/ApiCall/url";
 import PageHeader from "@/utilities/PageHeader";
-import { Calculator, Clock, DollarSign, Globe, Loader2 } from "lucide-react";
+import { Calculator, Clock, DollarSign, Globe, Loader2, Search } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
@@ -246,24 +246,25 @@ export default function ShippingCalculatorContent({
             </p>
           </div>
 
-          <div className="max-w-xl mx-auto mb-6">
+          <div className="max-w-xl mx-auto mb-8 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
               value={zoneSearch}
               onChange={(e) => setZoneSearch(e.target.value)}
               placeholder="Search Country / Zone"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+              className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-full shadow-sm focus:ring-2 focus:ring-[#006B45] focus:border-transparent outline-none"
             />
           </div>
 
-          <div className="overflow-x-auto rounded-lg border border-gray-200">
+          <div className="rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <table className="min-w-full text-sm">
-              <thead className="bg-[#12352A] text-white">
+              <thead className="bg-gradient-to-r from-[#12352A] to-[#1c4a36] text-white">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold">
+                  <th className="px-5 py-4 text-left font-semibold tracking-wide">
                     Zone Name
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold">
+                  <th className="px-5 py-4 text-left font-semibold tracking-wide">
                     Country Name
                   </th>
                 </tr>
@@ -273,7 +274,7 @@ export default function ShippingCalculatorContent({
                   <tr>
                     <td
                       colSpan={2}
-                      className="px-4 py-6 text-center text-gray-500"
+                      className="px-5 py-10 text-center text-gray-400"
                     >
                       Loading zones…
                     </td>
@@ -282,24 +283,39 @@ export default function ShippingCalculatorContent({
                   <tr>
                     <td
                       colSpan={2}
-                      className="px-4 py-6 text-center text-gray-500"
+                      className="px-5 py-10 text-center text-gray-400"
                     >
                       No zones found.
                     </td>
                   </tr>
                 ) : (
-                  filteredZones.map((z) => (
+                  filteredZones.map((z, i) => (
                     <tr
                       key={z._id}
-                      className="border-t border-gray-100 hover:bg-soft-green"
+                      className={`border-t border-gray-100 transition-colors hover:bg-[#f3faf7] ${
+                        i % 2 === 1 ? "bg-gray-50/50" : ""
+                      }`}
                     >
-                      <td className="px-4 py-3 font-medium text-[#12352A] align-top whitespace-nowrap">
-                        {z.name}
+                      <td className="px-5 py-4 align-top">
+                        <span className="inline-block bg-[#EAF3EE] text-[#006B45] border border-[#006B45]/30 rounded-full px-3 py-1 text-xs font-bold whitespace-nowrap">
+                          {z.name}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-700">
-                        {z.countryIds && z.countryIds.length > 0
-                          ? z.countryIds.map((c) => c.name).join(", ")
-                          : "—"}
+                      <td className="px-5 py-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {z.countryIds && z.countryIds.length > 0 ? (
+                            z.countryIds.map((c) => (
+                              <span
+                                key={c._id}
+                                className="inline-block bg-gray-100 text-gray-700 rounded-md px-2 py-0.5 text-xs"
+                              >
+                                {c.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
