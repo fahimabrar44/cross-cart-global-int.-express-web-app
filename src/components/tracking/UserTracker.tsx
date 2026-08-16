@@ -100,7 +100,7 @@ export default function UserTracker() {
     };
   }, [show]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       setError("Name is required");
@@ -129,7 +129,22 @@ export default function UserTracker() {
     };
     try {
       localStorage.setItem(LEAD_KEY, JSON.stringify(data));
-      // Best-effort: you can POST this to a backend leads endpoint here.
+      try {
+        const res = await fetch("/api/v1/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json().catch(() => null);
+        if (!res.ok || !result?.success) {
+          console.warn(
+            "Lead backend capture failed:",
+            result?.message || res.status
+          );
+        }
+      } catch (err) {
+        console.warn("Lead backend capture error:", err);
+      }
     } catch {
       // ignore storage errors
     }
