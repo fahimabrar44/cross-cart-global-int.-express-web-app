@@ -25,7 +25,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { CountryPhoneInput } from "@/components/ui/phone-input";
 import { countryService } from "@/services/countryService";
+import { validatePhone } from "@/lib/phoneCountries";
 import { CreateOrderData, Order } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
@@ -41,7 +43,12 @@ const addressSchema = z.object({
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  phone: z.string().min(1, "Phone number is required"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .refine((v) => validatePhone(v).valid, {
+      message: "Enter a valid phone number for the selected country",
+    }),
   email: z.string().email("Invalid email address").optional().or(z.literal("")),
   address: addressSchema,
 });
@@ -542,10 +549,11 @@ export function OrderForm({
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter phone number"
-                        {...field}
-                        data-testid="sender-phone"
+                      <CountryPhoneInput
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        placeholder="1XXXXXXXXX"
+                        dataTestId="sender-phone"
                       />
                     </FormControl>
                     <FormMessage />
@@ -711,10 +719,11 @@ export function OrderForm({
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter phone number"
-                        {...field}
-                        data-testid="receiver-phone"
+                      <CountryPhoneInput
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        placeholder="1XXXXXXXXX"
+                        dataTestId="receiver-phone"
                       />
                     </FormControl>
                     <FormMessage />

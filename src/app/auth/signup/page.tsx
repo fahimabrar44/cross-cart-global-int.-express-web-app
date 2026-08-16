@@ -6,10 +6,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { CountryPhoneInput } from "@/components/ui/phone-input";
 import { useAuth } from "@/hooks/AuthContext";
 import { postRequestSend } from "@/components/ApiCall/methord";
 import { SIGNUP_API } from "@/components/ApiCall/url";
-import { Eye, EyeOff, Gift, Loader2, Mail, Phone, User } from "lucide-react";
+import { validatePhone } from "@/lib/phoneCountries";
+import { Eye, EyeOff, Gift, Loader2, Mail, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -81,11 +83,12 @@ export default function SignupPage() {
       newErrors.name = "Name can only contain letters, spaces, hyphens, periods, and apostrophes";
     }
 
-    // Phone validation
+    // Phone validation (country-aware)
+    const phoneCheck = validatePhone(formData.phone);
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required";
-    } else if (!/^\+?[1-9]\d{7,14}$/.test(formData.phone.trim())) {
-      newErrors.phone = "Please enter a valid international phone number";
+    } else if (!phoneCheck.valid) {
+      newErrors.phone = phoneCheck.error || "Please enter a valid phone number";
     }
 
     // Email validation
@@ -236,23 +239,14 @@ export default function SignupPage() {
             {/* Phone Field */}
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+1234567890"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
-                  className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
-                  data-testid="phone-input"
-                />
-              </div>
-              {errors.phone && (
-                <p className="text-sm text-red-500" data-testid="phone-error">
-                  {errors.phone}
-                </p>
-              )}
+              <CountryPhoneInput
+                id="phone"
+                value={formData.phone}
+                onChange={(v) => handleInputChange("phone", v)}
+                error={errors.phone}
+                autoComplete="tel"
+                placeholder="1XXXXXXXXX"
+              />
             </div>
 
             {/* Email Field */}

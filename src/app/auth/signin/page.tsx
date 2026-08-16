@@ -13,9 +13,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { CountryPhoneInput } from "@/components/ui/phone-input";
 import { useAuth } from "@/hooks/AuthContext";
 import Logo from "@/utilities/Logo";
-import { Eye, EyeOff, Loader2, Phone } from "lucide-react";
+import { validatePhone } from "@/lib/phoneCountries";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -64,10 +66,11 @@ export default function SigninPage() {
   const validateForm = (): boolean => {
     const newErrors: SigninFormErrors = {};
 
+    const phoneCheck = validatePhone(phone);
     if (!phone.trim()) {
       newErrors.phone = "Phone number is required";
-    } else if (!/^\+?[1-9]\d{7,14}$/.test(phone.trim())) {
-      newErrors.phone = "Please enter a valid phone number";
+    } else if (!phoneCheck.valid) {
+      newErrors.phone = phoneCheck.error || "Please enter a valid phone number";
     }
 
     if (!password) {
@@ -172,27 +175,17 @@ export default function SigninPage() {
             {/* Phone input */}
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+1234567890"
-                  value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
-                    if (errors.phone)
-                      setErrors({ ...errors, phone: undefined });
-                  }}
-                  className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
-                  data-testid="phone-input"
-                />
-              </div>
-              {errors.phone && (
-                <p className="text-sm text-red-500" data-testid="phone-error">
-                  {errors.phone}
-                </p>
-              )}
+              <CountryPhoneInput
+                id="phone"
+                value={phone}
+                onChange={(v) => {
+                  setPhone(v);
+                  if (errors.phone) setErrors({ ...errors, phone: undefined });
+                }}
+                error={errors.phone}
+                autoComplete="tel"
+                placeholder="1XXXXXXXXX"
+              />
             </div>
 
             {/* Password input */}

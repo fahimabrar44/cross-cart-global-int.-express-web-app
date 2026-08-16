@@ -32,10 +32,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { CountryPhoneInput } from "@/components/ui/phone-input";
 import { useAuth } from "@/hooks/AuthContext";
 import { RoleGuard } from "@/middleware/roleGuard";
 import { PickupService, UserService } from "@/services/dashboardService";
 import { countryService } from "@/services/countryService";
+import { validatePhone } from "@/lib/phoneCountries";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -201,6 +203,10 @@ export default function PickupsPage() {
           !newAddress.country
         ) {
           toast.error("Please fill in the address, city, and country");
+          return;
+        }
+        if (!validatePhone(newAddress.phone).valid) {
+          toast.error("Please enter a valid contact phone number");
           return;
         }
         if (!user?.phone) {
@@ -785,12 +791,12 @@ export default function PickupsPage() {
 
                     <div>
                       <Label>Phone</Label>
-                      <Input
+                      <CountryPhoneInput
                         value={newAddress.phone}
-                        onChange={(e) =>
-                          setNewAddress({ ...newAddress, phone: e.target.value })
+                        onChange={(v) =>
+                          setNewAddress({ ...newAddress, phone: v })
                         }
-                        placeholder="Contact phone number"
+                        placeholder="1XXXXXXXXX"
                       />
                     </div>
 
