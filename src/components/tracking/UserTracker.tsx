@@ -218,7 +218,7 @@ export default function UserTracker() {
             <SelectTrigger>
               <SelectValue placeholder="Select a service" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[200]">
               {SERVICE_TYPES.map((s) => (
                 <SelectItem key={s} value={s}>
                   {s}
