@@ -33,9 +33,7 @@ export default function WorldLoader({
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-10">
       {globe}
-      {label ? (
-        <p className="text-sm text-muted-foreground">{label}</p>
-      ) : null}
+      {label ? <p className="text-sm text-muted-foreground">{label}</p> : null}
     </div>
   );
 }
