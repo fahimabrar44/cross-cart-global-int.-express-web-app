@@ -217,8 +217,8 @@ apiConfigSchema.index({ expiresAt: 1 }, {
 });
 apiConfigSchema.index({ "usage.dailyUsage.date": 1 }, { sparse: true });
 
-// Generate secure API key before save
-apiConfigSchema.pre<IApiConfig>("save", async function (next) {
+// Generate secure API key before validation (required fields must be set pre-validate, not pre-save)
+apiConfigSchema.pre<IApiConfig>("validate", async function (next) {
   if (!this.apiKey) {
     this.generateNewKey();
   }
