@@ -5,7 +5,7 @@ import { ROOT_API } from "@/components/ApiCall/url";
 import PageHeader from "@/utilities/PageHeader";
 import { Calculator, Clock, DollarSign, Globe, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface CountryOption {
   _id: string;
@@ -20,6 +20,14 @@ export interface ZoneOption {
   name: string;
   code?: string;
   isActive?: boolean;
+}
+
+interface FetchedZone {
+  _id: string;
+  name: string;
+  code?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  countryIds: { _id: string; name: string; code?: string; isActive?: boolean }[];
 }
 
 interface Rate {
@@ -83,6 +91,40 @@ export default function ShippingCalculatorContent({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [priceData, setPriceData] = useState<PriceData | null>(null);
+  const [zonesData, setZonesData] = useState<FetchedZone[]>([]);
+  const [loadingZones, setLoadingZones] = useState(true);
+  const [zoneSearch, setZoneSearch] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const params = new URLSearchParams({ limit: "200", isActive: "true" });
+        const res = await getRequestSend<FetchedZone[]>(
+          `${ROOT_API}zones?${params.toString()}`,
+        );
+        if (res.status === 200 && Array.isArray(res.data)) {
+          if (active) setZonesData(res.data);
+        }
+      } catch {
+        /* ignore zone fetch errors */
+      } finally {
+        if (active) setLoadingZones(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const filteredZones = zonesData.filter((z) => {
+    const term = zoneSearch.trim().toLowerCase();
+    if (!term) return true;
+    if (z.name.toLowerCase().includes(term)) return true;
+    return (z.countryIds || []).some((c) =>
+      c.name?.toLowerCase().includes(term),
+    );
+  });
 
   const getCountryName = (id: string) =>
     countries.find((c) => c._id === id)?.name || "";
@@ -190,6 +232,83 @@ export default function ShippingCalculatorContent({
         mainLink="/ship-and-track"
         subLink="/ship-and-track/claculate-shipping-charge"
       />
+
+      {/* World Country Zone List Section */}
+      <div className="w-full bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4 py-10">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-[#12352A] mb-3">
+              World Country Zone List
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Search and browse our shipping destination zones and the countries
+              covered under each.
+            </p>
+          </div>
+
+          <div className="max-w-xl mx-auto mb-6">
+            <input
+              type="text"
+              value={zoneSearch}
+              onChange={(e) => setZoneSearch(e.target.value)}
+              placeholder="Search Country / Zone"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+            />
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <table className="min-w-full text-sm">
+              <thead className="bg-[#12352A] text-white">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold">
+                    Zone Name
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold">
+                    Country Name
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingZones ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      className="px-4 py-6 text-center text-gray-500"
+                    >
+                      Loading zones…
+                    </td>
+                  </tr>
+                ) : filteredZones.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      className="px-4 py-6 text-center text-gray-500"
+                    >
+                      No zones found.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredZones.map((z) => (
+                    <tr
+                      key={z._id}
+                      className="border-t border-gray-100 hover:bg-soft-green"
+                    >
+                      <td className="px-4 py-3 font-medium text-[#12352A] align-top whitespace-nowrap">
+                        {z.name}
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">
+                        {z.countryIds && z.countryIds.length > 0
+                          ? z.countryIds.map((c) => c.name).join(", ")
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
       {/* Hero Section */}
       <div className="w-full bg-white">
