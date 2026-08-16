@@ -217,9 +217,11 @@ apiConfigSchema.index({ expiresAt: 1 }, {
 });
 apiConfigSchema.index({ "usage.dailyUsage.date": 1 }, { sparse: true });
 
-// Generate secure API key before validation (required fields must be set pre-validate, not pre-save)
+// Generate secure API key before validation (required fields must be set pre-validate, not pre-save).
+// Only auto-generate for NEW docs; for existing docs the key is loaded with select:false so an
+// update save would otherwise silently rotate a live key. Explicit regeneration uses generateNewKey().
 apiConfigSchema.pre<IApiConfig>("validate", async function (next) {
-  if (!this.apiKey) {
+  if (this.isNew && !this.apiKey) {
     this.generateNewKey();
   }
   
