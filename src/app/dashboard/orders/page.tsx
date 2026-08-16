@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/AuthContext";
+import { phonesEqual } from "@/lib/phoneCountries";
 import { OrderFilters, orderService } from "@/services/orderService";
 import { Order, hasPermission } from "@/types";
 import { apiService } from "@/services/apiService";
@@ -164,8 +165,8 @@ export default function OrdersPage() {
           user?.role === "user"
             ? all.filter(
                 (o: Order) =>
-                  o.parcel?.sender?.phone === user?.phone ||
-                  o.parcel?.receiver?.phone === user?.phone
+                  phonesEqual(o.parcel?.sender?.phone, user?.phone) ||
+                  phonesEqual(o.parcel?.receiver?.phone, user?.phone)
               )
             : all;
         setOrders(visible);

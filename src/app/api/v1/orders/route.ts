@@ -89,13 +89,27 @@ export const GET = createAuthHandler(async ({ req, user }) => {
     
     // Role-based filtering
     if (user?.role === "user") {
-      // Regular users can see orders where they're the sender or the receiver
-      query.$or = [
-        { "parcel.sender.phone": user.phone },
-        { "parcel.sender.email": user.email },
-        { "parcel.receiver.phone": user.phone },
-        { "parcel.receiver.email": user.email },
-      ];
+      // Regular users can see orders where they're the sender or the receiver.
+      // Match phones tolerantly (E.164 vs local formats) using normalized variants.
+      const phoneVariants: string[] = [];
+      if (user.phone) {
+        phoneVariants.push(user.phone);
+        const digits = user.phone.replace(/\D/g, "");
+        if (digits) {
+          phoneVariants.push(digits);
+          if (digits.length >= 10) phoneVariants.push(digits.slice(-10));
+        }
+      }
+      const or: Record<string, unknown>[] = [];
+      if (phoneVariants.length) {
+        or.push({ "parcel.sender.phone": { $in: phoneVariants } });
+        or.push({ "parcel.receiver.phone": { $in: phoneVariants } });
+      }
+      if (user.email) {
+        or.push({ "parcel.sender.email": user.email });
+        or.push({ "parcel.receiver.email": user.email });
+      }
+      query.$or = or;
     }
     // Admin and moderator can see all orders (no additional filter needed)
 

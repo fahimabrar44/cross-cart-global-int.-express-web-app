@@ -185,3 +185,23 @@ export function validatePhone(value: string, fallbackIso = "BD"): PhoneValidatio
   const { iso, national } = parseE164(value, fallbackIso);
   return validateNational(iso, national);
 }
+
+// Strip everything except digits, so "+880 1712-345678" -> "8801712345678".
+export function normalizePhone(p?: string | null): string {
+  if (!p) return "";
+  return p.replace(/\D/g, "");
+}
+
+// Compare two phone numbers tolerantly. Handles format differences like
+// "+8801712345678" vs "01712345678" vs "8801712345678" vs "1712345678".
+export function phonesEqual(a?: string | null, b?: string | null): boolean {
+  const da = normalizePhone(a);
+  const db = normalizePhone(b);
+  if (!da || !db) return false;
+  if (da === db) return true;
+  // Fall back to comparing the last 10 national digits (covers 880 / leading-0 prefixes).
+  if (da.length >= 10 && db.length >= 10 && da.slice(-10) === db.slice(-10)) {
+    return true;
+  }
+  return false;
+}
