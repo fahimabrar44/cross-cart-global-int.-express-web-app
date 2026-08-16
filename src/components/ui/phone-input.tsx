@@ -14,7 +14,8 @@ import {
   getCountryByIso,
   flagEmoji,
   parseE164,
-  validatePhone,
+  validateNational,
+  formatNational,
 } from "@/lib/phoneCountries";
 import { cn } from "@/lib/utils";
 
@@ -66,8 +67,8 @@ export function CountryPhoneInput({
 
   const emit = (nextIso: string, nextNational: string) => {
     const digits = nextNational.replace(/\D/g, "");
-    const country = getCountryByIso(nextIso);
     const nationalDigits = digits.startsWith("0") ? digits.slice(1) : digits;
+    const country = getCountryByIso(nextIso);
     const e164 = country ? `+${country.dialCode}${nationalDigits}` : "";
     lastEmitted.current = e164;
     onChange(e164);
@@ -80,15 +81,13 @@ export function CountryPhoneInput({
 
   const handleNational = (raw: string) => {
     const cleaned = raw.replace(/[^\d\s()-]/g, "");
-    setNational(cleaned);
-    emit(iso, cleaned);
+    const formatted = formatNational(iso, cleaned);
+    setNational(formatted);
+    emit(iso, formatted);
   };
 
   const country = getCountryByIso(iso);
-  const digits = national.replace(/\D/g, "");
-  const nationalDigits = digits.startsWith("0") ? digits.slice(1) : digits;
-  const currentE164 = country ? `+${country.dialCode}${nationalDigits}` : "";
-  const validation = validatePhone(currentE164, iso);
+  const validation = validateNational(iso, national);
 
   const message = error || (touched ? validation.error : undefined);
   const showError = Boolean(message);

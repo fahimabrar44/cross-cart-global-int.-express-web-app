@@ -16,6 +16,8 @@ import {
   User,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { CountryPhoneInput } from "@/components/ui/phone-input";
+import { validatePhone } from "@/lib/phoneCountries";
 
 export interface CountryOption {
   _id: string;
@@ -404,6 +406,8 @@ export default function CreateShipmentForm({
 
     if (!parcel.sender.name.trim()) return "Sender name is required";
     if (!parcel.sender.phone.trim()) return "Sender phone is required";
+    if (!validatePhone(parcel.sender.phone).valid)
+      return "Enter a valid sender phone number";
     if (!parcel.sender.email.trim()) return "Sender email is required";
     if (!parcel.sender.address.address.trim())
       return "Sender address is required";
@@ -411,6 +415,8 @@ export default function CreateShipmentForm({
 
     if (!parcel.receiver.name.trim()) return "Receiver name is required";
     if (!parcel.receiver.phone.trim()) return "Receiver phone is required";
+    if (!validatePhone(parcel.receiver.phone).valid)
+      return "Enter a valid receiver phone number";
     if (!parcel.receiver.address.address.trim())
       return "Receiver address is required";
     if (!parcel.to.trim()) return "Destination zone is required";
@@ -698,14 +704,10 @@ export default function CreateShipmentForm({
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Phone Number *
                       </label>
-                      <input
-                        type="tel"
+                      <CountryPhoneInput
                         value={formData.parcel.sender.phone}
-                        onChange={(e) =>
-                          updateFormField("sender", "phone", e.target.value)
-                        }
-                        placeholder="+880 1XXX XXXXXX"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                        onChange={(v) => updateFormField("sender", "phone", v)}
+                        placeholder="1XXX XXXXXX"
                       />
                     </div>
                     <div>
@@ -810,14 +812,10 @@ export default function CreateShipmentForm({
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Phone Number *
                       </label>
-                      <input
-                        type="tel"
+                      <CountryPhoneInput
                         value={formData.parcel.receiver.phone}
-                        onChange={(e) =>
-                          updateFormField("receiver", "phone", e.target.value)
-                        }
-                        placeholder="Recipient's phone number"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                        onChange={(v) => updateFormField("receiver", "phone", v)}
+                        placeholder="1XXX XXXXXX"
                       />
                     </div>
                     <div>

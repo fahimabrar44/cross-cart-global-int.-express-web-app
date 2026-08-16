@@ -13,17 +13,13 @@ import { useEffect, useState } from "react";
 const slider_image = [
   { id: 135, src: "/cover-1.png" },
   { id: 2345, src: "/cover-2.png" },
-  { id: 123, src: "/cover-3.png" },
   { id: 234, src: "/cover-4.png" },
-  { id: 156, src: "/cover-5.png" },
   { id: 278, src: "/cover-6.png" },
-
   { id: 1535, src: "/cover-7.png" },
   { id: 267, src: "/cover-8.png" },
   { id: 165, src: "/cover-9.png" },
   { id: 243, src: "/cover-1.png" },
   { id: 121, src: "/cover-2.png" },
-  { id: 23456, src: "/cover-3.png" },
 ];
 
 const HomeSaliderSectation = () => {

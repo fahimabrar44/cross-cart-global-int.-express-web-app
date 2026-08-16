@@ -1,6 +1,7 @@
 ﻿import type { Metadata } from "next";
 import PageHeader from '@/utilities/PageHeader';
 import Link from "next/link";
+import { StandalonePhoneInput } from "@/components/ui/phone-field-standalone";
 import { Building2, Users, Globe, Award, TrendingUp, Shield, CheckCircle, ArrowRight, Calendar, MapPin } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -375,7 +376,7 @@ const CrossCartCorporate = () => {
                   <input type="email" placeholder="Email Address" className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent" />
                 </div>
                 <div>
-                  <input type="tel" placeholder="Phone Number" className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent" />
+                  <StandalonePhoneInput placeholder="Phone Number" className="w-full" />
                 </div>
                 <div>
                   <textarea rows={4} placeholder="Tell us about your logistics requirements" className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"></textarea>

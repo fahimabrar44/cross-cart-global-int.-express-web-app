@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { CountryPhoneInput } from "@/components/ui/phone-input";
+import { validatePhone } from "@/lib/phoneCountries";
 
 export interface RequiredField {
   name: string;
@@ -373,6 +375,10 @@ export default function TrackShipmentContent({
     }
     if (!reviewForm.comment.trim()) {
       setReviewError("Please write your review details");
+      return;
+    }
+    if (reviewForm.phone && !validatePhone(reviewForm.phone).valid) {
+      setReviewError("Please enter a valid phone number");
       return;
     }
 
@@ -926,20 +932,16 @@ export default function TrackShipmentContent({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Phone
-                      </label>
-                      <input
-                        type="tel"
-                        value={reviewForm.phone}
-                        onChange={(e) =>
-                          setReviewForm({ ...reviewForm, phone: e.target.value })
-                        }
-                        placeholder="Phone number"
-                        className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone
+                    </label>
+                    <CountryPhoneInput
+                      value={reviewForm.phone}
+                      onChange={(v) => setReviewForm({ ...reviewForm, phone: v })}
+                      placeholder="Phone number"
+                    />
+                  </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Email

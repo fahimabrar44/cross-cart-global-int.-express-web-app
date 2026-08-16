@@ -25,12 +25,14 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { CreateUserData, UpdateUserData, User } from "@/types";
+import { CountryPhoneInput } from "@/components/ui/phone-input";
+import { validatePhone } from "@/lib/phoneCountries";
 import { Eye, EyeOff } from "lucide-react";
 
 const userFormSchema = z.object({
   name: z.string().min(1, "Name is required").min(2, "Name must be at least 2 characters"),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
-  phone: z.string().min(1, "Phone number is required").min(10, "Phone number must be at least 10 digits"),
+  phone: z.string().min(1, "Phone number is required").refine((v) => validatePhone(v).valid, "Enter a valid phone number"),
   
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error  
@@ -210,10 +212,11 @@ export function UserForm({
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Enter phone number" 
-                        {...field} 
-                        data-testid="user-phone-input"
+                      <CountryPhoneInput
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        placeholder="1XXXXXXXXX"
+                        dataTestId="user-phone-input"
                       />
                     </FormControl>
                     <FormDescription>

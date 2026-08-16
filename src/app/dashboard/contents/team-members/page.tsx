@@ -18,6 +18,9 @@ import { TeamMemberService } from "@/services/dashboardService";
 import { Edit, Eye, ImagePlus, Loader2, Plus, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Controller } from "react-hook-form";
+import { CountryPhoneInput } from "@/components/ui/phone-input";
+import { validatePhone } from "@/lib/phoneCountries";
 import { toast } from "sonner";
 
 interface TeamMemberFormData {
@@ -62,6 +65,7 @@ export default function TeamMembersPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const {
+    control,
     register,
     handleSubmit,
     setValue,
@@ -565,14 +569,30 @@ export default function TeamMembersPage() {
                       placeholder="email@example.com"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      {...register("phone")}
-                      placeholder="+8801xxxxxxxxx"
-                    />
-                  </div>
+                  <Controller
+                    name="phone"
+                    control={control}
+                    rules={{
+                      validate: (v) =>
+                        !v || validatePhone(v).valid || "Enter a valid phone number",
+                    }}
+                    render={({ field }) => (
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Phone</Label>
+                        <CountryPhoneInput
+                          id="phone"
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                          placeholder="1XXXXXXXXX"
+                        />
+                        {errors.phone && (
+                          <p className="text-sm text-red-600">
+                            {errors.phone.message as string}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

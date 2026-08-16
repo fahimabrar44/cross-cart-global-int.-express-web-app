@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { UserService } from "@/services/dashboardService";
+import { CountryPhoneInput } from "@/components/ui/phone-input";
+import { validatePhone } from "@/lib/phoneCountries";
 
 interface UserFormData {
   name: string;
@@ -30,6 +32,7 @@ interface UserFormProps {
 export function UserForm({ user, onSuccess, onCancel, isEdit = false }: UserFormProps) {
   const [loading, setLoading] = useState(false);
   const {
+    control,
     register,
     handleSubmit,
     setValue,
@@ -114,19 +117,30 @@ export function UserForm({ user, onSuccess, onCancel, isEdit = false }: UserForm
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                {...register("phone", { required: "Phone is required" })}
-                placeholder="+1234567890"
-                disabled={isEdit} // Phone cannot be changed in edit mode
-                data-testid="user-phone-input"
-              />
-              {errors.phone && (
-                <p className="text-sm text-red-600">{errors.phone.message}</p>
+            <Controller
+              name="phone"
+              control={control}
+              rules={{
+                required: "Phone is required",
+                validate: (v) => validatePhone(v).valid || "Enter a valid phone number",
+              }}
+              render={({ field }) => (
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <CountryPhoneInput
+                    id="phone"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    disabled={isEdit}
+                    placeholder="1XXXXXXXXX"
+                    dataTestId="user-phone-input"
+                  />
+                  {errors.phone && (
+                    <p className="text-sm text-red-600">{errors.phone.message}</p>
+                  )}
+                </div>
               )}
-            </div>
+            />
 
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>

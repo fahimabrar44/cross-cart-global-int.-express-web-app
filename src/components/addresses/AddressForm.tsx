@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { CountryPhoneInput } from "@/components/ui/phone-input";
+import { validatePhone } from "@/lib/phoneCountries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,7 +43,10 @@ const addressFormSchema = z.object({
   }),
   contactPerson: z.object({
     name: z.string().optional(),
-    phone: z.string().optional(),
+    phone: z
+      .string()
+      .optional()
+      .refine((v) => !v || validatePhone(v).valid, "Enter a valid phone number"),
     email: z.string().email("Invalid email").optional().or(z.literal("")),
   }).optional(),
 });
@@ -328,7 +333,14 @@ export function AddressForm({ address, onSubmit, onCancel, loading = false }: Ad
                 control={form.control} name="contactPerson.phone" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
-                    <FormControl><Input placeholder="Enter phone number" {...field} /></FormControl>
+                    <FormControl>
+                      <CountryPhoneInput
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        placeholder="1XXXXXXXXX"
+                      />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )} />
               </div>
