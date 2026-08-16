@@ -54,125 +54,84 @@ export async function GET(
     const to = order.parcel?.to as any;
     const sender = order.parcel?.sender || {};
     const receiver = order.parcel?.receiver || {};
-    const items = order.parcel?.item || [];
     const payment = order.payment || {};
-
-    const itemsTotal = items.reduce(
-      (sum: number, it: { totalPrice?: number }) => sum + (Number(it.totalPrice) || 0),
-      0
-    );
     const boxCount = order.parcel?.boxCount || 0;
     const packagingType = order.parcel?.packagingType || "—";
     const dimensions = order.parcel?.dimensions || {};
     const insurance = order.parcel?.insurance || {};
-    const insuranceCharge = Number(insurance.charge) || 0;
+    const awb = order.awb || "";
 
-    const rowLoop = items
-      .map(
-        (it: { name?: string; quantity?: number; unitPrice?: number; totalPrice?: number }) => `
-          <tr>
-            <td style="padding:8px;border:1px solid #ddd;">${it.name || "-"}</td>
-            <td style="padding:8px;border:1px solid #ddd;text-align:center;">${Number(it.quantity) || 0}</td>
-            <td style="padding:8px;border:1px solid #ddd;text-align:right;">${money(it.unitPrice)}</td>
-            <td style="padding:8px;border:1px solid #ddd;text-align:right;">${money(it.totalPrice)}</td>
-          </tr>`
-      )
-      .join("");
+    const card = `
+    <div class="label">
+      <div class="label-head">
+        <img class="logo" src="/full-logo.png" alt="CrossCart Global" />
+        <div class="head-right">
+          <div class="ship">SHIPPING LABEL</div>
+          <div class="track">${order.trackId}</div>
+        </div>
+      </div>
+      <div class="barcode" aria-hidden="true"></div>
+      <div class="addr">
+        <div class="from">
+          <span class="tag">FROM</span>
+          <div class="name">${sender.name || "-"}</div>
+          <div>${sender.phone || ""}</div>
+          <div>${from?.name || ""}${sender.address?.city ? ` - ${sender.address.city}` : ""}</div>
+        </div>
+        <div class="to">
+          <span class="tag">TO</span>
+          <div class="name">${receiver.name || "-"}</div>
+          <div>${receiver.phone || ""}</div>
+          <div>${to?.name || ""}${receiver.address?.city ? ` - ${receiver.address.city}` : ""}</div>
+        </div>
+      </div>
+      <div class="info">
+        <span>Service: ${order.parcel?.serviceType || "-"}</span>
+        <span>Priority: ${order.parcel?.priority || "normal"}</span>
+        <span>Weight: ${order.parcel?.weight || "0"} kg</span>
+        <span>Packaging: ${packagingType}</span>
+        <span>Boxes: ${boxCount}</span>
+        <span>Dim: ${dimensions.length || 0} × ${dimensions.width || 0} × ${dimensions.height || 0} cm</span>
+        ${awb ? `<span>AWB: ${awb}</span>` : ""}
+        ${insurance.enabled ? `<span>Insurance: Yes</span>` : ""}
+        <span>Amount: ${money(payment.pAmount)}</span>
+      </div>
+      <div class="foot">CrossCart Global Int Express · +8801622541719 · ${order.orderDate ? new Date(order.orderDate).toDateString() : ""}</div>
+    </div>`;
 
     const html = `<!DOCTYPE html>
-<html lang="en">
+    <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Invoice ${order.trackId}</title>
+  <title>Shipping Label ${order.trackId}</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a202c; margin: 24px; }
-    .header { display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #006B45; padding-bottom:16px; }
-    .brand { font-size:22px; font-weight:800; color:#006B45; }
-    .sub { color:#667eea; font-size:12px; letter-spacing:2px; text-transform:uppercase; }
-    h1 { font-size:26px; margin:8px 0 0; }
-    .meta { display:flex; gap:48px; margin-top:24px; }
-    .meta .col p { margin:2px 0; font-size:14px; }
-    .label { color:#718096; text-transform:uppercase; font-size:11px; letter-spacing:1px; }
-    table { width:100%; border-collapse:collapse; margin-top:24px; font-size:14px; }
-    th { background:#006B45; color:#fff; padding:8px; text-align:left; }
-    .totals { margin-top:16px; text-align:right; }
-    .totals p { margin:4px 0; font-size:14px; }
-    .grand { font-size:18px; font-weight:700; color:#006B45; border-top:2px solid #006B45; padding-top:8px; }
-    .footer { margin-top:32px; border-top:1px solid #eee; padding-top:12px; font-size:12px; color:#718096; text-align:center; }
-    @media print { body { margin:0; } }
-    .print-btn { float:right; margin-bottom:16px; padding:10px 18px; background:#006B45; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
-    @media print { .print-btn { display:none; } }
+    @page { size: A4 landscape; margin: 6mm; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a202c; margin: 0; padding: 0; }
+    .sheet { display: flex; gap: 6mm; width: 100%; height: calc(210mm - 12mm); }
+    .label { flex: 1; border: 2px solid #006B45; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+    .label-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #006B45; padding-bottom: 6px; }
+    .logo { height: 36px; width: auto; object-fit: contain; }
+    .head-right { text-align: right; }
+    .ship { font-weight: 800; color: #006B45; letter-spacing: 1px; font-size: 13px; }
+    .track { font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+    .barcode { height: 36px; background: repeating-linear-gradient(90deg, #111 0 2px, #fff 2px 4px, #111 4px 5px, #fff 5px 9px, #111 9px 12px, #fff 12px 14px); border: 1px solid #111; border-radius: 3px; }
+    .addr { display: flex; gap: 10px; }
+    .from, .to { flex: 1; border: 1px solid #ddd; border-radius: 6px; padding: 8px; }
+    .tag { background: #006B45; color: #fff; display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+    .name { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+    .info { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; }
+    .info span { background: #f3faf7; border: 1px solid #cfe9df; border-radius: 4px; padding: 3px 8px; }
+    .foot { margin-top: auto; font-size: 10px; color: #718096; text-align: center; border-top: 1px dashed #ccc; padding-top: 5px; }
+    .print-btn { position: fixed; top: 8px; right: 8px; padding: 10px 18px; background: #006B45; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; z-index: 10; }
+    @media print { .print-btn { display: none; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   </style>
 </head>
 <body>
   <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
-  <div class="header">
-    <div>
-      <div class="brand">CrossCart Global Int Express</div>
-      <div class="sub">International Courier Invoice</div>
-    </div>
-    <div style="text-align:right;">
-      <h1>INVOICE</h1>
-      <p style="margin:4px 0;">#${order.trackId}</p>
-      <p style="margin:2px 0;font-size:12px;color:#718096;">${order.orderDate ? new Date(order.orderDate).toDateString() : ""}</p>
-    </div>
-  </div>
-
-  <div class="meta">
-    <div class="col">
-      <p class="label">From</p>
-      <p>${sender.name || "-"}</p>
-      <p>${sender.phone || ""}</p>
-      <p>${sender.email || ""}</p>
-      <p>${from?.name || ""} ${sender.address?.city ? `- ${sender.address.city}` : ""}</p>
-    </div>
-    <div class="col">
-      <p class="label">To</p>
-      <p>${receiver.name || "-"}</p>
-      <p>${receiver.phone || ""}</p>
-      <p>${receiver.email || ""}</p>
-      <p>${to?.name || ""} ${receiver.address?.city ? `- ${receiver.address.city}` : ""}</p>
-    </div>
-    <div class="col">
-      <p class="label">Shipment Details</p>
-      <p>Service: ${order.parcel?.serviceType || "-"}</p>
-      <p>Priority: ${order.parcel?.priority || "normal"}</p>
-       <p>Weight: ${order.parcel?.weight || "0"} kg</p>
-       <p>Packaging: ${packagingType}</p>
-       <p>Boxes: ${boxCount}</p>
-       <p>Dimensions: ${dimensions.length || 0} × ${dimensions.width || 0} × ${dimensions.height || 0} cm</p>
-    </div>
-  </div>
-
-  <table>
-    <thead>
-      <tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>
-    </thead>
-    <tbody>
-      ${rowLoop || `<tr><td colspan="4" style="padding:8px;border:1px solid #ddd;text-align:center;">No line items</td></tr>`}
-    </tbody>
-  </table>
-
-  <div class="totals">
-    <p><strong>Items Total:</strong> ${money(itemsTotal)}</p>
-    <p><strong>Shipping Charge:</strong> ${money(payment.pAmount)}</p>
-    ${insurance.enabled ? `<p><strong>Insurance:</strong> ${money(insuranceCharge)}</p>` : ""}
-    ${Number(payment.pDiscount) > 0 ? `<p><strong>Discount:</strong> -${money(payment.pDiscount)}</p>` : ""}
-    ${Number(payment.pOfferDiscount) > 0 ? `<p><strong>Offer Discount:</strong> -${money(payment.pOfferDiscount)}</p>` : ""}
-    ${Number(payment.pExtraCharge) > 0 ? `<p><strong>Extra Charge:</strong> ${money(payment.pExtraCharge)}</p>` : ""}
-    <p class="grand">Grand Total: ${money(
-      (Number(payment.pAmount) || 0) +
-        (Number(payment.pExtraCharge) || 0) +
-        insuranceCharge -
-        (Number(payment.pDiscount) || 0) -
-        (Number(payment.pOfferDiscount) || 0)
-    )}</p>
-    <p style="font-size:12px;color:#718096;">Payment Method: ${payment.pType || "Not set"}</p>
-  </div>
-
-  <div class="footer">
-    CrossCart Global Int Express · 1 Eagle St, Dhaka, Bangladesh · +8801622541719<br/>
-    Thank you for shipping with us!
+  <div class="sheet">
+    ${card}
+    ${card}
   </div>
 </body>
 </html>`;
