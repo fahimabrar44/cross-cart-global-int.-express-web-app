@@ -95,8 +95,9 @@ const grandTotal =
           quantity?: number;
           unitPrice?: number;
           totalPrice?: number;
-        }) => `
+        }, index: number) => `
           <tr>
+          <td  style="padding:8px;border:1px solid #ddd;text-align:center;">${index + 1}</td>
             <td style="padding:8px;border:1px solid #ddd;">${it.name || "-"}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:center;">${Number(it.quantity) || 0}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:right;">${money(it.unitPrice)}</td>
@@ -198,7 +199,7 @@ const grandTotal =
 
   <table>
     <thead>
-      <tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>
+      <tr> <th  style="padding:8px;border:1px solid #ddd;text-align:center;">S/N</th><th style="padding:8px;border:1px solid #ddd;">Item</th><th  style="padding:8px;border:1px solid #ddd;text-align:center;">Qty</th><th  style="padding:8px;border:1px solid #ddd;text-align:right;">Unit Price</th><th  style="padding:8px;border:1px solid #ddd;text-align:right;">Total</th></tr>
     </thead>
     <tbody>
       ${rowLoop || `<tr><td colspan="4" style="padding:8px;border:1px solid #ddd;text-align:center;">No line items</td></tr>`}
