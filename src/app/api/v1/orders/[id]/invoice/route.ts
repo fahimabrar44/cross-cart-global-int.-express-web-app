@@ -67,40 +67,38 @@ export async function GET(
     const dimensions = order.parcel?.dimensions || {};
     const insurance = order.parcel?.insurance || {};
 
-
     const totalWeight = Number(order.parcel?.weight) || 0;
 
-const shippingCharge = Number(payment.pAmount) || 0;
-const insuranceCharge = Number(insurance?.charge) || 0;
-const discount = Number(payment.pDiscount) || 0;
-const offerDiscount = Number(payment.pOfferDiscount) || 0;
-const extraCharge = Number(payment.pExtraCharge) || 0;
+    const shippingCharge = Number(payment.pAmount) || 0;
+    const insuranceCharge = Number(insurance?.charge) || 0;
+    const discount = Number(payment.pDiscount) || 0;
+    const offerDiscount = Number(payment.pOfferDiscount) || 0;
+    const extraCharge = Number(payment.pExtraCharge) || 0;
 
-// Per KG Shipping Charge
-const perKgShippingCharge =
-  totalWeight > 0 ? shippingCharge / totalWeight : 0;
+    // Per KG Shipping Charge
+    const perKgShippingCharge =
+      totalWeight > 0 ? shippingCharge / totalWeight : 0;
 
-// Grand Total
-const grandTotal =
-  shippingCharge +
-  extraCharge +
-  insuranceCharge -
-  discount -
-  offerDiscount;
+    // Grand Total
+    const grandTotal =
+      shippingCharge + extraCharge + insuranceCharge - discount - offerDiscount;
 
     const rowLoop = items
       .map(
-        (it: {
-          name?: string;
-          quantity?: number;
-          unitPrice?: number;
-          totalPrice?: number;
-        }, index: number) => `
+        (
+          it: {
+            name?: string;
+            quantity?: number;
+            unitPrice?: number;
+            totalPrice?: number;
+          },
+          index: number,
+        ) => `
           <tr>
           <td  style="padding:8px;border:1px solid #ddd;text-align:center;">${index + 1}</td>
             <td style="padding:8px;border:1px solid #ddd;">${it.name || "-"}</td>
-            <td style="padding:8px;border:1px solid #ddd;text-align:center;">${Number(it.quantity) || 0}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:right;">${money(it.unitPrice)}</td>
+            <td style="padding:8px;border:1px solid #ddd;text-align:center;">${Number(it.quantity) || 0}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:right;">${money(it.totalPrice)}</td>
           </tr>`,
       )
@@ -199,20 +197,30 @@ const grandTotal =
 
   <table>
     <thead>
-      <tr> <th  style="padding:8px;border:1px solid #ddd;text-align:center;">S/N</th><th style="padding:8px;border:1px solid #ddd;">Item</th><th  style="padding:8px;border:1px solid #ddd;text-align:center;">Qty</th><th  style="padding:8px;border:1px solid #ddd;text-align:right;">Unit Price</th><th  style="padding:8px;border:1px solid #ddd;text-align:right;">Total</th></tr>
+      <tr> <th  style="padding:8px;border:1px solid #ddd;text-align:center;">S/N</th>
+      
+      <th style="padding:8px;border:1px solid #ddd;">Item</th>
+      
+      <th  style="padding:8px;border:1px solid #ddd;text-align:right;">Unit Price</th>
+      <th  style="padding:8px;border:1px solid #ddd;text-align:center;">Qty</th>
+      <th  style="padding:8px;border:1px solid #ddd;text-align:right;">Total</th></tr>
     </thead>
     <tbody>
       ${rowLoop || `<tr><td colspan="4" style="padding:8px;border:1px solid #ddd;text-align:center;">No line items</td></tr>`}
       
   <tr style="background:#f1f5f9;font-weight:700;">
+  <td style="padding:10px;border:1px solid #ddd;text-align:right;">
+      
+    </td>
     <td style="padding:10px;border:1px solid #ddd;text-align:right;">
-      TOTAL
+      
+    </td>
+    
+    <td style="padding:10px;border:1px solid #ddd;text-align:right;">
+    TOTAL
     </td>
     <td style="padding:10px;border:1px solid #ddd;text-align:center;">
       ${totalQuantity}
-    </td>
-    <td style="padding:10px;border:1px solid #ddd;text-align:right;">
-      $${money(totalUnitPrice)}
     </td>
     <td style="padding:10px;border:1px solid #ddd;text-align:right;">
       $${money(itemsTotal)}
