@@ -138,9 +138,9 @@ export async function GET(
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a202c; margin: 24px; }
     .header { display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #006B45; padding-bottom:16px; }
-    .brand-logo { height: 60px; width: auto; }
-    .sub { color:#667eea; font-size:12px; letter-spacing:2px; text-transform:uppercase; }
-    h1 { font-size:26px; margin:8px 0 0; }
+    .brand-logo { height: 70px; width: auto; }
+    .sub { color:#667eea; font-size:10px; letter-spacing:2px; text-transform:uppercase; }
+    h1 { font-size:28px; margin:8px 0 0; }
     .meta { display:flex; gap:48px; margin-top:24px; }
     .meta .col p { margin:2px 0; font-size:14px; }
     .label { color:#718096; text-transform:uppercase; font-size:11px; letter-spacing:1px; }
@@ -175,14 +175,14 @@ export async function GET(
       <p>${sender.name || "-"}</p>
       <p>${sender.phone || ""}</p>
       <p>${sender.email || ""}</p>
-      <p>${sender.address?.city && sender.address?.address && sender.address?.zipCode ? `${sender.address?.address} - ${sender.address.city} - ${sender.address?.zipCode}` : ""} - ${from?.name || ""}</p>
+      <p>${sender.address?.city && sender.address?.address && sender.address?.zipCode ? `${sender.address?.address}<br/>${sender.address.city} - ${sender.address?.zipCode}` : ""} - ${from?.name || ""}</p>
     </div>
     <div class="col">
       <p class="label">To</p>
       <p>${receiver.name || "-"}</p>
       <p>${receiver.phone || ""}</p>
       <p>${receiver.email || ""}</p>
-      <p>${receiver.address?.city && receiver.address?.address && receiver.address?.zipCode ? `${receiver.address?.address} - ${receiver.address.city} - ${receiver.address?.zipCode}` : ""} - ${to?.name || ""}</p>
+      <p>${receiver.address?.city && receiver.address?.address && receiver.address?.zipCode ? `${receiver.address?.address}<br/>${receiver.address.city} - ${receiver.address?.zipCode}` : ""} - ${to?.name || ""}</p>
     </div>
     <div class="col">
       <p class="label">Shipment Details</p>
@@ -197,16 +197,16 @@ export async function GET(
 
   <table>
     <thead>
-      <tr> <th  style="padding:8px;border:1px solid #ddd;text-align:center;">S/N</th>
+      <tr> <th  style="text-align:center;">S/N</th>
       
-      <th style="padding:8px;border:1px solid #ddd;">Item</th>
+      <th style="">Item</th>
       
-      <th  style="padding:8px;border:1px solid #ddd;text-align:right;">Unit Price</th>
-      <th  style="padding:8px;border:1px solid #ddd;text-align:center;">Qty</th>
-      <th  style="padding:8px;border:1px solid #ddd;text-align:right;">Total</th></tr>
+      <th  style="text-align:right;">Unit Price</th>
+      <th  style="text-align:center;">Qty</th>
+      <th  style="text-align:right;">Total</th></tr>
     </thead>
     <tbody>
-      ${rowLoop || `<tr><td colspan="4" style="padding:8px;border:1px solid #ddd;text-align:center;">No line items</td></tr>`}
+      ${rowLoop || `<tr><td colspan="4" style="text-align:center;">No line items</td></tr>`}
       
   <tr style="background:#f1f5f9;font-weight:700;">
   <td style="padding:10px;border:1px solid #ddd;text-align:right;">
