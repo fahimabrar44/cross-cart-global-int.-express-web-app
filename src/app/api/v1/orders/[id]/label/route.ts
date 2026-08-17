@@ -63,7 +63,7 @@ export async function GET(
     <div class="label">
       <div class="top">
         <div>
-          <img class="brand-logo" src="/full-logo.png" alt="CrossCart Global" />
+          <img class="brand-logo" src="/full-logo.png" alt="Cross Cart Global" />
           <div class="tagline">Global Int. Express</div>
         </div>
         <div class="awb">
@@ -124,9 +124,9 @@ export async function GET(
     body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #000; }
     .sheet { display: flex; gap: 6mm; justify-content: center; padding: 6mm; }
     .label { border: 2px solid #006B45; padding: 14px; width: 4in; min-height: 6in; }
-    .brand-logo { height: 30px; width: auto; display: block; }
+    .brand-logo { height: 50px; width: auto; display: block; }
     .top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #006B45; padding-bottom: 10px; }
-    .tagline { font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase; color: #777; margin-top: 3px; }
+    .tagline { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: #777; margin-top: 3px; }
     .awb { text-align: right; }
     .awb .lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: #777; }
     .awb .num { font-size: 18px; font-weight: 800; letter-spacing: 2px; color: #006B45; }

@@ -87,7 +87,7 @@ export async function GET(
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a202c; margin: 24px; }
     .header { display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #006B45; padding-bottom:16px; }
-    .brand-logo { height: 44px; width: auto; }
+    .brand-logo { height: 60px; width: auto; }
     .sub { color:#667eea; font-size:12px; letter-spacing:2px; text-transform:uppercase; }
     h1 { font-size:26px; margin:8px 0 0; }
     .meta { display:flex; gap:48px; margin-top:24px; }
