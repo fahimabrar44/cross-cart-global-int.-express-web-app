@@ -66,7 +66,27 @@ export async function GET(
     const packagingType = order.parcel?.packagingType || "—";
     const dimensions = order.parcel?.dimensions || {};
     const insurance = order.parcel?.insurance || {};
-    const insuranceCharge = Number(insurance.charge) || 0;
+
+
+    const totalWeight = Number(order.parcel?.weight) || 0;
+
+const shippingCharge = Number(payment.pAmount) || 0;
+const insuranceCharge = Number(insurance?.charge) || 0;
+const discount = Number(payment.pDiscount) || 0;
+const offerDiscount = Number(payment.pOfferDiscount) || 0;
+const extraCharge = Number(payment.pExtraCharge) || 0;
+
+// Per KG Shipping Charge
+const perKgShippingCharge =
+  totalWeight > 0 ? shippingCharge / totalWeight : 0;
+
+// Grand Total
+const grandTotal =
+  shippingCharge +
+  extraCharge +
+  insuranceCharge -
+  discount -
+  offerDiscount;
 
     const rowLoop = items
       .map(
@@ -187,20 +207,118 @@ export async function GET(
     <td style="padding:10px;border:1px solid #ddd;text-align:right;">
       TOTAL
     </td>
-    <td style="padding:10px;border:1px solid #ddd;">
+    <td style="padding:10px;border:1px solid #ddd;text-align:center;">
       ${totalQuantity}
     </td>
-    <td style="padding:10px;border:1px solid #ddd;">
+    <td style="padding:10px;border:1px solid #ddd;text-align:right;">
       $${money(totalUnitPrice)}
     </td>
-    <td style="padding:10px;border:1px solid #ddd;">
+    <td style="padding:10px;border:1px solid #ddd;text-align:right;">
       $${money(itemsTotal)}
     </td>
     </tbody>
   </table>
 
+  <div class="payment-section">
+  <h3>Shipping & Payment Breakdown</h3>
+
+  <table class="payment-table">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th style="text-align:right;">Amount</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+        <td>Total Weight</td>
+        <td style="text-align:right;">
+          ${totalWeight} KG
+        </td>
+      </tr>
+
+      <tr>
+        <td>Per KG Shipping Charge</td>
+        <td style="text-align:right;">
+          $${money(perKgShippingCharge)}
+        </td>
+      </tr>
+
+      <tr>
+        <td>Total Shipping Charge</td>
+        <td style="text-align:right;">
+          $${money(shippingCharge)}
+        </td>
+      </tr>
+
+      ${
+        insurance.enabled
+          ? `
+          <tr>
+            <td>Insurance Charge</td>
+            <td style="text-align:right;">
+              + $${money(insuranceCharge)}
+            </td>
+          </tr>
+        `
+          : ""
+      }
+
+      ${
+        extraCharge > 0
+          ? `
+          <tr>
+            <td>Extra Charge</td>
+            <td style="text-align:right;">
+              + $${money(extraCharge)}
+            </td>
+          </tr>
+        `
+          : ""
+      }
+
+      ${
+        discount > 0
+          ? `
+          <tr>
+            <td>Discount</td>
+            <td style="text-align:right;">
+              - $${money(discount)}
+            </td>
+          </tr>
+        `
+          : ""
+      }
+
+      ${
+        offerDiscount > 0
+          ? `
+          <tr>
+            <td>Offer Discount</td>
+            <td style="text-align:right;">
+              - $${money(offerDiscount)}
+            </td>
+          </tr>
+        `
+          : ""
+      }
+
+      <tr class="payment-grand-total">
+        <td>Grand Total</td>
+        <td style="text-align:right;">
+          $${money(grandTotal)}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="payment-method">
+    <strong>Payment Method:</strong> ${payment.pType || "Not set"}
+  </p>
+</div>
+
   <div class="totals">
-    <p><strong>Items Total:</strong>$${money(itemsTotal)}</p>
     <p><strong>Shipping Charge:</strong>$${money(payment.pAmount)}</p>
     ${insurance.enabled ? `<p><strong>Insurance:</strong> $${money(insuranceCharge)}</p>` : ""}
     ${Number(payment.pDiscount) > 0 ? `<p><strong>Discount:</strong> -$${money(payment.pDiscount)}</p>` : ""}
