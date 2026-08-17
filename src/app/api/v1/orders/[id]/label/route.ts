@@ -124,7 +124,7 @@ export async function GET(
     body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #000; }
     .sheet { display: flex; gap: 12mm; justify-content: center; padding: 6mm; }
     .label { border: 2px solid #006B45; padding: 10px; width: 4.25in; min-height: 6in; }
-    .brand-logo { height: 70px; width: auto; display: block; }
+    .brand-logo { height: 60px; width: auto; display: block; }
     .top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #006B45; padding-bottom: 10px; }
     .tagline { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: #777; margin-top: 3px; }
     .awb { text-align: right; }
