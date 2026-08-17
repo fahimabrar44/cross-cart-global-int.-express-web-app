@@ -160,7 +160,7 @@ export async function GET(
   <div class="header">
     <div>
       <img class="brand-logo" src="/full-logo.png" alt="CrossCart Global" />
-      <div class="sub">International Courier Invoice</div>
+      <div class="sub">International Global</div>
     </div>
     <div style="text-align:right;">
       <h1>INVOICE</h1>
@@ -328,7 +328,7 @@ export async function GET(
 </div>
 
   <div class="footer">
-    CrossCart Global International Express · Warehouse No.1, Bhiend SKS Tower, Mohakhali, Dhaka 1206, Bangladesh · +8801410144466<br/>
+    Cross Cart Global International Express · Warehouse No.1, Bhiend SKS Tower, Mohakhali, Dhaka 1206, Bangladesh · +8801410144466<br/>
     © ${new Date().getFullYear()} Cross Cart Global International Express. All rights reserved.<br/>
     Thank you for shipping with us!
   </div>
