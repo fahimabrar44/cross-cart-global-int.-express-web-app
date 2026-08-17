@@ -352,9 +352,8 @@ export const POST = createPublicHandler(async ({ req, user }) => {
     // set to genaret trackId
     const generateTrackId = () => {
       const prefix = "CCG";
-      const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
       const timestampPart = Date.now().toString().slice(-5);
-      return `${prefix}-${randomPart}-${timestampPart}`;
+      return `${prefix}-${timestampPart}`;
     }
     body.trackId = generateTrackId();
     
@@ -438,19 +437,6 @@ export const POST = createPublicHandler(async ({ req, user }) => {
     // Construct order document and save
     const order = new Order(body);
     await order.save();
-
-    void sendMetaCapiEvent(
-      "Purchase",
-      { email: parcel.sender?.email, phone: parcel.sender?.phone },
-      {
-        req,
-        customData: {
-          trackId: order.trackId,
-          value: Number(body.payment?.pAmount || 0),
-          currency: "USD",
-        },
-      }
-    );
 
     const track = new Track({
         order: order._id, // Link to the newly created order

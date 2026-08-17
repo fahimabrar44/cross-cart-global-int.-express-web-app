@@ -124,14 +124,14 @@ export async function GET(
       <p>${sender.name || "-"}</p>
       <p>${sender.phone || ""}</p>
       <p>${sender.email || ""}</p>
-      <p>${from?.name || ""} ${sender.address?.city && sender.address?.address && sender.address?.zipCode ? `${sender.address?.zipCode} - ${sender.address?.address} - ${sender.address.city}` : ""}</p>
+      <p>${sender.address?.city && sender.address?.address && sender.address?.zipCode ? `${sender.address?.address} - ${sender.address.city} - ${sender.address?.zipCode}` : ""}${from?.name || ""}</p>
     </div>
     <div class="col">
       <p class="label">To</p>
       <p>${receiver.name || "-"}</p>
       <p>${receiver.phone || ""}</p>
       <p>${receiver.email || ""}</p>
-      <p>${to?.name || ""} ${receiver.address?.city && receiver.address?.address && receiver.address?.zipCode ? `${receiver.address?.zipCode} - ${receiver.address?.address} - ${receiver.address.city}` : ""}</p>
+      <p>${receiver.address?.city && receiver.address?.address && receiver.address?.zipCode ? `${receiver.address?.address} - ${receiver.address.city} - ${receiver.address?.zipCode}` : ""}${to?.name || ""}</p>
     </div>
     <div class="col">
       <p class="label">Shipment Details</p>
@@ -154,13 +154,13 @@ export async function GET(
   </table>
 
   <div class="totals">
-    <p><strong>Items Total:</strong> ${money(itemsTotal)}</p>
-    <p><strong>Shipping Charge:</strong> ${money(payment.pAmount)}</p>
-    ${insurance.enabled ? `<p><strong>Insurance:</strong> ${money(insuranceCharge)}</p>` : ""}
-    ${Number(payment.pDiscount) > 0 ? `<p><strong>Discount:</strong> -${money(payment.pDiscount)}</p>` : ""}
-    ${Number(payment.pOfferDiscount) > 0 ? `<p><strong>Offer Discount:</strong> -${money(payment.pOfferDiscount)}</p>` : ""}
-    ${Number(payment.pExtraCharge) > 0 ? `<p><strong>Extra Charge:</strong> ${money(payment.pExtraCharge)}</p>` : ""}
-    <p class="grand">Grand Total: ${money(
+    <p><strong>Items Total:</strong>$${money(itemsTotal)}</p>
+    <p><strong>Shipping Charge:</strong>$${money(payment.pAmount)}</p>
+    ${insurance.enabled ? `<p><strong>Insurance:</strong> $${money(insuranceCharge)}</p>` : ""}
+    ${Number(payment.pDiscount) > 0 ? `<p><strong>Discount:</strong> -$${money(payment.pDiscount)}</p>` : ""}
+    ${Number(payment.pOfferDiscount) > 0 ? `<p><strong>Offer Discount:</strong> -$${money(payment.pOfferDiscount)}</p>` : ""}
+    ${Number(payment.pExtraCharge) > 0 ? `<p><strong>Extra Charge:</strong> $${money(payment.pExtraCharge)}</p>` : ""}
+    <p class="grand">Grand Total: $${money(
       (Number(payment.pAmount) || 0) +
         (Number(payment.pExtraCharge) || 0) +
         insuranceCharge -
@@ -171,8 +171,8 @@ export async function GET(
   </div>
 
   <div class="footer">
-    CrossCart Global Int Express · 1 Eagle St, Dhaka, Bangladesh · +8801622541719<br/>
-    © ${new Date().getFullYear()} CrossCart Global Int Express. All rights reserved.<br/>
+    CrossCart Global International Express · Warehouse No.1, Bhiend SKS Tower, Mohakhali, Dhaka 1206, Bangladesh · +8801410144466<br/>
+    © ${new Date().getFullYear()} Cross Cart Global International Express. All rights reserved.<br/>
     Thank you for shipping with us!
   </div>
 </body>
