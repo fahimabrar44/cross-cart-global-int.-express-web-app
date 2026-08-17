@@ -17,6 +17,20 @@ export const metadata: Metadata = {
     "Learn about Cross Cart Global International Express — a Bangladesh-based international courier service built on trust, offering discounted worldwide delivery through DHL, FedEx, Aramex and UPS with doorstep pickup.",
   keywords: [
     "about Cross Cart Global",
+    "Cross Cart Global about",
+    "courier company Bangladesh",
+    "international logistics company Bangladesh",
+    "shipping company Dhaka",
+    "about Cross Cart",
+    "logistics company Bangladesh",
+    "courier service about us",
+    "Cross Cart history",
+    "Bangladesh courier company",
+    "global logistics partner Bangladesh",
+    "Cross Cart mission vision",
+    "international shipping company Bangladesh",
+    "trusted courier Bangladesh",
+    "logistics services Bangladesh",
     "international courier company Bangladesh",
     "courier agency Bangladesh",
     "affordable international shipping",
@@ -50,6 +64,10 @@ export const metadata: Metadata = {
     description:
       "Discover how Cross Cart Global International Express makes international courier services more affordable and reliable in Bangladesh.",
     images: ["/full-logo.png", "/logo.png"],
+  },
+   robots: {
+    index: true,
+    follow: true,
   },
 };
 

@@ -41,7 +41,13 @@ From the very beginning, our focus has been on customer-first solutions: offerin
 Today, Cross Cart Global International Express continues to grow — but our foundation remains the same: a commitment to connecting Bangladesh with the world, one parcel at a time.
 
 
-To become a leading international courier company, connecting Bangladesh seamlessly with the world while providing reliable, affordable, and customer-focused shipping solutions.`,
+To become a leading international courier company, connecting Bangladesh seamlessly with the world while providing reliable, affordable, and customer-focused shipping solutions.
+
+Cross Cart Global is a leading international courier and logistics service provider based in Bangladesh, dedicated to delivering fast, secure, and cost-effective shipping solutions worldwide. We specialize in international courier services, air freight, sea freight, and end-to-end eCommerce logistics tailored for individuals, businesses, and online sellers.
+Our services include reliable parcel delivery, real-time shipment tracking, customs clearance support, and efficient cross-border logistics management. Whether you are sending documents, commercial goods, personal packages, or bulk shipments, we ensure safe and timely delivery with full transparency at every step.
+From Bangladesh, we operate global shipping routes covering major destinations including India, China, the USA, the UK, Canada, Europe, Australia, Malaysia, and many more countries. Our strong logistics network and strategic partnerships enable us to offer competitive pricing and faster transit times.
+Cross Cart Global also supports eCommerce businesses with complete logistics solutions, including order fulfillment, inventory handling, and return management—helping sellers expand their reach to international markets seamlessly.
+With a focus on customer satisfaction, reliability, and innovation, Cross Cart Global aims to be your trusted logistics partner for all international shipping needs.`,
   metadataBase: new URL("https://crosscartglobal.com"),
   applicationName:
     "Cross Cart Global International Express – International Courier Solutions",
@@ -285,7 +291,7 @@ To become a leading international courier company, connecting Bangladesh seamles
   authors: [
     {
       name: "Cross Cart Global International Express Team",
-      url: "https://crosscartbd.com",
+      url: "https://crosscartglobal.com",
     },
   ],
   category:
@@ -449,12 +455,12 @@ To become a leading international courier company, connecting Bangladesh seamles
   },
   icons: {
     icon: [
-      { url: "/icon0.svg", type: "image/svg+xml" },
-      { url: "/icon1.png", type: "image/png", sizes: "32x32" },
+      { url: "/logo.png", type: "image/svg+xml" },
+      { url: "/logo.png", type: "image/png", sizes: "32x32" },
       { url: "/favicon.ico" },
     ],
     apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
-    shortcut: ["/favicon.ico"],
+    shortcut: ["/logo.png"],
   },
   alternates: {
     canonical: "https://crosscartglobal.com",
@@ -485,7 +491,7 @@ const organizationSchema = {
   ],
   contactPoint: [
     {
-      "@type": "ContactPoint",
+      "@type": "Contact Point",
       telephone: "+8801410-144466",
       contactType: "customer service",
       areaServed: "BD",
@@ -495,7 +501,7 @@ const organizationSchema = {
 };
 
 const websiteSchema = {
-  "@context": "https://schema.org",
+  "@context": "https://crosscartglobal.com",
   "@type": "WebSite",
   name: "Cross Cart Global International Express Courier",
   url: "https://crosscartglobal.com",
@@ -507,7 +513,7 @@ const websiteSchema = {
 };
 
 const localBusinessSchema = {
-  "@context": "https://schema.org",
+  "@context": "https://crosscartglobal.com",
   "@type": "CourierService",
   "@id": "https://crosscartglobal.com/",
 
