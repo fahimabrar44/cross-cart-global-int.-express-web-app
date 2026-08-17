@@ -124,14 +124,14 @@ export async function GET(
       <p>${sender.name || "-"}</p>
       <p>${sender.phone || ""}</p>
       <p>${sender.email || ""}</p>
-      <p>${sender.address?.city && sender.address?.address && sender.address?.zipCode ? `${sender.address?.address} - ${sender.address.city} - ${sender.address?.zipCode}` : ""}${from?.name || ""}</p>
+      <p>${sender.address?.city && sender.address?.address && sender.address?.zipCode ? `${sender.address?.address} - ${sender.address.city} - ${sender.address?.zipCode}` : ""} - ${from?.name || ""}</p>
     </div>
     <div class="col">
       <p class="label">To</p>
       <p>${receiver.name || "-"}</p>
       <p>${receiver.phone || ""}</p>
       <p>${receiver.email || ""}</p>
-      <p>${receiver.address?.city && receiver.address?.address && receiver.address?.zipCode ? `${receiver.address?.address} - ${receiver.address.city} - ${receiver.address?.zipCode}` : ""}${to?.name || ""}</p>
+      <p>${receiver.address?.city && receiver.address?.address && receiver.address?.zipCode ? `${receiver.address?.address} - ${receiver.address.city} - ${receiver.address?.zipCode}` : ""} - ${to?.name || ""}</p>
     </div>
     <div class="col">
       <p class="label">Shipment Details</p>
