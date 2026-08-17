@@ -75,11 +75,11 @@ export async function GET(
       <div class="sections">
         <div class="section">
           <h4>From (Sender)</h4>
-          <p>${sender.name || "-"}<br />${sender.phone || ""}<br />${sender.address?.address || ""}<br />${sender.address?.city || ""}, ${from?.name || ""}</p>
+          <p>${sender.name || "-"}<br />${sender.phone || ""}<br />${sender.address?.address || ""}<br />${sender.address?.city || ""},${sender.address?.zipCode || ""}, ${from?.name || ""}</p>
         </div>
         <div class="section">
           <h4>To (Receiver)</h4>
-          <p>${receiver.name || "-"}<br />${receiver.phone || ""}<br />${receiver.address?.address || ""}<br />${receiver.address?.city || ""}, ${to?.name || ""}</p>
+          <p>${receiver.name || "-"}<br />${receiver.phone || ""}<br />${receiver.address?.address || ""}<br />${receiver.address?.city || ""}, ${receiver.address?.zipCode || ""}, ${to?.name || ""}</p>
         </div>
       </div>
 

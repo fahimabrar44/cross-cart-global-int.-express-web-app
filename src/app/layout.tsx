@@ -475,7 +475,7 @@ To become a leading international courier company, connecting Bangladesh seamles
 
 
 const organizationSchema = {
-  "@context": "https://schema.org",
+  "@context": "https://crosscartglobal.com",
   "@type": "Organization",
   name: "Cross Cart Global International Express Courier",
   url: "https://crosscartglobal.com",

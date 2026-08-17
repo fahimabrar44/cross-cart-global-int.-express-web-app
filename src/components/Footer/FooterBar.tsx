@@ -144,9 +144,9 @@ const FooterBar = () => {
                 <Logo isFooter={true} width={220} height={80} />
               </div>
 
-              <div className="text-sm font-medium pr-2 text-[#B7C9C0] py-1">CrossCart Global Int Express connects Bangladesh to the world through trusted global courier partners — DHL, FedEx, UPS, Aramex, and leading local carriers.
+              <div className="text-sm font-medium pr-2 text-[#B7C9C0] py-1">Cross Cart Global International Express connects Bangladesh to the world through trusted global courier partners — DHL, FedEx, UPS, Aramex, and leading local carriers.
 We make international delivery smarter, faster, and more affordable by offering exclusive agency rates and hassle-free service. <br />
-💼 Direct costs more. CrossCart Global Int Express saves you.
+💼 Direct costs more. Cross Cart Global International Express saves you.
               </div>
 
               <div className="flex justify-start align-middle items-center gap-3 py-2">
@@ -238,7 +238,7 @@ We make international delivery smarter, faster, and more affordable by offering 
         </div>
         <div className="flex items-center justify-between align-middle py-4 pb-0 flex-row border-t border-white/10 border-dashed">
           <div className={"text-sm w-full text-center text-[#B7C9C0] "}>
-            ©<Link href="/" className="hover:text-[#F5C400]">CrossCart Global Int Express</Link> All Rights
+            ©<Link href="/" className="hover:text-[#F5C400]">Cross Cart Global International Express</Link> All Rights
             Reserved.
           </div>
         </div>
