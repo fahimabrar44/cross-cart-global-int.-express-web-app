@@ -304,7 +304,7 @@ const grandTotal =
           : ""
       }
 
-      <tr class="payment-grand-total">
+      <tr class="payment-grand-total grand">
         <td>Grand Total</td>
         <td style="text-align:right;">
           $${money(grandTotal)}
@@ -317,22 +317,6 @@ const grandTotal =
     <strong>Payment Method:</strong> ${payment.pType || "Not set"}
   </p>
 </div>
-
-  <div class="totals">
-    <p><strong>Shipping Charge:</strong>$${money(payment.pAmount)}</p>
-    ${insurance.enabled ? `<p><strong>Insurance:</strong> $${money(insuranceCharge)}</p>` : ""}
-    ${Number(payment.pDiscount) > 0 ? `<p><strong>Discount:</strong> -$${money(payment.pDiscount)}</p>` : ""}
-    ${Number(payment.pOfferDiscount) > 0 ? `<p><strong>Offer Discount:</strong> -$${money(payment.pOfferDiscount)}</p>` : ""}
-    ${Number(payment.pExtraCharge) > 0 ? `<p><strong>Extra Charge:</strong> $${money(payment.pExtraCharge)}</p>` : ""}
-    <p class="grand">Grand Total: $${money(
-      (Number(payment.pAmount) || 0) +
-        (Number(payment.pExtraCharge) || 0) +
-        insuranceCharge -
-        (Number(payment.pDiscount) || 0) -
-        (Number(payment.pOfferDiscount) || 0),
-    )}</p>
-    <p style="font-size:12px;color:#718096;">Payment Method: ${payment.pType || "Not set"}</p>
-  </div>
 
   <div class="footer">
     CrossCart Global International Express · Warehouse No.1, Bhiend SKS Tower, Mohakhali, Dhaka 1206, Bangladesh · +8801410144466<br/>
