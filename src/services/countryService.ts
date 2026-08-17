@@ -65,7 +65,7 @@ class CountryService {
 
   // Get all active countries for dropdowns
   async getActiveCountries(): Promise<ApiResponse<Country[]>> {
-    return api.get<Country[]>(`${this.baseEndpoint}`, { isActive: true });
+    return api.get<Country[]>(`${this.baseEndpoint}`, { isActive: true, limit: 1000 });
   }
 }
 
