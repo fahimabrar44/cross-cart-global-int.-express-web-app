@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/config/db";
-import { Order } from "@/server/models/Order.model";
 import { verifyAuth } from "@/middleware/auth";
+import { Order } from "@/server/models/Order.model";
 import { Types } from "mongoose";
+import { NextRequest, NextResponse } from "next/server";
 
 function money(n: number | undefined): string {
   return (Number(n) || 0).toLocaleString("en-US", {
@@ -18,7 +18,7 @@ function money(n: number | undefined): string {
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
     await connectDB();
@@ -58,8 +58,9 @@ export async function GET(
     const payment = order.payment || {};
 
     const itemsTotal = items.reduce(
-      (sum: number, it: { totalPrice?: number }) => sum + (Number(it.totalPrice) || 0),
-      0
+      (sum: number, it: { totalPrice?: number }) =>
+        sum + (Number(it.totalPrice) || 0),
+      0,
     );
     const boxCount = order.parcel?.boxCount || 0;
     const packagingType = order.parcel?.packagingType || "—";
@@ -69,15 +70,46 @@ export async function GET(
 
     const rowLoop = items
       .map(
-        (it: { name?: string; quantity?: number; unitPrice?: number; totalPrice?: number }) => `
+        (it: {
+          name?: string;
+          quantity?: number;
+          unitPrice?: number;
+          totalPrice?: number;
+        }) => `
           <tr>
             <td style="padding:8px;border:1px solid #ddd;">${it.name || "-"}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:center;">${Number(it.quantity) || 0}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:right;">${money(it.unitPrice)}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:right;">${money(it.totalPrice)}</td>
-          </tr>`
+          </tr>`,
       )
       .join("");
+
+    const totalQuantity = items.reduce(
+      (
+        sum: number,
+        item: {
+          name?: string;
+          quantity?: number;
+          unitPrice?: number;
+          totalPrice?: number;
+        },
+      ) => sum + (Number(item.quantity) || 0),
+      0,
+    );
+
+    const totalUnitPrice = items.reduce(
+      (
+        sum: number,
+        item: {
+          name?: string;
+          quantity?: number;
+          unitPrice?: number;
+          totalPrice?: number;
+        },
+      ) => sum + (Number(item.unitPrice) || 0),
+      0,
+    );
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -150,6 +182,20 @@ export async function GET(
     </thead>
     <tbody>
       ${rowLoop || `<tr><td colspan="4" style="padding:8px;border:1px solid #ddd;text-align:center;">No line items</td></tr>`}
+      
+  <tr style="background:#f1f5f9;font-weight:700;">
+    <td style="padding:10px;border:1px solid #ddd;text-align:right;">
+      TOTAL
+    </td>
+    <td style="padding:10px;border:1px solid #ddd;">
+      ${totalQuantity}
+    </td>
+    <td style="padding:10px;border:1px solid #ddd;">
+      $${money(totalUnitPrice)}
+    </td>
+    <td style="padding:10px;border:1px solid #ddd;">
+      $${money(itemsTotal)}
+    </td>
     </tbody>
   </table>
 
@@ -165,7 +211,7 @@ export async function GET(
         (Number(payment.pExtraCharge) || 0) +
         insuranceCharge -
         (Number(payment.pDiscount) || 0) -
-        (Number(payment.pOfferDiscount) || 0)
+        (Number(payment.pOfferDiscount) || 0),
     )}</p>
     <p style="font-size:12px;color:#718096;">Payment Method: ${payment.pType || "Not set"}</p>
   </div>
@@ -182,7 +228,8 @@ export async function GET(
       headers: { "Content-Type": "text/html; charset=utf-8" },
     });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Failed to generate invoice";
+    const msg =
+      error instanceof Error ? error.message : "Failed to generate invoice";
     return new NextResponse(`<pre>${msg}</pre>`, { status: 500 });
   }
 }
