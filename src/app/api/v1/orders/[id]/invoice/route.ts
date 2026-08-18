@@ -160,7 +160,7 @@ export async function GET(
   <div class="header">
     <div>
       <img class="brand-logo" src="/full-logo.png" alt="CrossCart Global" />
-      <div class="sub">International Global</div>
+      <div class="sub">Global International Express</div>
     </div>
     <div style="text-align:right;">
       <h1>INVOICE</h1>
