@@ -10,6 +10,7 @@ import {
   updateTrackStatus,
   fetchAndStoreTracking,
   logTrackSyncResult,
+  sortHistoryByTime,
 } from "@/server/services/trackingService";
 import {
   detectCourier,
@@ -409,6 +410,12 @@ export async function GET(
           return step;
         })
       );
+    }
+
+    // Always return history in chronological order so the public timeline,
+    // admin modal and receipt render updates in the correct sequence.
+    if (Array.isArray(tracked.history)) {
+      tracked.history = sortHistoryByTime(tracked.history);
     }
 
     return successResponse({ status: 200, message: "Track fetched successfully", data: tracked, req });

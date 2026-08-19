@@ -2,6 +2,7 @@ import connectDB from "@/config/db";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { errorResponse, successResponse } from "@/server/common/response";
 import { Track } from "@/server/models/Track.model";
+import { sortHistoryByTime } from "@/server/services/trackingService";
 import { Types } from "mongoose";
 
 type GetQuery = {
@@ -57,10 +58,18 @@ export const GET = createModeratorHandler(async ({ req }) => {
       .limit(limit)
       .lean();
 
+    // Return history in chronological order so the admin timeline/modal and
+    // receipt render updates in the correct sequence.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sortedTracks = (tracks as any[]).map((t) => {
+      if (Array.isArray(t.history)) t.history = sortHistoryByTime(t.history);
+      return t;
+    });
+
     return successResponse({
       status: 200,
       message: "Tracks fetched successfully",
-      data: tracks,
+      data: sortedTracks,
       meta: {
         page,
         limit,

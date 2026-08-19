@@ -90,6 +90,27 @@ export interface TimelineStep {
 // into their real stage (in-transit, arrived-at-hub, delivered, ...) and stops
 // the same scan from being pushed twice.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+/**
+ * Return a track's history sorted chronologically (oldest → newest) by its
+ * `timestamp`. The stored array order isn't guaranteed to be chronological
+ * (carrier syncs and manual admin updates can be interleaved), so always sort
+ * before rendering a timeline.
+ */
+export function sortHistoryByTime(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  history?: { timestamp?: string | Date }[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any[] {
+  if (!Array.isArray(history)) return [];
+  return history
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(a?.timestamp || 0).getTime() -
+        new Date(b?.timestamp || 0).getTime()
+    );
+}
+
 export function appendHistory(track: any, step: TimelineStep): boolean {
   if (!track.history) return false;
   const ts = step.timestamp ? new Date(step.timestamp) : new Date();
