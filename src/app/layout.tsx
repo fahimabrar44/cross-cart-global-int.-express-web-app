@@ -520,9 +520,9 @@ const localBusinessSchema = {
   name: "Cross Cart Global International Express Courier",
   alternateName: "Cross Cart Global International Express Courier",
   url: "https://crosscartglobal.com",
-  logo: "https://crosscartglobal.com/logo.png",
+  logo: "https://crosscartglobal.com/full-logo.png",
   image: [
-    "https://crosscartglobal.com/logo.png",
+    "https://crosscartglobal.com/full-logo.png",
     "https://crosscartglobal.com/cover-1.png",
     "https://crosscartglobal.com/cover-2.png"
   ],
@@ -589,6 +589,7 @@ const localBusinessSchema = {
     "https://www.facebook.com/crosscart",
     "https://www.facebook.com/crosscartglobal",
     "https://www.instagram.com/crosscart.global",
+    "https://www.instagram.com/crosscartglobal",
     "https://www.linkedin.com/company/cross-cart-global",
     "https://twitter.com/crosscartglobal",
     "https://www.youtube.com/@crosscartglobal",

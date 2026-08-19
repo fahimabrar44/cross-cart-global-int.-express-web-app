@@ -5,7 +5,6 @@ import { Order } from "@/server/models/Order.model";
 import { Track } from "@/server/models/Track.model";
 import { Coupon } from "@/server/models/Coupon.model";
 import { notificationService } from "@/services/notificationService";
-import { sendMetaCapiEvent } from "@/server/lib/metaCapi";
 
 type GetQuery = {
   trackId?: string;

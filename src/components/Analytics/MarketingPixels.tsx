@@ -1,7 +1,8 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { getConsent } from "@/lib/visitor";
 import { apiService } from "@/services/apiService";
 import { setGoogleAdsSendTo } from "@/lib/marketing";
@@ -16,8 +17,10 @@ interface PublicConfig {
 }
 
 export default function MarketingPixels() {
+  const pathname = usePathname();
   const [granted, setGranted] = useState(false);
   const [config, setConfig] = useState<PublicConfig | null>(null);
+  const firstRender = useRef(true);
 
   useEffect(() => {
     const update = () => setGranted(Boolean(getConsent()?.marketing));
@@ -45,6 +48,31 @@ export default function MarketingPixels() {
       active = false;
     };
   }, [granted]);
+
+  // Fire a PageView on every client-side route change so the full website is
+  // tracked (the init scripts only fire PageView once on first load).
+  useEffect(() => {
+    if (!granted || !config) return;
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    try {
+      if (typeof window.fbq === "function") window.fbq("track", "PageView");
+    } catch {
+      /* ignore */
+    }
+    try {
+      if (typeof window.ttq?.page === "function") window.ttq.page();
+    } catch {
+      /* ignore */
+    }
+    try {
+      if (typeof window.pintrk === "function") window.pintrk("page");
+    } catch {
+      /* ignore */
+    }
+  }, [pathname, granted, config]);
 
   // Only load marketing/advertising pixels after consent AND config is ready.
   if (!granted || !config) return null;
