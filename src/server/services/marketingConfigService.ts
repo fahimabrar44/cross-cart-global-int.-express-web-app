@@ -16,12 +16,37 @@ export interface PublicMarketingConfig {
 let cache: { data: IMarketingConfig | null; at: number } | null = null;
 const TTL_MS = 5 * 60 * 1000;
 
+// Fallback defaults so pixels work out of the box before an admin saves config.
+// Env vars (if present) override the hardcoded Meta Pixel ID.
+const DEFAULT_META_PIXEL_ID = "26093014930391502";
+
+const defaultConfig = {
+  metaPixelId: process.env.NEXT_PUBLIC_META_PIXEL_ID || DEFAULT_META_PIXEL_ID,
+  metaCapiToken: "",
+  tiktokPixelId: process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID || "",
+  linkedinPartnerId: process.env.NEXT_PUBLIC_LINKEDIN_PARTNER_ID || "",
+  pinterestTagId: process.env.NEXT_PUBLIC_PINTEREST_TAG_ID || "",
+  twitterPixelId: process.env.NEXT_PUBLIC_TWITTER_PIXEL_ID || "",
+  googleAdsSendTo: process.env.NEXT_PUBLIC_GOOGLE_ADS_SEND_TO || "",
+};
+
 export async function getMarketingConfig(): Promise<IMarketingConfig | null> {
   if (cache && Date.now() - cache.at < TTL_MS) return cache.data;
   await connectDB();
-  const doc = (await MarketingConfig.findOne({}).lean()) as
+
+  let doc = (await MarketingConfig.findOne({}).lean()) as
     | IMarketingConfig
     | null;
+
+  // Seed defaults on first read so the pixels load without manual setup.
+  if (!doc) {
+    doc = (await MarketingConfig.findOneAndUpdate(
+      {},
+      { $setOnInsert: { ...defaultConfig } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    ).lean()) as IMarketingConfig | null;
+  }
+
   cache = { data: doc, at: Date.now() };
   return doc;
 }

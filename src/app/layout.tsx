@@ -51,7 +51,7 @@ With a focus on customer satisfaction, reliability, and innovation, Cross Cart G
   metadataBase: new URL("https://crosscartglobal.com"),
   applicationName:
     "Cross Cart Global International Express – International Courier Solutions",
-  generator: "Next.js 15",
+  referrer: "origin-when-cross-origin",
 
   keywords: [
     "Cross Cart Global",
