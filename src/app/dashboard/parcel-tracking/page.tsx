@@ -355,7 +355,8 @@ export default function ParcelTrackingPage() {
           currentStatus: updateTrack.currentStatus,
           description: updateTrack.description,
           location: updateTrack.location,
-          updatedBy: null,
+          updatedBy: user?.id || null,
+          timestamp: updateTrack.timestamp || undefined,
         }),
       });
 

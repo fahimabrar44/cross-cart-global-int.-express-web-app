@@ -443,6 +443,7 @@ export const PUT = createModeratorHandler(async ({ req }) => {
       location: body.location || { city: "", country: "" },
       updatedBy: body.updatedBy || null,
       estimatedDelivery: body.estimatedDelivery,
+      timestamp: body.timestamp,
     });
 
     if (!result) return errorResponse({ status: 404, message: "Track not found", req });

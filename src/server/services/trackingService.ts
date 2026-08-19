@@ -172,18 +172,31 @@ export async function updateTrackStatus(input: {
   location?: { city?: string; country?: string };
   updatedBy?: string | null;
   estimatedDelivery?: Date | string;
+  timestamp?: Date | string;
 }): Promise<{ track: unknown; orderUpdated: boolean } | null> {
   const track = await Track.findOne({ trackId: input.trackId });
   if (!track) return null;
 
-  const changed = track.currentStatus !== input.status;
+  const statusChanged = track.currentStatus !== input.status;
   track.currentStatus = input.status;
-  if (changed) {
+
+  // Append a history step whenever the status changes OR the caller supplied a
+  // description/location. Without this, an "Add Tracking History" entry made at
+  // the same stage (the common case) is silently dropped even though the API
+  // reports success.
+  const hasDetail =
+    Boolean(input.description && input.description.trim()) ||
+    Boolean(
+      input.location &&
+        (input.location.city?.trim() || input.location.country?.trim())
+    );
+  if (statusChanged || hasDetail) {
     appendHistory(track, {
       status: input.status,
       description: input.description,
       location: input.location,
       updatedBy: input.updatedBy || null,
+      timestamp: input.timestamp,
     });
   }
   if (input.estimatedDelivery) {
