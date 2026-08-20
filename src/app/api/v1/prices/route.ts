@@ -7,6 +7,9 @@ import { Price } from "@/server/models/Price.model";
 import { Zone } from "@/server/models/Zone.model";
 import { Types } from "mongoose";
 import { NextRequest } from "next/server";
+import { withTtlCache, invalidateReferenceData } from "@/server/services/referenceCache";
+
+const REF_TTL_MS = 5 * 60 * 1000;
 
 type GetQuery = {
   from?: string;
@@ -57,7 +60,6 @@ function validateRates(rates: any[]): { valid: boolean; message: string } {
     return { valid: false, message: "rate must be an array" };
   for (let i = 0; i < rates.length; i++) {
     const r = rates[i];
-    console.log(r);
 
     if (!r.name || typeof r.name !== "string")
       return { valid: false, message: `rate[${i}].name is required` };
@@ -150,14 +152,28 @@ export async function GET(req: NextRequest) {
       : "createdAt";
     const sortOrder = (q.sortOrder || "desc").toLowerCase() === "asc" ? 1 : -1;
 
-    const total = await Price.countDocuments(query);
-    const prices = await Price.find(query)
-      .populate("from")
-      .populate("to")
-      .sort({ [sortBy as string]: sortOrder })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const cacheKey = `prices:list:${q.from ?? ""}|${q.to ?? ""}|${q.fromName ?? ""}|${q.toName ?? ""}|${q.rateName ?? ""}|${sortBy}|${sortOrder}|${page}|${limit}`;
+
+    const result = await withTtlCache<{ total: number; prices: unknown[] }>(
+      cacheKey,
+      REF_TTL_MS,
+      async () => {
+        const total = await Price.countDocuments(query);
+        const prices = await Price.find(query)
+          .populate("from")
+          .populate("to")
+          .sort({ [sortBy as string]: sortOrder })
+          .skip(skip)
+          .limit(limit)
+          .lean();
+
+        return { total, prices };
+      }
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prices = result.prices as any[];
+    const total = result.total;
  
 
     // For public / API-key consumers apply profit % then fuel surcharge onto
@@ -227,6 +243,7 @@ export const POST = createModeratorHandler(async ({ req }) => {
 
     const price = new Price(body);
     await price.save();
+    invalidateReferenceData("prices");
 
     return successResponse({
       status: 200,

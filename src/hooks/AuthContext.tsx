@@ -26,6 +26,10 @@ interface User {
     back?: string;
     verified?: boolean;
   };
+  preferences?: {
+    notifications?: { email?: boolean; sms?: boolean; push?: boolean };
+    privacy?: { profileVisibility?: "public" | "private"; dataSharing?: boolean };
+  };
 }
 
 interface AuthTokens {
@@ -203,7 +207,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = () => {
-    // Call signout API in background
+    // Call signout API in background so the server can revoke the refresh token
     if (accessToken) {
       fetch("/api/v1/auth/signout", {
         method: "POST",
@@ -211,6 +215,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          refreshToken: localStorage.getItem("refreshToken") || undefined,
+        }),
       }).catch((err) => console.error("Signout API error:", err));
     }
 
@@ -257,12 +264,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       const data = await response.json();
-      console.log(data);
-      
 
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
-      if (!data.status == 200 || !data.data) {
+      // successResponse serializes status as a string, so normalize before comparing
+      const status =
+        typeof data.status === "string" ? parseInt(data.status, 10) : data.status;
+      if (status !== 200 || !data.data) {
         throw new Error("Invalid refresh response format");
       }
 
@@ -290,7 +296,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         localStorage.setItem("authUser", JSON.stringify(updatedUser));
       }
 
-      console.log("Token refresh successful");
       return true;
     } catch (error) {
       console.error("Token refresh failed:", error);

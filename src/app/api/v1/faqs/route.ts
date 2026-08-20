@@ -3,6 +3,9 @@ import connectDB from "@/config/db";
 import { FAQ } from "@/server/models/FAQ.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
+import { withTtlCache, invalidateReferenceData } from "@/server/services/referenceCache";
+
+const REF_TTL_MS = 5 * 60 * 1000;
 
 type GetQuery = {
   category?: string;
@@ -23,31 +26,41 @@ export async function GET(req: NextRequest) {
     const limit = Math.max(1, Math.min(200, parseInt(q.limit || "100", 10) || 100));
     const skip = (page - 1) * limit;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: any = {};
-    if (q.isActive !== undefined) query.isActive = q.isActive === "true";
-    if (q.category) query.category = q.category;
-    if (q.search) {
-      const s = q.search.trim();
-      query.$or = [
-        { question: { $regex: s, $options: "i" } },
-        { answer: { $regex: s, $options: "i" } },
-      ];
-    }
+    const cacheKey = `faqs:list:${q.category ?? ""}|${q.isActive ?? ""}|${q.search ?? ""}|${page}|${limit}`;
 
-    const total = await FAQ.countDocuments(query);
-    const faqs = await FAQ.find(query)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .sort({ category: 1, order: 1 } as any)
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const result = await withTtlCache<{ total: number; faqs: unknown[] }>(
+      cacheKey,
+      REF_TTL_MS,
+      async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const query: any = {};
+        if (q.isActive !== undefined) query.isActive = q.isActive === "true";
+        if (q.category) query.category = q.category;
+        if (q.search) {
+          const s = q.search.trim();
+          query.$or = [
+            { question: { $regex: s, $options: "i" } },
+            { answer: { $regex: s, $options: "i" } },
+          ];
+        }
+
+        const total = await FAQ.countDocuments(query);
+        const faqs = await FAQ.find(query)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .sort({ category: 1, order: 1 } as any)
+          .skip(skip)
+          .limit(limit)
+          .lean();
+
+        return { total, faqs };
+      }
+    );
 
     return successResponse({
       status: 200,
       message: "FAQs fetched successfully",
-      data: faqs,
-      meta: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) },
+      data: result.faqs,
+      meta: { page, limit, total: result.total, totalPages: Math.max(1, Math.ceil(result.total / limit)) },
       req,
     });
   } catch (error: unknown) {
@@ -73,6 +86,7 @@ export const POST = createModeratorHandler(async ({ req }) => {
     });
 
     await faq.save();
+    invalidateReferenceData("faqs");
 
     return successResponse({ status: 201, message: "FAQ created successfully", data: faq, req });
   } catch (error: unknown) {

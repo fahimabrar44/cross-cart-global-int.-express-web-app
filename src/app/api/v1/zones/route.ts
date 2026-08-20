@@ -4,6 +4,9 @@ import { successResponse, errorResponse } from "@/server/common/response";
 import { NextRequest } from "next/server";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { Types } from "mongoose";
+import { withTtlCache, invalidateReferenceData } from "@/server/services/referenceCache";
+
+const REF_TTL_MS = 5 * 60 * 1000;
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,63 +27,73 @@ export async function GET(req: NextRequest) {
     const limit = Math.max(1, parseInt(url.searchParams.get("limit") || "20", 10));
     const skip = (page - 1) * limit;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: any = {};
+    const cacheKey = `zones:list:${search ?? ""}|${name ?? ""}|${code ?? ""}|${isActiveParam ?? ""}|${createdFrom ?? ""}|${createdTo ?? ""}|${sortBy}|${sortOrder}|${page}|${limit}`;
 
-    if (typeof isActiveParam === "string") {
-      if (isActiveParam.toLowerCase() === "true") query.isActive = true;
-      else if (isActiveParam.toLowerCase() === "false") query.isActive = false;
-    }
+    const result = await withTtlCache<{ total: number; zones: unknown[] }>(
+      cacheKey,
+      REF_TTL_MS,
+      async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const query: any = {};
 
-    if (name) query.name = { $regex: name, $options: "i" };
-    if (code) query.code = { $regex: code, $options: "i" };
+        if (typeof isActiveParam === "string") {
+          if (isActiveParam.toLowerCase() === "true") query.isActive = true;
+          else if (isActiveParam.toLowerCase() === "false") query.isActive = false;
+        }
 
-    if (createdFrom || createdTo) {
-      query.createdAt = {};
-      if (createdFrom) {
-        const d = new Date(createdFrom);
-        if (!isNaN(d.getTime())) query.createdAt.$gte = d;
+        if (name) query.name = { $regex: name, $options: "i" };
+        if (code) query.code = { $regex: code, $options: "i" };
+
+        if (createdFrom || createdTo) {
+          query.createdAt = {};
+          if (createdFrom) {
+            const d = new Date(createdFrom);
+            if (!isNaN(d.getTime())) query.createdAt.$gte = d;
+          }
+          if (createdTo) {
+            const d = new Date(createdTo);
+            if (!isNaN(d.getTime())) query.createdAt.$lte = d;
+          }
+          if (Object.keys(query.createdAt).length === 0) delete query.createdAt;
+        }
+
+        if (search) {
+          const s = search.trim();
+          query.$or = [
+            { name: { $regex: s, $options: "i" } },
+            { code: { $regex: s, $options: "i" } },
+            { description: { $regex: s, $options: "i" } },
+          ];
+        }
+
+        const allowedSortFields = new Set(["name", "code", "createdAt", "updatedAt"]);
+        const finalSortBy = allowedSortFields.has(sortBy) ? sortBy : "createdAt";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sortObj: any = {};
+        sortObj[finalSortBy] = sortOrder;
+
+        const total = await Zone.countDocuments(query);
+
+        const zones = await Zone.find(query)
+          .populate("countryIds", "name code isActive")
+          .sort(sortObj)
+          .skip(skip)
+          .limit(limit)
+          .lean();
+
+        return { total, zones };
       }
-      if (createdTo) {
-        const d = new Date(createdTo);
-        if (!isNaN(d.getTime())) query.createdAt.$lte = d;
-      }
-      if (Object.keys(query.createdAt).length === 0) delete query.createdAt;
-    }
-
-    if (search) {
-      const s = search.trim();
-      query.$or = [
-        { name: { $regex: s, $options: "i" } },
-        { code: { $regex: s, $options: "i" } },
-        { description: { $regex: s, $options: "i" } },
-      ];
-    }
-
-    const allowedSortFields = new Set(["name", "code", "createdAt", "updatedAt"]);
-    const finalSortBy = allowedSortFields.has(sortBy) ? sortBy : "createdAt";
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sortObj: any = {};
-    sortObj[finalSortBy] = sortOrder;
-
-    const total = await Zone.countDocuments(query);
-
-    const zones = await Zone.find(query)
-      .populate("countryIds", "name code isActive")
-      .sort(sortObj)
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    );
 
     return successResponse({
       status: 200,
       message: "Zones fetched successfully",
-      data: zones,
+      data: result.zones,
       meta: {
         page,
         limit,
-        total,
-        totalPages: Math.ceil(total / limit) || 1,
+        total: result.total,
+        totalPages: Math.ceil(result.total / limit) || 1,
       },
       req,
     });
@@ -135,6 +148,7 @@ export const POST = createModeratorHandler(async ({ req }) => {
     });
 
     await zone.save();
+    invalidateReferenceData("zones");
 
     return successResponse({
       status: 200,

@@ -4,6 +4,7 @@ import { successResponse, errorResponse } from "@/server/common/response";
 import { NextRequest, NextResponse } from "next/server";
 import { Types } from "mongoose";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
+import { invalidateReferenceData } from "@/server/services/referenceCache";
 
 const extractId = (req: Request): string => {
   const segments = new URL(req.url).pathname.split("/").filter(Boolean);
@@ -70,6 +71,8 @@ export const PUT = createModeratorHandler(async ({ req }) => {
       return errorResponse({ status: 404, message: "Country not found", req });
     }
 
+invalidateReferenceData("countrys");
+
     return successResponse({
       status: 200,
       message: "Country updated successfully",
@@ -110,6 +113,8 @@ export const PATCH = createModeratorHandler(async ({ req }) => {
       return errorResponse({ status: 404, message: "Country not found", req });
     }
 
+invalidateReferenceData("countrys");
+
     return successResponse({
       status: 200,
       message: "Country updated successfully",
@@ -141,6 +146,8 @@ export const DELETE = createModeratorHandler(async ({ req }) => {
     if (!deleted) {
       return errorResponse({ status: 404, message: "Country not found", req });
     }
+
+invalidateReferenceData("countrys");
 
     return successResponse({
       status: 200,

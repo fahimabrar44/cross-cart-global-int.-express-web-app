@@ -16,6 +16,10 @@ export interface User {
     back?: string;
     verified?: boolean;
   };
+  preferences?: {
+    notifications?: { email?: boolean; sms?: boolean; push?: boolean };
+    privacy?: { profileVisibility?: "public" | "private"; dataSharing?: boolean };
+  };
 }
 
 

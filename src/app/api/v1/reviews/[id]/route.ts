@@ -4,6 +4,7 @@ import { Review } from "@/server/models/Review.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { Types } from "mongoose";
+import { invalidateReferenceData } from "@/server/services/referenceCache";
 
 const extractId = (req: Request): string => {
   const segments = new URL(req.url).pathname.split("/").filter(Boolean);
@@ -58,6 +59,7 @@ export const PUT = createModeratorHandler(async ({ req }) => {
     if (body.status) review.status = body.status;
 
     await review.save();
+    invalidateReferenceData("reviews");
 
     return successResponse({ status: 200, message: "Review updated successfully", data: review, req });
   } catch (error: unknown) {
@@ -76,6 +78,8 @@ export const DELETE = createModeratorHandler(async ({ req }) => {
 
     const deleted = await Review.findByIdAndDelete(id);
     if (!deleted) return errorResponse({ status: 404, message: "Review not found", req });
+
+    invalidateReferenceData("reviews");
 
     return successResponse({ status: 200, message: "Review deleted successfully", req });
   } catch (error: unknown) {

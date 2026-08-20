@@ -142,6 +142,21 @@ export default function SettingsPage() {
       setValue("name", user.name);
       setValue("email", user.email);
       setValue("phone", user.phone);
+
+      if (user.preferences?.notifications) {
+        setNotificationSettings({
+          email: user.preferences.notifications.email ?? true,
+          sms: user.preferences.notifications.sms ?? true,
+          push: user.preferences.notifications.push ?? true,
+        });
+      }
+      if (user.preferences?.privacy) {
+        setPrivacySettings({
+          profileVisibility:
+            user.preferences.privacy.profileVisibility || "public",
+          dataSharing: !!user.preferences.privacy.dataSharing,
+        });
+      }
     }
   }, [user, setValue]);
 

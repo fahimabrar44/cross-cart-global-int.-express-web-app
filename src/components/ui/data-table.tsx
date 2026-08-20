@@ -97,7 +97,10 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    // When server-side pagination props are passed, the current page's rows
+    // are already sliced on the server — do NOT let the client re-paginate
+    // (TanStack's default pageSize of 10 would otherwise truncate the page).
+    ...(pagination ? {} : { getPaginationRowModel: getPaginationRowModel() }),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,

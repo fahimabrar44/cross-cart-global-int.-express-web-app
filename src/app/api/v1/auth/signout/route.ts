@@ -103,21 +103,25 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Remove token from user's active tokens (safe & tolerant)
-    try {
-      const tokensField = (user as unknown as { tokens?: unknown }).tokens;
-      if (tokensField && Array.isArray(tokensField)) {
-        // Try pulling object-form tokens: { token: <token> }
-        await User.updateOne(
-          { _id: user._id },
-          { $pull: { tokens: { token } } }
-        ).catch(() => undefined);
+    // Revoke the session. Prefer the refresh token supplied in the body;
+    // otherwise clear all stored refresh tokens so nothing stays valid after logout.
+    const bodyText = await req.text().catch(() => "");
+    const refreshToken =
+      bodyText
+        ? (JSON.parse(bodyText) as { refreshToken?: string }).refreshToken
+        : undefined;
 
-        // Also try pulling primitive token strings (tokens: string[])
+    try {
+      if (refreshToken) {
         await User.updateOne(
           { _id: user._id },
-          { $pull: { tokens: token } }
-        ).catch(() => undefined);
+          { $pull: { refreshTokens: refreshToken } }
+        );
+      } else {
+        await User.updateOne(
+          { _id: user._id },
+          { $set: { refreshTokens: [] } }
+        );
       }
     } catch (err) {
       console.error("Token removal during signout failed (ignored):", err);

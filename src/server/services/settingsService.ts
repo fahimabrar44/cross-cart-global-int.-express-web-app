@@ -5,6 +5,7 @@ import { Setting } from "@/server/models/Settings.model";
 // Sensible for single-instance deployments; TTL keeps it fresh.
 interface CacheEntry {
   value: string | number | boolean | null;
+  found: boolean;
   expiresAt: number;
 }
 
@@ -15,18 +16,24 @@ function cacheKey(k: string): string {
   return `setting:${k}`;
 }
 
-function readCache(k: string): string | number | boolean | null {
+function readCache(
+  k: string
+): { value: string | number | boolean | null; found: boolean } | undefined {
   const entry = cache.get(cacheKey(k));
-  if (!entry) return null;
+  if (!entry) return undefined;
   if (Date.now() > entry.expiresAt) {
     cache.delete(cacheKey(k));
-    return null;
+    return undefined;
   }
-  return entry.value;
+  return { value: entry.value, found: entry.found };
 }
 
-function writeCache(k: string, value: string | number | boolean | null) {
-  cache.set(cacheKey(k), { value, expiresAt: Date.now() + TTL_MS });
+function writeCache(
+  k: string,
+  value: string | number | boolean | null,
+  found: boolean
+) {
+  cache.set(cacheKey(k), { value, found, expiresAt: Date.now() + TTL_MS });
 }
 
 function invalidateCache(k: string) {
@@ -42,23 +49,27 @@ export async function getSetting(
   envFallback?: string
 ): Promise<string | number | boolean | null> {
   const cached = readCache(key);
-  if (cached !== null) return cached;
+  if (cached && cached.found) return cached.value;
 
   let value: string | number | boolean | null = null;
+  let found = false;
   try {
     await connectDB();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const doc = (await Setting.findOne({ key }).lean()) as any;
+    found = Boolean(doc);
     value = doc ? (doc.value as string | number | boolean) : null;
   } catch {
     value = null;
+    found = false;
   }
 
-  if (value === null && envFallback !== undefined) {
+  if (!found && envFallback !== undefined) {
     value = envFallback;
+    found = true;
   }
 
-  writeCache(key, value);
+  writeCache(key, value, found);
   return value;
 }
 

@@ -4,6 +4,9 @@ import { Review } from "@/server/models/Review.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createAuthHandler } from "@/server/common/apiWrapper";
 import { Types } from "mongoose";
+import { withTtlCache, invalidateReferenceData } from "@/server/services/referenceCache";
+
+const REF_TTL_MS = 5 * 60 * 1000;
 
 type GetQuery = {
   user?: string;
@@ -27,30 +30,40 @@ export async function GET(req: NextRequest) {
     const limit = Math.max(1, Math.min(200, parseInt(q.limit || "20", 10)));
     const skip = (page - 1) * limit;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: any = {};
+    const cacheKey = `reviews:list:${q.user ?? ""}|${q.status ?? ""}|${q.rating ?? ""}|${q.search ?? ""}|${q.sortBy ?? ""}|${q.sortOrder ?? ""}|${page}|${limit}`;
 
-    if (q.user && Types.ObjectId.isValid(q.user)) query.user = new Types.ObjectId(q.user);
-    if (q.status) query.status = q.status;
-    if (q.rating) query.rating = Number(q.rating);
-    if (q.search) query.$or = [{ comment: { $regex: q.search, $options: "i" } }];
+    const result = await withTtlCache<{ total: number; reviews: unknown[] }>(
+      cacheKey,
+      REF_TTL_MS,
+      async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const query: any = {};
 
-    const allowedSortFields = new Set(["createdAt", "updatedAt", "rating", "helpfulCount"]);
-    const sortBy = allowedSortFields.has(q.sortBy || "") ? q.sortBy : "createdAt";
-    const sortOrder = (q.sortOrder || "desc").toLowerCase() === "asc" ? 1 : -1;
+        if (q.user && Types.ObjectId.isValid(q.user)) query.user = new Types.ObjectId(q.user);
+        if (q.status) query.status = q.status;
+        if (q.rating) query.rating = Number(q.rating);
+        if (q.search) query.$or = [{ comment: { $regex: q.search, $options: "i" } }];
 
-    const total = await Review.countDocuments(query);
-    const reviews = await Review.find(query).populate("user")
-  .sort({ [sortBy as string]: sortOrder })
-  .skip(skip)
-  .limit(limit)
-  .lean();
+        const allowedSortFields = new Set(["createdAt", "updatedAt", "rating", "helpfulCount"]);
+        const sortBy = allowedSortFields.has(q.sortBy || "") ? q.sortBy : "createdAt";
+        const sortOrder = (q.sortOrder || "desc").toLowerCase() === "asc" ? 1 : -1;
+
+        const total = await Review.countDocuments(query);
+        const reviews = await Review.find(query).populate("user")
+          .sort({ [sortBy as string]: sortOrder })
+          .skip(skip)
+          .limit(limit)
+          .lean();
+
+        return { total, reviews };
+      }
+    );
 
     return successResponse({
       status: 200,
       message: "Reviews fetched successfully",
-      data: reviews,
-      meta: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) },
+      data: result.reviews,
+      meta: { page, limit, total: result.total, totalPages: Math.max(1, Math.ceil(result.total / limit)) },
       req,
     });
   } catch (error: unknown) {
@@ -81,6 +94,7 @@ export const POST = createAuthHandler(async ({ req }) => {
     });
 
     await review.save();
+    invalidateReferenceData("reviews");
 
     return successResponse({ status: 201, message: "Review created successfully", data: review, req });
   } catch (error: unknown) {

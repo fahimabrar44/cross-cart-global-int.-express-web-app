@@ -6,6 +6,9 @@ import { Zone } from "@/server/models/Zone.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { verifyApiKeyIfProvided } from "@/server/common/apiKeyAuth";
 import { Types } from "mongoose";
+import { withTtlCache } from "@/server/services/referenceCache";
+
+const REF_TTL_MS = 5 * 60 * 1000;
 
 // Flat-rate tiers (grams) applied up to their cap
 const FLAT_TIERS: { key: string; cap: number }[] = [
@@ -98,24 +101,49 @@ export async function POST(req: NextRequest) {
       return errorResponse({ status: 400, message: "Valid weight (grams) is required", req });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const origin: any = await Country.findById(new Types.ObjectId(fromCountryId)).lean();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const zone: any = await Zone.findById(new Types.ObjectId(toZoneId)).lean();
+    const cacheKey = `prices:calc:${fromCountryId}:${toZoneId}`;
 
-    if (!origin) {
+    const looked = await withTtlCache<{
+      origin: { _id: unknown; name?: string; code?: string };
+      zone: { _id: unknown; name?: string; code?: string };
+      price: { rate?: RateRow[] } | null;
+    }>(
+      cacheKey,
+      REF_TTL_MS,
+      async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const origin: any = await Country.findById(new Types.ObjectId(fromCountryId)).lean();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const zone: any = await Zone.findById(new Types.ObjectId(toZoneId)).lean();
+
+        if (!origin) {
+          return { origin: null as unknown as typeof origin, zone: null, price: null };
+        }
+        if (!zone) {
+          return { origin, zone: null as unknown as typeof zone, price: null };
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const price: any = await Price.findOne({
+          from: new Types.ObjectId(fromCountryId),
+          to: new Types.ObjectId(toZoneId),
+          isActive: true,
+        }).lean();
+
+        return { origin, zone, price };
+      }
+    );
+
+    if (!looked.origin) {
       return errorResponse({ status: 404, message: "Origin country not found", req });
     }
-    if (!zone) {
+    if (!looked.zone) {
       return errorResponse({ status: 404, message: "Destination zone not found", req });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const price: any = await Price.findOne({
-      from: new Types.ObjectId(fromCountryId),
-      to: new Types.ObjectId(toZoneId),
-      isActive: true,
-    }).lean();
+    const origin = looked.origin;
+    const zone = looked.zone;
+    const price = looked.price;
 
     if (!price) {
       return errorResponse({

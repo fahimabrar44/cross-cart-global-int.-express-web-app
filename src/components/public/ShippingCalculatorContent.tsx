@@ -93,11 +93,15 @@ export default function ShippingCalculatorContent({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [priceData, setPriceData] = useState<PriceData | null>(null);
-  const [zonesData, setZonesData] = useState<FetchedZone[]>([]);
-  const [loadingZones, setLoadingZones] = useState(true);
+  const [zonesData, setZonesData] = useState<FetchedZone[]>(
+    () => initialZones as FetchedZone[]
+  );
+  const [loadingZones, setLoadingZones] = useState(() => initialZones.length === 0);
   const [zoneSearch, setZoneSearch] = useState("");
 
   useEffect(() => {
+    // Zones are already server-rendered; only refetch when SSR had none.
+    if (initialZones.length > 0) return;
     let active = true;
     (async () => {
       try {
@@ -117,6 +121,7 @@ export default function ShippingCalculatorContent({
     return () => {
       active = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredZones = zonesData.filter((z) => {

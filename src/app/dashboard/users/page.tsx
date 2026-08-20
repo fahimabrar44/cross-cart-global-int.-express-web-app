@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/AuthContext";
 import { userService, UserFilters } from "@/services/userService";
-import { User, hasPermission } from "@/types";
+import { User, hasPermission, DEFAULT_PERMISSIONS, Role } from "@/types";
 import { DataTable } from "@/components/ui/data-table";
 import { createUserColumns } from "@/components/users/UserColumns";
 import { UserForm } from "@/components/users/UserForm";
@@ -48,7 +48,7 @@ export default function UsersPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [, setIsPermissionsModalOpen] = useState(false);
+  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   
   // Filter and pagination
@@ -600,6 +600,66 @@ export default function UsersPage() {
                   )}
                 </div>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Permissions Modal */}
+      <Dialog open={isPermissionsModalOpen} onOpenChange={setIsPermissionsModalOpen}>
+        <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              User Permissions — {selectedUser?.name || ""}
+            </DialogTitle>
+            <DialogDescription>
+              Role:{" "}
+              <Badge variant="outline" className="capitalize">
+                {selectedUser?.role || "user"}
+              </Badge>
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser &&
+            (() => {
+              const perms =
+                DEFAULT_PERMISSIONS[selectedUser.role as Role] || {};
+              const entities = Object.keys(perms);
+              if (entities.length === 0) {
+                return (
+                  <p className="text-sm text-muted-foreground">
+                    No permissions configured for this role.
+                  </p>
+                );
+              }
+              return (
+                <div className="space-y-3">
+                  {entities.map((entity) => (
+                    <div
+                      key={entity}
+                      className="flex items-center justify-between gap-4 border rounded-lg p-3"
+                    >
+                      <span className="font-medium capitalize">{entity}</span>
+                      <div className="flex flex-wrap gap-1.5 justify-end">
+                        {(["create", "read", "update", "delete"] as const).map(
+                          (perm) => (
+                            <Badge
+                              key={perm}
+                              variant={perms[entity]?.includes(perm) ? "default" : "secondary"}
+                              className="capitalize"
+                            >
+                              {perms[entity]?.includes(perm) ? perm : "—"}
+                            </Badge>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          {!selectedUser && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           )}
         </DialogContent>

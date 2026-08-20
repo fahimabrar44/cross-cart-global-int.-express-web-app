@@ -4,6 +4,7 @@ import { Price } from "@/server/models/Price.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { Types } from "mongoose";
+import { invalidateReferenceData } from "@/server/services/referenceCache";
 
 const extractId = (req: Request): string => {
   const segments = new URL(req.url).pathname.split("/").filter(Boolean);
@@ -53,6 +54,7 @@ export const PUT = createModeratorHandler(async ({ req }) => {
     if (body.rate) price.rate = body.rate;
 
     await price.save();
+    invalidateReferenceData("prices");
 
     return successResponse({ status: 200, message: "Price updated successfully", data: price, req });
   } catch (error: unknown) {
@@ -96,6 +98,8 @@ export const PATCH = createModeratorHandler(async ({ req }) => {
 
     if (!price) return errorResponse({ status: 404, message: "Price not found", req });
 
+    invalidateReferenceData("prices");
+
     return successResponse({ status: 200, message: "Price updated successfully", data: price, req });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Failed to update price";
@@ -114,6 +118,8 @@ export const DELETE = createModeratorHandler(async ({ req }) => {
 
     const deleted = await Price.findByIdAndDelete(id);
     if (!deleted) return errorResponse({ status: 404, message: "Price not found", req });
+
+    invalidateReferenceData("prices");
 
     return successResponse({ status: 200, message: "Price deleted successfully", req });
   } catch (error: unknown) {

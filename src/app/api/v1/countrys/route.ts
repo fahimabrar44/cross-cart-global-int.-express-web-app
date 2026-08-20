@@ -3,7 +3,10 @@ import { Country } from "@/server/models/Country.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { NextRequest } from "next/server";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
- 
+import { withTtlCache, invalidateReferenceData } from "@/server/services/referenceCache";
+
+const REF_TTL_MS = 5 * 60 * 1000;
+
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
@@ -26,70 +29,80 @@ export async function GET(req: NextRequest) {
     const limit = Math.max(1, parseInt(url.searchParams.get("limit") || "20", 10));
     const skip = (page - 1) * limit;
 
-    // Build query object
-    
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: any = {};
+    const cacheKey = `countrys:list:${search ?? ""}|${name ?? ""}|${code ?? ""}|${zone ?? ""}|${timezone ?? ""}|${phoneCode ?? ""}|${isActiveParam ?? ""}|${createdFrom ?? ""}|${createdTo ?? ""}|${sortBy}|${sortOrder}|${page}|${limit}`;
 
-    if (typeof isActiveParam === "string") {
-      if (isActiveParam.toLowerCase() === "true") query.isActive = true;
-      else if (isActiveParam.toLowerCase() === "false") query.isActive = false;
-    }
+    const result = await withTtlCache<{ total: number; countries: unknown[] }>(
+      cacheKey,
+      REF_TTL_MS,
+      async () => {
+        // Build query object
 
-    if (name) query.name = { $regex: name, $options: "i" };
-    if (code) query.code = code.toUpperCase();
-    if (zone) query.zone = { $regex: zone, $options: "i" };
-    if (timezone) query.timezone = { $regex: timezone, $options: "i" };
-    if (phoneCode) query.phoneCode = { $regex: phoneCode, $options: "i" };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const query: any = {};
 
-    if (createdFrom || createdTo) {
-      query.createdAt = {};
-      if (createdFrom) {
-        const d = new Date(createdFrom);
-        if (!isNaN(d.getTime())) query.createdAt.$gte = d;
+        if (typeof isActiveParam === "string") {
+          if (isActiveParam.toLowerCase() === "true") query.isActive = true;
+          else if (isActiveParam.toLowerCase() === "false") query.isActive = false;
+        }
+
+        if (name) query.name = { $regex: name, $options: "i" };
+        if (code) query.code = code.toUpperCase();
+        if (zone) query.zone = { $regex: zone, $options: "i" };
+        if (timezone) query.timezone = { $regex: timezone, $options: "i" };
+        if (phoneCode) query.phoneCode = { $regex: phoneCode, $options: "i" };
+
+        if (createdFrom || createdTo) {
+          query.createdAt = {};
+          if (createdFrom) {
+            const d = new Date(createdFrom);
+            if (!isNaN(d.getTime())) query.createdAt.$gte = d;
+          }
+          if (createdTo) {
+            const d = new Date(createdTo);
+            if (!isNaN(d.getTime())) query.createdAt.$lte = d;
+          }
+          // clean empty object
+          if (Object.keys(query.createdAt).length === 0) delete query.createdAt;
+        }
+
+        if (search) {
+          const s = search.trim();
+          query.$or = [
+            { name: { $regex: s, $options: "i" } },
+            { code: { $regex: s, $options: "i" } },
+            { zone: { $regex: s, $options: "i" } },
+            { phoneCode: { $regex: s, $options: "i" } },
+          ];
+        }
+
+        // Validate sortBy allowed fields (prevent injection / invalid field)
+        const allowedSortFields = new Set(["name", "code", "createdAt", "updatedAt", "zone"]);
+        const finalSortBy = allowedSortFields.has(sortBy) ? sortBy : "createdAt";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sortObj: any = {};
+        sortObj[finalSortBy] = sortOrder;
+
+        const total = await Country.countDocuments(query);
+
+        const countries = await Country.find(query)
+          .sort(sortObj)
+          .skip(skip)
+          .limit(limit)
+          .lean();
+
+        return { total, countries };
       }
-      if (createdTo) {
-        const d = new Date(createdTo);
-        if (!isNaN(d.getTime())) query.createdAt.$lte = d;
-      }
-      // clean empty object
-      if (Object.keys(query.createdAt).length === 0) delete query.createdAt;
-    }
-
-    if (search) {
-      const s = search.trim();
-      query.$or = [
-        { name: { $regex: s, $options: "i" } },
-        { code: { $regex: s, $options: "i" } },
-        { zone: { $regex: s, $options: "i" } },
-        { phoneCode: { $regex: s, $options: "i" } },
-      ];
-    }
-
-    // Validate sortBy allowed fields (prevent injection / invalid field)
-    const allowedSortFields = new Set(["name", "code", "createdAt", "updatedAt", "zone"]);
-    const finalSortBy = allowedSortFields.has(sortBy) ? sortBy : "createdAt";
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sortObj: any = {};
-    sortObj[finalSortBy] = sortOrder;
-
-    const total = await Country.countDocuments(query);
-
-    const countries = await Country.find(query)
-      .sort(sortObj)
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    );
 
     return successResponse({
       status: 200,
       message: "Countries fetched successfully",
-      data: countries,
+      data: result.countries,
       meta: {
         page,
         limit,
-        total,
-        totalPages: Math.ceil(total / limit) || 1,
+        total: result.total,
+        totalPages: Math.ceil(result.total / limit) || 1,
       },
       req,
     });
@@ -141,6 +154,7 @@ export const POST = createModeratorHandler(async ({ req }) => {
     });
 
     await country.save();
+    invalidateReferenceData("countrys");
 
     return successResponse({
       status: 200,

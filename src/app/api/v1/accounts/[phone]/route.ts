@@ -12,6 +12,10 @@ interface UpdateUserBody {
   isActive?: boolean;
   isVerified?: boolean;
   password?: string;
+  preferences?: {
+    notifications?: { email?: boolean; sms?: boolean; push?: boolean };
+    privacy?: { profileVisibility?: "public" | "private"; dataSharing?: boolean };
+  };
 }
 
 // GET: fetch account information by phone (self, admin, or moderator)
@@ -68,16 +72,21 @@ export async function PUT(
       return errorResponse({ status: 401, message: "Unauthorized", req });
     }
 
-    // Only admin can update account details (privilege escalation guard)
-    if (!authResult.user || authResult.user.role !== "admin") {
-      return errorResponse({ status: 403, message: "Admin access required", req });
-    }
-
     await connectDB();
 
     const { phone } = await params;
     if (!phone) {
       return errorResponse({ status: 400, message: "Phone parameter is required", req });
+    }
+
+    // Admins may update any account; non-admins may only update their own profile.
+    if (!authResult.user) {
+      return errorResponse({ status: 401, message: "Unauthorized", req });
+    }
+    const isAdmin = authResult.user.role === "admin";
+    const isSelf = authResult.user.phone === phone;
+    if (!isAdmin && !isSelf) {
+      return errorResponse({ status: 403, message: "Admin access required", req });
     }
 
     const body: UpdateUserBody = await req.json();
@@ -89,16 +98,22 @@ export async function PUT(
 
     // Build a sanitized flat update object. `phone` is the lookup identifier and
     // must not be changed here; unknown/extra fields are ignored.
+    // Privileged fields (role, isActive, isVerified, password) are admin-only so
+    // users cannot escalate their own permissions via self-service updates.
     const update: Record<string, unknown> = {};
     if (body.name !== undefined) update.name = body.name;
     if (body.email !== undefined) update.email = body.email;
-    if (body.role !== undefined) update.role = body.role;
-    if (body.isActive !== undefined) update.isActive = body.isActive;
-    if (body.isVerified !== undefined) update.isVerified = body.isVerified;
-    if (body.password) {
-      // findOneAndUpdate bypasses the pre("save") hook, so hash here (12 rounds,
-      // matching the signup flow) to avoid storing plaintext passwords.
-      update.password = await bcrypt.hash(body.password, 12);
+    if (body.preferences?.notifications !== undefined) update["preferences.notifications"] = body.preferences.notifications;
+    if (body.preferences?.privacy !== undefined) update["preferences.privacy"] = body.preferences.privacy;
+    if (isAdmin) {
+      if (body.role !== undefined) update.role = body.role;
+      if (body.isActive !== undefined) update.isActive = body.isActive;
+      if (body.isVerified !== undefined) update.isVerified = body.isVerified;
+      if (body.password) {
+        // findOneAndUpdate bypasses the pre("save") hook, so hash here (12 rounds,
+        // matching the signup flow) to avoid storing plaintext passwords.
+        update.password = await bcrypt.hash(body.password, 12);
+      }
     }
 
     if (Object.keys(update).length === 0) {

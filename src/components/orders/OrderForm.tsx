@@ -167,7 +167,6 @@ export function OrderForm({
     const loadCountries = async () => {
       try {
         const response = await countryService.getActiveCountries();
-        console.log(response);
 
         if (response.status == 200 && response.data) {
           setCountries(

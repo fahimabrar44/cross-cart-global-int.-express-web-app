@@ -2,6 +2,7 @@ import connectDB from "@/config/db";
 import { FAQ } from "@/server/models/FAQ.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
+import { invalidateReferenceData } from "@/server/services/referenceCache";
 
 export const PUT = createModeratorHandler(async ({ req }) => {
   try {
@@ -24,6 +25,8 @@ export const PUT = createModeratorHandler(async ({ req }) => {
     const updated = await FAQ.findByIdAndUpdate(id, update, { new: true }).lean();
     if (!updated) return errorResponse({ status: 404, message: "FAQ not found", req });
 
+    invalidateReferenceData("faqs");
+
     return successResponse({ status: 200, message: "FAQ updated successfully", data: updated, req });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Failed to update FAQ";
@@ -39,6 +42,8 @@ export const DELETE = createModeratorHandler(async ({ req }) => {
 
     const deleted = await FAQ.findByIdAndDelete(id);
     if (!deleted) return errorResponse({ status: 404, message: "FAQ not found", req });
+
+    invalidateReferenceData("faqs");
 
     return successResponse({ status: 200, message: "FAQ deleted successfully", req });
   } catch (error: unknown) {

@@ -118,8 +118,7 @@ export function AddressForm({ address, onSubmit, onCancel, loading = false }: Ad
     const loadCountries = async () => {
       try {
         const response = await countryService.getActiveCountries();
-        console.log(response);
-        
+
         if (response.status == 200 && response.data) {
           setCountries(Array.isArray(response.data) ? response.data : [response.data]);
         }
@@ -144,8 +143,6 @@ export function AddressForm({ address, onSubmit, onCancel, loading = false }: Ad
       zipCode: data.address.zipCode,
       country: data.address.country,
     };
-    console.log(formatted.country);
-    
 
     onSubmit(formatted);
   };
