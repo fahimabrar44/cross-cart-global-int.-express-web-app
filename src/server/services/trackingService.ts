@@ -2,7 +2,7 @@
 // Shared helpers for order/track status synchronization and
 // carrier tracking API integration. Provider-agnostic; configure via env:
 // TRACKING_API_URL, TRACKING_API_KEY, TRACKING_PROVIDER (greenweb-style / generic json)
-import { Track } from "@/server/models/Track.model";
+import { Track, type ITrack } from "@/server/models/Track.model";
 import { Order } from "@/server/models/Order.model";
 import { Country } from "@/server/models/Country.model";
 import { TrackSyncLog } from "@/server/models/TrackSyncLog.model";
@@ -89,18 +89,13 @@ export interface TimelineStep {
 // instead of duplicated — this re-classifies previously stored "created" rows
 // into their real stage (in-transit, arrived-at-hub, delivered, ...) and stops
 // the same scan from being pushed twice.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 /**
  * Return a track's history sorted chronologically (oldest → newest) by its
  * `timestamp`. The stored array order isn't guaranteed to be chronological
  * (carrier syncs and manual admin updates can be interleaved), so always sort
  * before rendering a timeline.
  */
-export function sortHistoryByTime(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  history?: { timestamp?: string | Date }[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): any[] {
+export function sortHistoryByTime(history?: TimelineStep[]): TimelineStep[] {
   if (!Array.isArray(history)) return [];
   return history
     .slice()
@@ -111,15 +106,16 @@ export function sortHistoryByTime(
     );
 }
 
-export function appendHistory(track: any, step: TimelineStep): boolean {
+export function appendHistory(track: ITrack, step: TimelineStep): boolean {
   if (!track.history) return false;
   const ts = step.timestamp ? new Date(step.timestamp) : new Date();
   const desc = step.description || statusDescription(step.status);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const existing = track.history.find((h: any) => {
+  const history = track.history as unknown as TimelineStep[];
+
+  const existing = history.find((h) => {
     if (h.description !== desc) return false;
-    const diff = Math.abs(new Date(h.timestamp).getTime() - ts.getTime());
+    const diff = Math.abs(new Date(h.timestamp || 0).getTime() - ts.getTime());
     // Re-scans within 24h, or any still-"created" row (status re-classification)
     return diff < 24 * 60 * 60 * 1000 || h.status === "created";
   });
@@ -137,7 +133,7 @@ export function appendHistory(track: any, step: TimelineStep): boolean {
     return changed;
   }
 
-  track.history.push({
+  history.push({
     status: step.status,
     description: desc,
     location: {
@@ -279,14 +275,13 @@ export function isActiveTrackStatus(status?: string): boolean {
  * status-change notifications when new events arrived.
  */
 export async function mergeCarrierEventsInto(input: {
-  track: unknown;
+  track: ITrack;
   events: CarrierEvent[];
   currentStatus?: string;
   estimatedDelivery?: Date | string;
   updatedBy?: string | null;
-}): Promise<{ added: number; track: unknown }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const track = input.track as any;
+}): Promise<{ added: number; track: ITrack }> {
+  const track = input.track;
   const previousStatus = track.currentStatus;
 
   let added = 0;
