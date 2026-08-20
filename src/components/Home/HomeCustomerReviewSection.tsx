@@ -65,6 +65,18 @@ const fallbackTestimonials = [
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Review = any;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapReview(r: any) {
+  return {
+    _id: r._id,
+    name: r.user?.name || "Verified Customer",
+    avatar: r.user?.avatar || "",
+    quote: r.comment,
+    rating: r.rating,
+    isVerified: r.isVerified,
+  };
+}
+
 function StarRow({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -82,12 +94,21 @@ function StarRow({ rating }: { rating: number }) {
   );
 }
 
-const HomeCustomerReviewSection = () => {
+const HomeCustomerReviewSection = ({
+  initialReviews = [],
+}: {
+  initialReviews?: Review[];
+}) => {
   const [api1, setApi1] = useState<CarouselApi>();
   const [api2, setApi2] = useState<CarouselApi>();
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<Review[]>(() =>
+    (initialReviews || []).map(mapReview)
+  );
 
   useEffect(() => {
+    // Reviews are server-rendered; only refetch from the client when the SSR
+    // list was empty (e.g. the API was unavailable during the render).
+    if ((initialReviews || []).length > 0) return;
     const fetchReviews = async () => {
       try {
         const response = await fetch(
@@ -95,14 +116,7 @@ const HomeCustomerReviewSection = () => {
         );
         const data = await response.json();
         if (data.success && Array.isArray(data.data)) {
-          const mapped = data.data.map((r: Review) => ({
-            _id: r._id,
-            name: r.user?.name || "Verified Customer",
-            avatar: r.user?.avatar || "",
-            quote: r.comment,
-            rating: r.rating,
-            isVerified: r.isVerified,
-          }));
+          const mapped = data.data.map(mapReview);
           if (mapped.length > 0) setReviews(mapped);
         }
       } catch {
@@ -110,6 +124,7 @@ const HomeCustomerReviewSection = () => {
       }
     };
     fetchReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const testimonials = reviews.length > 0 ? reviews : fallbackTestimonials;
