@@ -2,6 +2,9 @@ import connectDB from "@/config/db";
 import { TeamMember } from "@/server/models/TeamMember.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createModeratorHandler, createPublicHandler } from "@/server/common/apiWrapper";
+import { withTtlCache, invalidateReferenceData } from "@/server/services/referenceCache";
+
+const REF_TTL_MS = 5 * 60 * 1000;
 
 // =========================
 // POST - Create Team Member (admin/moderator)
@@ -18,6 +21,7 @@ export const POST = createModeratorHandler(async ({ req }) => {
       order: typeof body.order === "number" ? body.order : 0,
     });
     await member.save();
+    invalidateReferenceData("team-members");
 
     return successResponse({
       status: 201,
@@ -45,18 +49,26 @@ export const GET = createPublicHandler(async ({ req }) => {
     const includeInactive =
       url.searchParams.get("includeInactive") === "true";
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: any = {};
-    if (!includeInactive) query.isActive = true;
+    const result = await withTtlCache<{ members: unknown[] }>(
+      `team-members:list:${includeInactive ? "all" : "active"}`,
+      REF_TTL_MS,
+      async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const query: any = {};
+        if (!includeInactive) query.isActive = true;
 
-    const members = await TeamMember.find(query)
-      .sort({ order: 1, createdAt: -1 })
-      .lean();
+        const members = await TeamMember.find(query)
+          .sort({ order: 1, createdAt: -1 })
+          .lean();
+
+        return { members };
+      }
+    );
 
     return successResponse({
       status: 200,
       message: "Team members fetched successfully",
-      data: members,
+      data: result.members,
       req,
     });
   } catch (error: unknown) {

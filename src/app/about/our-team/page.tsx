@@ -1,8 +1,7 @@
 ﻿import type { Metadata } from "next";
 import OurTeamMemberSection from "@/components/About/OurTeamMemberSection";
 import PageHeader from "@/utilities/PageHeader";
-import connectDB from "@/config/db";
-import { TeamMember } from "@/server/models/TeamMember.model";
+import { fetchPublicData } from "@/server/common/fetchPublic";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -47,35 +46,24 @@ export const metadata: Metadata = {
 };
 
 const CrossCartTeamMember = async () => {
-  let members: {
-    name: string;
-    position: string;
-    image?: string;
-    bio?: string;
-    experience?: string;
-    location?: string;
-    keyAchievement?: string;
-    social?: { email?: string; phone?: string };
-  }[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data = await fetchPublicData<any>("team-members");
 
-  try {
-    await connectDB();
-    const data = await TeamMember.find({ isActive: true })
-      .sort({ order: 1, createdAt: -1 })
-      .lean();
-    members = (data as Record<string, unknown>[]).map((m) => ({
-      name: String(m.name || ""),
-      position: String(m.position || ""),
-      image: m.image ? String(m.image) : undefined,
-      bio: m.bio ? String(m.bio) : undefined,
-      experience: m.experience ? String(m.experience) : undefined,
-      location: m.location ? String(m.location) : undefined,
-      keyAchievement: m.keyAchievement ? String(m.keyAchievement) : undefined,
-      social: m.social as { email?: string; phone?: string } | undefined,
-    }));
-  } catch (error) {
-    console.error("Failed to load team members:", error);
-  }
+  const members = (data || [])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((m: any) => ({
+      name: String(m?.name || ""),
+      position: String(m?.position || ""),
+      image: m?.image ? String(m.image) : undefined,
+      bio: m?.bio ? String(m.bio) : undefined,
+      experience: m?.experience ? String(m.experience) : undefined,
+      location: m?.location ? String(m.location) : undefined,
+      keyAchievement: m?.keyAchievement ? String(m.keyAchievement) : undefined,
+      social: m?.social as
+        | { email?: string; phone?: string }
+        | undefined,
+    }))
+    .filter((member: { name: string }) => member.name);
 
   return (
     <div className="w-full h-auto bg-soft-green overflow-x-hidden">

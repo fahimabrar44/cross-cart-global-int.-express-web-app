@@ -3,6 +3,7 @@ import { TeamMember } from "@/server/models/TeamMember.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import mongoose from "mongoose";
 import { createModeratorHandler, createPublicHandler } from "@/server/common/apiWrapper";
+import { invalidateReferenceData } from "@/server/services/referenceCache";
 
 const extractId = (req: Request): string => {
   const segments = new URL(req.url).pathname.split("/").filter(Boolean);
@@ -60,6 +61,8 @@ export const PUT = createModeratorHandler(async ({ req }) => {
     if (!member)
       return errorResponse({ status: 404, message: "Team member not found", req });
 
+    invalidateReferenceData("team-members");
+
     return successResponse({
       status: 200,
       message: "Team member updated successfully",
@@ -90,6 +93,8 @@ export const DELETE = createModeratorHandler(async ({ req }) => {
 
     if (!member)
       return errorResponse({ status: 404, message: "Team member not found", req });
+
+    invalidateReferenceData("team-members");
 
     return successResponse({
       status: 200,
