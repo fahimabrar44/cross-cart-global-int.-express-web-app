@@ -1,15 +1,15 @@
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
-import { getAllCouriers } from "@/server/services/trackingMoreService";
+import { getCouriersCached } from "@/server/services/trackingMoreService";
 
 /**
  * GET /api/v1/tracking/couriers
- * Returns all supported couriers from TrackingMore.
+ * Returns all supported couriers from TrackingMore (cached for 6h).
  * Optional query: ?search=... (client-side filter)
  */
 export const GET = createModeratorHandler(async ({ req }) => {
   try {
-    const couriers = await getAllCouriers();
+    const couriers = await getCouriersCached();
     return successResponse({
       status: 200,
       message: "Couriers fetched successfully",

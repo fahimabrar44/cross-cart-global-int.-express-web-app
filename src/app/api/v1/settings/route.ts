@@ -8,6 +8,8 @@ import { setSetting } from "@/server/services/settingsService";
 const KNOWN_SETTING_KEYS = [
   "TRACKINGMORE_API_KEY",
   "TRACKINGMORE_BASE_URL",
+  "TRACKINGMORE_DAILY_LIMIT",
+  "TRACKINGMORE_WEBHOOK_SECRET",
   "TRACKING_PROVIDER",
   "TRACKING_API_URL",
   "TRACKING_API_KEY",
@@ -97,7 +99,10 @@ export const PUT = createApiHandler(
         value = String(body.value || "").trim();
       }
 
-      const isSecret = key === "TRACKINGMORE_API_KEY" || key === "TRACKING_API_KEY";
+      const isSecret =
+        key === "TRACKINGMORE_API_KEY" ||
+        key === "TRACKINGMORE_WEBHOOK_SECRET" ||
+        key === "TRACKING_API_KEY";
       await setSetting(key, value, {
         isSecret,
         description: body.description || "",
