@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+﻿import { pageMetadata } from "@/lib/seo";
 import PageHeader from "@/utilities/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,47 +14,19 @@ import {
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "API Integration",
   description:
-    "Integrate CrossCart Global International Express shipping APIs into your website, app or system. Track shipments and calculate delivery prices with a simple REST API and your own API key.",
+    "Developer API for Cross Cart Global International Express — integrate international courier booking, shipment tracking and FedEx/DHL/UPS/Aramex status webhooks into your platform.",
+  path: "/api-integration",
   keywords: [
+    "courier API",
     "shipping API Bangladesh",
-    "courier API integration",
-    "shipment tracking API",
-    "price calculation API",
-    "CrossCart shipping API",
+    "tracking API",
+    "shipment webhook",
+    "logistics API integration",
   ],
-  alternates: {
-    canonical: "https://crosscartglobal.com/api-integration",
-  },
-  openGraph: {
-    title: "API Integration | Cross Cart Global International Express",
-    description:
-      "Track shipments and calculate delivery prices with CrossCart shipping REST APIs and your own API key.",
-    url: "https://crosscartglobal.com/api-integration",
-    siteName: "Cross Cart Global International Express",
-    type: "website",
-    locale: "en_US",
-    images: [
-      {
-        url: "/full-logo.png",
-        width: 1200,
-        height: 630,
-        alt: "Cross Cart Global International Express",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@crosscartglobal",
-    creator: "@crosscartglobal",
-    title: "API Integration | Cross Cart Global International Express",
-    description:
-      "Track shipments and calculate delivery prices with CrossCart shipping REST APIs and your own API key.",
-    images: ["/full-logo.png", "/logo.png"],
-  },
-};
+});
 
 const CodeBlock = ({ code }: { code: string }) => (
   <pre className="overflow-x-auto rounded-lg bg-foreground text-background p-4 text-sm leading-relaxed">

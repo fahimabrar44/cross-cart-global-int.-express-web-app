@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+﻿import { pageMetadata } from "@/lib/seo";
 import OurServiceSection from "@/components/About/OurServiceSection";
 import OurStorySection from "@/components/About/OurStorySection";
 import OurTeamMemberSection from "@/components/About/OurTeamMemberSection";
@@ -6,69 +6,20 @@ import OurWorkProcessSection from "@/components/About/OurWorkProcessSection";
 import PageHeader from "@/utilities/PageHeader";
 import { fetchPublicData } from "@/server/common/fetchPublic";
 
-const siteName = "Cross Cart Global International Express";
-const pageUrl = "https://crosscartglobal.com/about";
-
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "About Us",
   description:
-    "Learn about Cross Cart Global International Express — a Bangladesh-based international courier service built on trust, offering discounted worldwide delivery through DHL, FedEx, Aramex and UPS with doorstep pickup.",
+    "Learn about Cross Cart Global International Express — a Bangladesh-based international courier built on trust, partnering with FedEx, DHL, UPS and Aramex to deliver affordable worldwide shipping with doorstep pickup.",
+  path: "/about",
   keywords: [
     "about Cross Cart Global",
-    "Cross Cart Global about",
     "courier company Bangladesh",
     "international logistics company Bangladesh",
-    "shipping company Dhaka",
-    "about Cross Cart",
-    "logistics company Bangladesh",
-    "courier service about us",
     "Cross Cart history",
     "Bangladesh courier company",
-    "global logistics partner Bangladesh",
-    "Cross Cart mission vision",
-    "international shipping company Bangladesh",
-    "trusted courier Bangladesh",
-    "logistics services Bangladesh",
-    "international courier company Bangladesh",
-    "courier agency Bangladesh",
-    "affordable international shipping",
-    "cross cart global about us",
   ],
-  alternates: {
-    canonical: pageUrl,
-  },
-  openGraph: {
-    title: "About Us | Cross Cart Global International Express",
-    description:
-      "Discover how Cross Cart Global International Express makes international courier services more affordable and reliable in Bangladesh.",
-    url: pageUrl,
-    siteName,
-    type: "website",
-    locale: "en_US",
-    images: [
-      {
-        url: "/full-logo.png",
-        width: 1200,
-        height: 630,
-        alt: siteName,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@crosscartglobal",
-    creator: "@crosscartglobal",
-    title: "About Us | Cross Cart Global International Express",
-    description:
-      "Discover how Cross Cart Global International Express makes international courier services more affordable and reliable in Bangladesh.",
-    images: ["/full-logo.png", "/logo.png"],
-  },
-   robots: {
-    index: true,
-    follow: true,
-  },
-};
+});
 
 const CrossCartAbout = async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

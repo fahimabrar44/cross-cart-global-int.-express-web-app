@@ -1,51 +1,22 @@
-﻿import type { Metadata } from "next";
+﻿import { pageMetadata } from "@/lib/seo";
 import PageHeader from '@/utilities/PageHeader';
 import Link from "next/link";
 import { StandalonePhoneInput } from "@/components/ui/phone-field-standalone";
 import { Building2, Users, Globe, Award, TrendingUp, Shield, CheckCircle, ArrowRight, Calendar, MapPin } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: "Corporate Solutions",
+export const metadata = pageMetadata({
+  title: "Cross Cart Corporate",
   description:
-    "Corporate courier and logistics solutions from Cross Cart Global International Express — enterprise logistics, B2B shipping, volume discounts and API integration for businesses in Bangladesh.",
+    "Corporate shipping solutions from Cross Cart Global International Express — bulk international courier, employee relocation and business logistics for companies in Bangladesh via FedEx, DHL, UPS and Aramex.",
+  path: "/crosscart-corporate",
   keywords: [
-    "corporate courier Bangladesh",
-    "B2B shipping solutions",
-    "business logistics Dhaka",
-    "enterprise shipping",
-    "Cross Cart corporate",
+    "corporate courier",
+    "business shipping Bangladesh",
+    "corporate logistics",
+    "bulk courier services",
   ],
-  alternates: {
-    canonical: "https://crosscartglobal.com/crosscart-corporate",
-  },
-  openGraph: {
-    title: "Corporate Solutions | Cross Cart Global International Express",
-    description:
-      "Enterprise logistics and B2B shipping solutions with volume discounts, dedicated account management and API integration for Bangladeshi businesses.",
-    url: "https://crosscartglobal.com/crosscart-corporate",
-    siteName: "Cross Cart Global International Express",
-    type: "website",
-    locale: "en_US",
-    images: [
-      {
-        url: "/logo.png",
-        width: 1200,
-        height: 630,
-        alt: "Cross Cart Global International Express",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@crosscartglobal",
-    creator: "@crosscartglobal",
-    title: "Corporate Solutions | Cross Cart Global International Express",
-    description:
-      "Enterprise logistics and B2B shipping solutions with volume discounts, dedicated account management and API integration for Bangladeshi businesses.",
-    images: ["/full-logo.png", "/logo.png"],
-  },
-};
+});
 
 const CrossCartCorporate = () => {
   const stats = [

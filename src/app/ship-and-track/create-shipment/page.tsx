@@ -1,12 +1,22 @@
+import { pageMetadata } from "@/lib/seo";
 import CreateShipmentForm, {
   type CountryOption,
   type ZoneOption,
 } from "@/components/public/CreateShipmentForm";
 import { fetchPublicData } from "@/server/common/fetchPublic";
-export const metadata = {
-  title: "Create Shipment | Cross Cart Global International Express",
-  description: "Create a new international shipment with Cross Cart Global in a few simple steps.",
-};
+export const metadata = pageMetadata({
+  title: "Create Shipment",
+  description:
+    "Book your international courier shipment online with Cross Cart Global International Express — doorstep pickup in Bangladesh, customs support and tracking via FedEx, DHL, UPS and Aramex.",
+  path: "/ship-and-track/create-shipment",
+  keywords: [
+    "create shipment",
+    "book courier online",
+    "international parcel booking",
+    "online courier Bangladesh",
+    "schedule pickup",
+  ],
+});
 
 
 export const dynamic = "force-dynamic";

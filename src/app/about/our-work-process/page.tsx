@@ -1,50 +1,21 @@
-﻿import type { Metadata } from 'next'
+﻿import { pageMetadata } from "@/lib/seo";
 import OurWorkProcessSection from '@/components/About/OurWorkProcessSection';
 import PageHeader from '@/utilities/PageHeader';
 import React from 'react'
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: 'Our Work Process',
+export const metadata = pageMetadata({
+  title: "Our Work Process",
   description:
-    'Learn how Cross Cart Global International Express ships your parcels — from booking and doorstep pickup to customs clearance and final delivery, with tracking at every step.',
+    "See how Cross Cart Global International Express ships your parcel worldwide — from doorstep pickup in Bangladesh to dispatch via FedEx, DHL, UPS and Aramex, with tracking at every step.",
+  path: "/about/our-work-process",
   keywords: [
-    'courier work process',
-    'how international shipping works',
-    'doorstep pickup process',
-    'parcel delivery steps',
-    'Cross Cart Global shipping process',
+    "how international shipping works",
+    "courier pickup process",
+    "shipment process Bangladesh",
+    "parcel dispatch process",
   ],
-  alternates: {
-    canonical: 'https://crosscartglobal.com/about/our-work-process',
-  },
-  openGraph: {
-    title: 'Our Work Process | Cross Cart Global International Express',
-    description:
-      'See how Cross Cart Global International Express handles your shipment from doorstep pickup to worldwide delivery, with tracking at every step.',
-    url: 'https://crosscartglobal.com/about/our-work-process',
-    siteName: 'Cross Cart Global International Express',
-    type: 'website',
-    locale: 'en_US',
-    images: [
-      {
-        url: '/full-logo.png',
-        width: 1200,
-        height: 630,
-        alt: 'Cross Cart Global International Express',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@crosscartglobal',
-    creator: '@crosscartglobal',
-    title: 'Our Work Process | Cross Cart Global International Express',
-    description:
-      'See how Cross Cart Global International Express handles your shipment from doorstep pickup to worldwide delivery, with tracking at every step.',
-    images: ['/full-logo.png', '/logo.png'],
-  },
-};
+});
 
 const CrossCartWorkProcess = () => {
   return (

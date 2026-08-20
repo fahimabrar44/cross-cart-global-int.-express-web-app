@@ -1,50 +1,22 @@
-﻿import type { Metadata } from 'next'
+﻿import { pageMetadata } from "@/lib/seo";
 import PageHeader from '@/utilities/PageHeader';
 import Link from "next/link";
 import { Heart, Car, Laptop, ShirtIcon, Factory, Pill, CheckCircle, ArrowRight, Shield } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: 'Industry Solutions',
+export const metadata = pageMetadata({
+  title: "Industry Logistics Solutions",
   description:
-    'Industry-specific logistics from Cross Cart Global International Express — temperature-controlled healthcare shipping, automotive parts, electronics, fashion, and manufacturing logistics in Bangladesh.',
+    "Industry-specific logistics from Cross Cart Global International Express — tailored international courier and freight for garments, pharma, manufacturing and retail in Bangladesh via FedEx, DHL, UPS and Aramex.",
+  path: "/logistics-solutions/industry-solutions",
   keywords: [
-    'healthcare logistics Bangladesh',
-    'automotive parts shipping',
-    'electronics shipping',
-    'cold chain courier',
-    'industry logistics solutions',
+    "industry logistics",
+    "garment shipping",
+    "pharma logistics",
+    "retail fulfillment",
+    "manufacturing shipping Bangladesh",
   ],
-  alternates: {
-    canonical: 'https://crosscartglobal.com/logistics-solutions/industry-solutions',
-  },
-  openGraph: {
-    title: 'Industry Solutions | Cross Cart Global International Express',
-    description:
-      'Specialized logistics for healthcare, automotive, electronics, fashion and manufacturing sectors from Bangladesh.',
-    url: 'https://crosscartglobal.com/logistics-solutions/industry-solutions',
-    siteName: 'Cross Cart Global International Express',
-    type: 'website',
-    locale: 'en_US',
-    images: [
-      {
-        url: '/full-logo.png',
-        width: 1200,
-        height: 630,
-        alt: 'Cross Cart Global International Express',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@crosscartglobal',
-    creator: '@crosscartglobal',
-    title: 'Industry Solutions | Cross Cart Global International Express',
-    description:
-      'Specialized logistics for healthcare, automotive, electronics, fashion and manufacturing sectors from Bangladesh.',
-    images: ['/full-logo.png', '/logo.png'],
-  },
-};
+});
 
 const IndustrySolutions = () => {
   const industries = [

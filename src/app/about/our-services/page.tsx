@@ -1,50 +1,23 @@
-﻿import type { Metadata } from 'next'
+﻿import { pageMetadata } from "@/lib/seo";
 import OurServiceSection from '@/components/About/OurServiceSection';
 import PageHeader from '@/utilities/PageHeader'
 import React from 'react'
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: 'Our Services',
+export const metadata = pageMetadata({
+  title: "Our Services",
   description:
-    'Explore the international courier services of Cross Cart Global International Express — documents, parcels, e-commerce and corporate shipping from Bangladesh with doorstep pickup and real-time tracking.',
+    "Cross Cart Global International Express offers international courier, air freight, sea freight, parcel delivery, customs clearance and eCommerce logistics from Bangladesh through FedEx, DHL, UPS and Aramex.",
+  path: "/about/our-services",
   keywords: [
-    'international courier services Bangladesh',
-    'parcel shipping services',
-    'e-commerce shipping solutions',
-    'corporate courier Bangladesh',
-    'doorstep pickup service',
+    "international courier services",
+    "air freight Bangladesh",
+    "sea freight Bangladesh",
+    "parcel delivery",
+    "ecommerce logistics",
+    "customs clearance Bangladesh",
   ],
-  alternates: {
-    canonical: 'https://crosscartglobal.com/about/our-services',
-  },
-  openGraph: {
-    title: 'Our Services | Cross Cart Global International Express',
-    description:
-      'Affordable international courier services from Bangladesh — documents, parcels, e-commerce and corporate shipping with doorstep pickup and tracking.',
-    url: 'https://crosscartglobal.com/about/our-services',
-    siteName: 'Cross Cart Global International Express',
-    type: 'website',
-    locale: 'en_US',
-    images: [
-      {
-        url: '/full-logo.png',
-        width: 1200,
-        height: 630,
-        alt: 'Cross Cart Global International Express',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@crosscartglobal',
-    creator: '@crosscartglobal',
-    title: 'Our Services | Cross Cart Global International Express',
-    description:
-      'Affordable international courier services from Bangladesh — documents, parcels, e-commerce and corporate shipping with doorstep pickup and tracking.',
-    images: ['/full-logo.png', '/logo.png'],
-  },
-};
+});
 
 const CrossCartService = () => {
   return (

@@ -1,50 +1,22 @@
-﻿import type { Metadata } from "next";
+﻿import { pageMetadata } from "@/lib/seo";
 import PageHeader from "@/utilities/PageHeader";
 import React from 'react';
 import { Mail, Phone, MessageCircle, MapPin, Clock, HelpCircle, Shield, ThumbsUp } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Help & Support",
   description:
-    "Get help with booking, tracking and delivery from Cross Cart Global International Express. Reach our support team by email, hotline or live chat, available 7 days a week.",
+    "Get help with Cross Cart Global International Express — international courier booking, tracking, customs and delivery support from our Bangladesh team, plus guides for FedEx, DHL, UPS and Aramex shipments.",
+  path: "/about/help-and-support",
   keywords: [
-    "courier support Bangladesh",
-    "track shipment help",
-    "customer support shipping",
-    "Cross Cart Global help",
-    "parcel delivery assistance",
+    "courier help",
+    "shipping support Bangladesh",
+    "track help",
+    "customer support courier",
+    "international shipping FAQ",
   ],
-  alternates: {
-    canonical: "https://crosscartglobal.com/about/help-and-support",
-  },
-  openGraph: {
-    title: "Help & Support | Cross Cart Global International Express",
-    description:
-      "Fast support for bookings, tracking and delivery — reach Cross Cart Global International Express by email, hotline or live chat, 7 days a week.",
-    url: "https://crosscartglobal.com/about/help-and-support",
-    siteName: "Cross Cart Global International Express",
-    type: "website",
-    locale: "en_US",
-    images: [
-      {
-        url: "/full-logo.png",
-        width: 1200,
-        height: 630,
-        alt: "Cross Cart Global International Express",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@crosscartglobal",
-    creator: "@crosscartglobal",
-    title: "Help & Support | Cross Cart Global International Express",
-    description:
-      "Fast support for bookings, tracking and delivery — reach Cross Cart Global International Express by email, hotline or live chat, 7 days a week.",
-    images: ["/full-logo.png", "/logo.png"],
-  },
-};
+});
 
 const HelpAndSupport = () => {
     return (

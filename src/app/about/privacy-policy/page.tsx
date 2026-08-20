@@ -1,48 +1,19 @@
-﻿import type { Metadata } from 'next'
+﻿import { pageMetadata } from "@/lib/seo";
 import PageHeader from '@/utilities/PageHeader';
 import React from 'react'
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: 'Privacy Policy',
+export const metadata = pageMetadata({
+  title: "Privacy Policy",
   description:
-    'Read the Cross Cart Global International Express privacy policy — how we collect, use, disclose and protect your personal and shipment information across our courier services.',
+    "How Cross Cart Global International Express collects, uses and protects your data when you use our international courier, tracking and eCommerce logistics services.",
+  path: "/about/privacy-policy",
   keywords: [
-    'courier privacy policy',
-    'data protection shipping',
-    'Cross Cart Global privacy policy',
-    'personal data courier service',
+    "privacy policy",
+    "courier data policy",
+    "Cross Cart privacy",
   ],
-  alternates: {
-    canonical: 'https://crosscartglobal.com/about/privacy-policy',
-  },
-  openGraph: {
-    title: 'Privacy Policy | Cross Cart Global International Express',
-    description:
-      'How Cross Cart Global International Express collects, uses and protects your personal and shipment information.',
-    url: 'https://crosscartglobal.com/about/privacy-policy',
-    siteName: 'Cross Cart Global International Express',
-    type: 'website',
-    locale: 'en_US',
-    images: [
-      {
-        url: '/full-logo.png',
-        width: 1200,
-        height: 630,
-        alt: 'Cross Cart Global International Express',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@crosscartglobal',
-    creator: '@crosscartglobal',
-    title: 'Privacy Policy | Cross Cart Global International Express',
-    description:
-      'How Cross Cart Global International Express collects, uses and protects your personal and shipment information.',
-    images: ['/full-logo.png', '/logo.png'],
-  },
-};
+});
 
 const PrivacyPolicy = () => {
   return (

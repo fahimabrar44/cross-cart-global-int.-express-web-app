@@ -1,49 +1,20 @@
-﻿import type { Metadata } from "next";
+﻿import { pageMetadata } from "@/lib/seo";
 import OurTeamMemberSection from "@/components/About/OurTeamMemberSection";
 import PageHeader from "@/utilities/PageHeader";
 import { fetchPublicData } from "@/server/common/fetchPublic";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Our Team",
   description:
-    "Meet the dedicated team behind Cross Cart Global International Express — logistics, operations and support professionals committed to reliable, affordable international shipping from Bangladesh.",
+    "Meet the team behind Cross Cart Global International Express — the professionals making reliable, affordable international courier and FedEx, DHL, UPS, Aramex shipping from Bangladesh possible.",
+  path: "/about/our-team",
   keywords: [
-    "Cross Cart Global team",
-    "courier team Bangladesh",
-    "logistics professionals",
-    "international shipping experts",
+    "Cross Cart team",
+    "courier professionals Bangladesh",
+    "logistics team Bangladesh",
   ],
-  alternates: {
-    canonical: "https://crosscartglobal.com/about/our-team",
-  },
-  openGraph: {
-    title: "Our Team | Cross Cart Global International Express",
-    description:
-      "Meet the professionals behind Cross Cart Global International Express who make reliable, affordable international shipping from Bangladesh possible.",
-    url: "https://crosscartglobal.com/about/our-team",
-    siteName: "Cross Cart Global International Express",
-    type: "website",
-    locale: "en_US",
-    images: [
-      {
-        url: "/full-logo.png",
-        width: 1200,
-        height: 630,
-        alt: "Cross Cart Global International Express",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@crosscartglobal",
-    creator: "@crosscartglobal",
-    title: "Our Team | Cross Cart Global International Express",
-    description:
-      "Meet the professionals behind Cross Cart Global International Express who make reliable, affordable international shipping from Bangladesh possible.",
-    images: ["/full-logo.png", "/logo.png"],
-  },
-};
+});
 
 const CrossCartTeamMember = async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

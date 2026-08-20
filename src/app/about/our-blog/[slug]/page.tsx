@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageHeader from "@/utilities/PageHeader";
 import { fetchPublicObject } from "@/server/common/fetchPublic";
+import { mergeKeywords } from "@/lib/seo";
 import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
 
 interface BlogPost {
@@ -45,16 +46,24 @@ export async function generateMetadata({
     blog.metaDescription ||
     "Read this article on the Cross Cart Global International Express blog.";
 
+  const slugPath = `/about/our-blog/${blog.slug}`;
+  const keywords = mergeKeywords([
+    "Cross Cart blog",
+    blog.category || "shipping guide",
+    ...(blog.tags || []),
+  ]);
+
   return {
     title,
     description,
+    keywords,
     alternates: {
-      canonical: `https://crosscartglobal.com/about/our-blog/${blog.slug}`,
+      canonical: `https://crosscartglobal.com${slugPath}`,
     },
     openGraph: {
       title: `${title} | Cross Cart Global International Express`,
       description,
-      url: `https://crosscartglobal.com/about/our-blog/${blog.slug}`,
+      url: `https://crosscartglobal.com${slugPath}`,
       siteName: "Cross Cart Global International Express",
       type: "article",
       publishedTime: blog.createdAt,

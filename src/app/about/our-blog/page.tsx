@@ -1,51 +1,23 @@
-﻿import type { Metadata } from "next";
+﻿import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import PageHeader from "@/utilities/PageHeader";
 import { fetchPublicData } from "@/server/common/fetchPublic";
 import { Mail, Package, PenTool } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: "Our Blog",
+export const metadata = pageMetadata({
+  title: "Blog & Shipping Guides",
   description:
-    "The Cross Cart Global International Express blog — shipping tips, customs guides, e-commerce advice and success stories to help Bangladeshi sellers grow globally.",
+    "Tips, guides and news from Cross Cart Global International Express — international courier advice, FedEx/DHL/UPS/Aramex rate comparisons, customs tips and eCommerce shipping from Bangladesh.",
+  path: "/about/our-blog",
   keywords: [
-    "international shipping tips",
-    "courier blog Bangladesh",
-    "e-commerce shipping guide",
-    "customs documentation guide",
-    "Cross Cart Global blog",
+    "courier blog",
+    "shipping tips Bangladesh",
+    "international shipping guide",
+    "customs tips",
+    "ecommerce shipping blog",
   ],
-  alternates: {
-    canonical: "https://crosscartglobal.com/about/our-blog",
-  },
-  openGraph: {
-    title: "Our Blog | Cross Cart Global International Express",
-    description:
-      "Shipping tips, customs guides and success stories to help Bangladeshi sellers grow globally with Cross Cart Global International Express.",
-    url: "https://crosscartglobal.com/about/our-blog",
-    siteName: "Cross Cart Global International Express",
-    type: "website",
-    locale: "en_US",
-    images: [
-      {
-        url: "/full-logo.png",
-        width: 1200,
-        height: 630,
-        alt: "Cross Cart Global International Express",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@crosscartglobal",
-    creator: "@crosscartglobal",
-    title: "Our Blog | Cross Cart Global International Express",
-    description:
-      "Shipping tips, customs guides and success stories to help Bangladeshi sellers grow globally with Cross Cart Global International Express.",
-    images: ["/full-logo.png", "/logo.png"],
-  },
-};
+});
 
 interface BlogPost {
   _id: string;

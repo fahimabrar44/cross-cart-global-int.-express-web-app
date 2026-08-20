@@ -1,12 +1,22 @@
+import { pageMetadata } from "@/lib/seo";
 import TrackShipmentContent, {
   type RequiredField,
   type TrackingData,
 } from "@/components/public/TrackShipmentContent";
 
-export const metadata = {
-  title: "Track Shipment | Cross Cart Global International Express",
-  description: "Track your Cross Cart Global shipment in real time using your tracking ID.",
-};
+export const metadata = pageMetadata({
+  title: "Track Shipment",
+  description:
+    "Track your Cross Cart Global International Express parcel in real time — enter your tracking number to see FedEx, DHL, UPS and Aramex international courier status and delivery updates.",
+  path: "/ship-and-track/track-shipment",
+  keywords: [
+    "track shipment",
+    "parcel tracking",
+    "courier tracking number",
+    "track international package",
+    "real-time tracking",
+  ],
+});
 
 export const dynamic = "force-dynamic";
 

@@ -1,49 +1,21 @@
-﻿import type { Metadata } from "next";
+﻿import { pageMetadata } from "@/lib/seo";
 import PageHeader from "@/utilities/PageHeader";
 import React from 'react';
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Trust & Safety",
   description:
-    "Trust and safety at Cross Cart Global International Express — verified courier partnerships, secure handling, real-time tracking, data privacy and customer assurance for every shipment.",
+    "How Cross Cart Global International Express keeps your international courier shipments safe — secure handling, verified delivery, insurance options and trusted FedEx, DHL, UPS, Aramex partnerships.",
+  path: "/about/trust-and-safety",
   keywords: [
-    "courier trust and safety",
-    "secure parcel handling",
-    "data privacy shipping",
-    "verified courier partnerships",
-    "Cross Cart Global safety",
+    "safe courier service",
+    "secure international shipping",
+    "parcel insurance",
+    "trusted courier Bangladesh",
+    "shipment safety",
   ],
-  alternates: {
-    canonical: "https://crosscartglobal.com/about/trust-and-safety",
-  },
-  openGraph: {
-    title: "Trust & Safety | Cross Cart Global International Express",
-    description:
-      "Every parcel carried with care, transparency and security — verified courier partners, real-time tracking and data protection with Cross Cart Global International Express.",
-    url: "https://crosscartglobal.com/about/trust-and-safety",
-    siteName: "Cross Cart Global International Express",
-    type: "website",
-    locale: "en_US",
-    images: [
-      {
-        url: "/full-logo.png",
-        width: 1200,
-        height: 630,
-        alt: "Cross Cart Global International Express",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@crosscartglobal",
-    creator: "@crosscartglobal",
-    title: "Trust & Safety | Cross Cart Global International Express",
-    description:
-      "Every parcel carried with care, transparency and security — verified courier partners, real-time tracking and data protection with Cross Cart Global International Express.",
-    images: ["/full-logo.png", "/logo.png"],
-  },
-};
+});
 
 const TrustAndSafety = () => {
   return (

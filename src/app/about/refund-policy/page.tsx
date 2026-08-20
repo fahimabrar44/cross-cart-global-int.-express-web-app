@@ -1,48 +1,19 @@
-﻿import type { Metadata } from 'next'
+﻿import { pageMetadata } from "@/lib/seo";
 import PageHeader from '@/utilities/PageHeader'
 import React from 'react'
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: 'Refund Policy',
+export const metadata = pageMetadata({
+  title: "Refund Policy",
   description:
-    'Review the Cross Cart Global International Express refund policy — eligibility, non-refundable cases, refund amount and methods for cancelled, lost or undelivered shipments from Bangladesh.',
+    "Cross Cart Global International Express refund and cancellation policy for international courier, air freight and sea freight shipments from Bangladesh.",
+  path: "/about/refund-policy",
   keywords: [
-    'courier refund policy',
-    'shipping refund Bangladesh',
-    'Cross Cart Global refund',
-    'parcel refund eligibility',
+    "courier refund policy",
+    "shipping refund Bangladesh",
+    "cancel shipment refund",
   ],
-  alternates: {
-    canonical: 'https://crosscartglobal.com/about/refund-policy',
-  },
-  openGraph: {
-    title: 'Refund Policy | Cross Cart Global International Express',
-    description:
-      'Fair and transparent refund policy for cancelled, lost or undelivered shipments with Cross Cart Global International Express from Bangladesh.',
-    url: 'https://crosscartglobal.com/about/refund-policy',
-    siteName: 'Cross Cart Global International Express',
-    type: 'website',
-    locale: 'en_US',
-    images: [
-      {
-        url: '/full-logo.png',
-        width: 1200,
-        height: 630,
-        alt: 'Cross Cart Global International Express',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@crosscartglobal',
-    creator: '@crosscartglobal',
-    title: 'Refund Policy | Cross Cart Global International Express',
-    description:
-      'Fair and transparent refund policy for cancelled, lost or undelivered shipments with Cross Cart Global International Express from Bangladesh.',
-    images: ['/full-logo.png', '/logo.png'],
-  },
-};
+});
 
 const RefundPolicy = () => {
   return (

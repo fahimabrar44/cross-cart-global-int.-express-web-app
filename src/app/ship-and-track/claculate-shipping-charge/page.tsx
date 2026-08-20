@@ -1,12 +1,25 @@
+import { pageMetadata } from "@/lib/seo";
 import ShippingCalculatorContent, {
   type CountryOption,
   type ZoneOption,
 } from "@/components/public/ShippingCalculatorContent";
 import { fetchPublicData } from "@/server/common/fetchPublic";
-export const metadata = {
-  title: "Calculate Shipping Charge | Cross Cart Global International Express",
-  description: "Calculate international courier and shipping charges instantly with the Cross Cart Global rate calculator.",
-};
+export const metadata = pageMetadata({
+  title: "Calculate Shipping Charge",
+  description:
+    "Compare international courier rates instantly with Cross Cart Global International Express — get discounted FedEx, DHL, UPS and Aramex shipping charges from Bangladesh by weight and destination.",
+  path: "/ship-and-track/claculate-shipping-charge",
+  keywords: [
+    "shipping calculator",
+    "courier rate calculator",
+    "FedEx rate",
+    "DHL rate",
+    "UPS rate",
+    "Aramex rate",
+    "cheap international shipping",
+    "calculate courier charge",
+  ],
+});
 
 
 export const dynamic = "force-dynamic";

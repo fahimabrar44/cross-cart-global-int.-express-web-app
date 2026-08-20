@@ -1,6 +1,6 @@
 ﻿import PageHeader from "@/utilities/PageHeader";
 import Link from "next/link";
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
 import { Mail, MessageCircle, Phone } from "lucide-react";
 
@@ -8,46 +8,18 @@ const siteName = "Cross Cart Global International Express";
 const pageUrl = "https://crosscartglobal.com/contact";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Contact Us",
   description:
-    "Get in touch with Cross Cart Global International Express. Contact our support team by email or phone for international courier and parcel delivery inquiries from Bangladesh.",
+    "Contact Cross Cart Global International Express for international courier, freight and tracking support in Bangladesh — phone, email and office details, with partnerships across FedEx, DHL, UPS and Aramex.",
+  path: "/contact",
   keywords: [
-    "contact Cross Cart Global",
-    "courier customer support Bangladesh",
-    "international shipping inquiry",
-    "cross cart global contact",
+    "contact courier Bangladesh",
+    "Cross Cart contact",
+    "courier customer care",
+    "shipping support phone",
   ],
-  alternates: {
-    canonical: pageUrl,
-  },
-  openGraph: {
-    title: "Contact Us | Cross Cart Global International Express",
-    description:
-      "Reach the support team at Cross Cart Global International Express for all your international courier and shipping needs.",
-    url: pageUrl,
-    siteName,
-    type: "website",
-    locale: "en_US",
-    images: [
-      {
-        url: "/full-logo.png",
-        width: 1200,
-        height: 630,
-        alt: siteName,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@crosscartglobal",
-    creator: "@crosscartglobal",
-    title: "Contact Us | Cross Cart Global International Express",
-    description:
-      "Reach the support team at Cross Cart Global International Express for all your international courier and shipping needs.",
-    images: ["/full-logo.png", "/logo.png"],
-  },
-};
+});
 
 const Contact = () => {
   const contactData = {
