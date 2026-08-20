@@ -3,6 +3,7 @@ import { Zone } from "@/server/models/Zone.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { NextRequest } from "next/server";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
+import { AuthMiddleware } from "@/middleware/auth";
 import { Types } from "mongoose";
 import { withTtlCache, invalidateReferenceData } from "@/server/services/referenceCache";
 
@@ -11,6 +12,21 @@ const REF_TTL_MS = 5 * 60 * 1000;
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
+
+    // Admins/moderators (JWT or API key) manage this data and must see fresh
+    // results, so skip the cache for them. The in-memory cache isn't shared
+    // across serverless instances, so relying on it for admins would otherwise
+    // show stale data after an edit. Public/API-key consumers stay cached.
+    let isInternal = false;
+    const apiKey = req.headers.get("X-API-Key") || req.headers.get("x-api-key");
+    if (apiKey) {
+      const apiAuth = await AuthMiddleware.validateApiKey(req);
+      if (!apiAuth.success && apiAuth.response) return apiAuth.response;
+      isInternal = ["admin", "moderator"].includes(apiAuth.user?.role || "");
+    } else {
+      const authResult = await AuthMiddleware.authenticate(req);
+      isInternal = ["admin", "moderator"].includes(authResult.user?.role || "");
+    }
 
     const url = new URL(req.url);
     const search = url.searchParams.get("search");
@@ -29,61 +45,65 @@ export async function GET(req: NextRequest) {
 
     const cacheKey = `zones:list:${search ?? ""}|${name ?? ""}|${code ?? ""}|${isActiveParam ?? ""}|${createdFrom ?? ""}|${createdTo ?? ""}|${sortBy}|${sortOrder}|${page}|${limit}`;
 
-    const result = await withTtlCache<{ total: number; zones: unknown[] }>(
-      cacheKey,
-      REF_TTL_MS,
-      async () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const query: any = {};
+    const loadZones = async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const query: any = {};
 
-        if (typeof isActiveParam === "string") {
-          if (isActiveParam.toLowerCase() === "true") query.isActive = true;
-          else if (isActiveParam.toLowerCase() === "false") query.isActive = false;
-        }
-
-        if (name) query.name = { $regex: name, $options: "i" };
-        if (code) query.code = { $regex: code, $options: "i" };
-
-        if (createdFrom || createdTo) {
-          query.createdAt = {};
-          if (createdFrom) {
-            const d = new Date(createdFrom);
-            if (!isNaN(d.getTime())) query.createdAt.$gte = d;
-          }
-          if (createdTo) {
-            const d = new Date(createdTo);
-            if (!isNaN(d.getTime())) query.createdAt.$lte = d;
-          }
-          if (Object.keys(query.createdAt).length === 0) delete query.createdAt;
-        }
-
-        if (search) {
-          const s = search.trim();
-          query.$or = [
-            { name: { $regex: s, $options: "i" } },
-            { code: { $regex: s, $options: "i" } },
-            { description: { $regex: s, $options: "i" } },
-          ];
-        }
-
-        const allowedSortFields = new Set(["name", "code", "createdAt", "updatedAt"]);
-        const finalSortBy = allowedSortFields.has(sortBy) ? sortBy : "createdAt";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const sortObj: any = {};
-        sortObj[finalSortBy] = sortOrder;
-
-        const total = await Zone.countDocuments(query);
-
-        const zones = await Zone.find(query)
-          .populate("countryIds", "name code isActive")
-          .sort(sortObj)
-          .skip(skip)
-          .limit(limit)
-          .lean();
-
-        return { total, zones };
+      if (typeof isActiveParam === "string") {
+        if (isActiveParam.toLowerCase() === "true") query.isActive = true;
+        else if (isActiveParam.toLowerCase() === "false") query.isActive = false;
       }
-    );
+
+      if (name) query.name = { $regex: name, $options: "i" };
+      if (code) query.code = { $regex: code, $options: "i" };
+
+      if (createdFrom || createdTo) {
+        query.createdAt = {};
+        if (createdFrom) {
+          const d = new Date(createdFrom);
+          if (!isNaN(d.getTime())) query.createdAt.$gte = d;
+        }
+        if (createdTo) {
+          const d = new Date(createdTo);
+          if (!isNaN(d.getTime())) query.createdAt.$lte = d;
+        }
+        if (Object.keys(query.createdAt).length === 0) delete query.createdAt;
+      }
+
+      if (search) {
+        const s = search.trim();
+        query.$or = [
+          { name: { $regex: s, $options: "i" } },
+          { code: { $regex: s, $options: "i" } },
+          { description: { $regex: s, $options: "i" } },
+        ];
+      }
+
+      const allowedSortFields = new Set(["name", "code", "createdAt", "updatedAt"]);
+      const finalSortBy = allowedSortFields.has(sortBy) ? sortBy : "createdAt";
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sortObj: any = {};
+      sortObj[finalSortBy] = sortOrder;
+
+      const total = await Zone.countDocuments(query);
+
+      const zones = await Zone.find(query)
+        .populate("countryIds", "name code isActive")
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      return { total, zones };
+    };
+
+    const result = isInternal
+      ? await loadZones()
+      : await withTtlCache<{ total: number; zones: unknown[] }>(
+          cacheKey,
+          REF_TTL_MS,
+          loadZones
+        );
 
     return successResponse({
       status: 200,

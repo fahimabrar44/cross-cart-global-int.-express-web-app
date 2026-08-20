@@ -150,42 +150,52 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
-                onValueChange={form.setValue.bind(null, "from")}
-                value={form.getValues("from")}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Origin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {countries.map((c) => (
-                    <SelectItem key={c._id} value={c._id}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormField
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error
+                control={form.control}
+                name="from"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Origin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((c) => (
+                        <SelectItem key={c._id} value={c._id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
 
-              <Select
-                onValueChange={form.setValue.bind(null, "to")}
-                value={form.getValues("to")}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Destination Zone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {zones.length === 0 && (
-                    <SelectItem value="__none__" disabled>
-                      No active zones. Add zones first.
-                    </SelectItem>
-                  )}
-                  {zones.map((z) => (
-                    <SelectItem key={z._id} value={z._id}>
-                      {z.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormField
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error
+                control={form.control}
+                name="to"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Destination Zone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {zones.length === 0 && (
+                        <SelectItem value="__none__" disabled>
+                          No active zones. Add zones first.
+                        </SelectItem>
+                      )}
+                      {zones.map((z) => (
+                        <SelectItem key={z._id} value={z._id}>
+                          {z.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             <div className="space-y-4">

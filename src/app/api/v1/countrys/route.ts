@@ -3,6 +3,7 @@ import { Country } from "@/server/models/Country.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { NextRequest } from "next/server";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
+import { AuthMiddleware } from "@/middleware/auth";
 import { withTtlCache, invalidateReferenceData } from "@/server/services/referenceCache";
 
 const REF_TTL_MS = 5 * 60 * 1000;
@@ -10,6 +11,21 @@ const REF_TTL_MS = 5 * 60 * 1000;
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
+
+    // Admins/moderators (JWT or API key) manage this data and must see fresh
+    // results, so skip the cache for them. The in-memory cache isn't shared
+    // across serverless instances, so relying on it for admins would otherwise
+    // show stale data after an edit. Public/API-key consumers stay cached.
+    let isInternal = false;
+    const apiKey = req.headers.get("X-API-Key") || req.headers.get("x-api-key");
+    if (apiKey) {
+      const apiAuth = await AuthMiddleware.validateApiKey(req);
+      if (!apiAuth.success && apiAuth.response) return apiAuth.response;
+      isInternal = ["admin", "moderator"].includes(apiAuth.user?.role || "");
+    } else {
+      const authResult = await AuthMiddleware.authenticate(req);
+      isInternal = ["admin", "moderator"].includes(authResult.user?.role || "");
+    }
 
     const url = new URL(req.url);
     const search = url.searchParams.get("search");
@@ -31,68 +47,72 @@ export async function GET(req: NextRequest) {
 
     const cacheKey = `countrys:list:${search ?? ""}|${name ?? ""}|${code ?? ""}|${zone ?? ""}|${timezone ?? ""}|${phoneCode ?? ""}|${isActiveParam ?? ""}|${createdFrom ?? ""}|${createdTo ?? ""}|${sortBy}|${sortOrder}|${page}|${limit}`;
 
-    const result = await withTtlCache<{ total: number; countries: unknown[] }>(
-      cacheKey,
-      REF_TTL_MS,
-      async () => {
-        // Build query object
+    const loadCountries = async () => {
+      // Build query object
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const query: any = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const query: any = {};
 
-        if (typeof isActiveParam === "string") {
-          if (isActiveParam.toLowerCase() === "true") query.isActive = true;
-          else if (isActiveParam.toLowerCase() === "false") query.isActive = false;
-        }
-
-        if (name) query.name = { $regex: name, $options: "i" };
-        if (code) query.code = code.toUpperCase();
-        if (zone) query.zone = { $regex: zone, $options: "i" };
-        if (timezone) query.timezone = { $regex: timezone, $options: "i" };
-        if (phoneCode) query.phoneCode = { $regex: phoneCode, $options: "i" };
-
-        if (createdFrom || createdTo) {
-          query.createdAt = {};
-          if (createdFrom) {
-            const d = new Date(createdFrom);
-            if (!isNaN(d.getTime())) query.createdAt.$gte = d;
-          }
-          if (createdTo) {
-            const d = new Date(createdTo);
-            if (!isNaN(d.getTime())) query.createdAt.$lte = d;
-          }
-          // clean empty object
-          if (Object.keys(query.createdAt).length === 0) delete query.createdAt;
-        }
-
-        if (search) {
-          const s = search.trim();
-          query.$or = [
-            { name: { $regex: s, $options: "i" } },
-            { code: { $regex: s, $options: "i" } },
-            { zone: { $regex: s, $options: "i" } },
-            { phoneCode: { $regex: s, $options: "i" } },
-          ];
-        }
-
-        // Validate sortBy allowed fields (prevent injection / invalid field)
-        const allowedSortFields = new Set(["name", "code", "createdAt", "updatedAt", "zone"]);
-        const finalSortBy = allowedSortFields.has(sortBy) ? sortBy : "createdAt";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const sortObj: any = {};
-        sortObj[finalSortBy] = sortOrder;
-
-        const total = await Country.countDocuments(query);
-
-        const countries = await Country.find(query)
-          .sort(sortObj)
-          .skip(skip)
-          .limit(limit)
-          .lean();
-
-        return { total, countries };
+      if (typeof isActiveParam === "string") {
+        if (isActiveParam.toLowerCase() === "true") query.isActive = true;
+        else if (isActiveParam.toLowerCase() === "false") query.isActive = false;
       }
-    );
+
+      if (name) query.name = { $regex: name, $options: "i" };
+      if (code) query.code = code.toUpperCase();
+      if (zone) query.zone = { $regex: zone, $options: "i" };
+      if (timezone) query.timezone = { $regex: timezone, $options: "i" };
+      if (phoneCode) query.phoneCode = { $regex: phoneCode, $options: "i" };
+
+      if (createdFrom || createdTo) {
+        query.createdAt = {};
+        if (createdFrom) {
+          const d = new Date(createdFrom);
+          if (!isNaN(d.getTime())) query.createdAt.$gte = d;
+        }
+        if (createdTo) {
+          const d = new Date(createdTo);
+          if (!isNaN(d.getTime())) query.createdAt.$lte = d;
+        }
+        // clean empty object
+        if (Object.keys(query.createdAt).length === 0) delete query.createdAt;
+      }
+
+      if (search) {
+        const s = search.trim();
+        query.$or = [
+          { name: { $regex: s, $options: "i" } },
+          { code: { $regex: s, $options: "i" } },
+          { zone: { $regex: s, $options: "i" } },
+          { phoneCode: { $regex: s, $options: "i" } },
+        ];
+      }
+
+      // Validate sortBy allowed fields (prevent injection / invalid field)
+      const allowedSortFields = new Set(["name", "code", "createdAt", "updatedAt", "zone"]);
+      const finalSortBy = allowedSortFields.has(sortBy) ? sortBy : "createdAt";
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sortObj: any = {};
+      sortObj[finalSortBy] = sortOrder;
+
+      const total = await Country.countDocuments(query);
+
+      const countries = await Country.find(query)
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      return { total, countries };
+    };
+
+    const result = isInternal
+      ? await loadCountries()
+      : await withTtlCache<{ total: number; countries: unknown[] }>(
+          cacheKey,
+          REF_TTL_MS,
+          loadCountries
+        );
 
     return successResponse({
       status: 200,

@@ -3,6 +3,7 @@ import connectDB from "@/config/db";
 import { Review } from "@/server/models/Review.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { createAuthHandler } from "@/server/common/apiWrapper";
+import { AuthMiddleware } from "@/middleware/auth";
 import { Types } from "mongoose";
 import { withTtlCache, invalidateReferenceData } from "@/server/services/referenceCache";
 
@@ -23,6 +24,21 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
+    // Admins/moderators (JWT or API key) manage this data and must see fresh
+    // results, so skip the cache for them. The in-memory cache isn't shared
+    // across serverless instances, so relying on it for admins would otherwise
+    // show stale data after an edit. Public/API-key consumers stay cached.
+    let isInternal = false;
+    const apiKey = req.headers.get("X-API-Key") || req.headers.get("x-api-key");
+    if (apiKey) {
+      const apiAuth = await AuthMiddleware.validateApiKey(req);
+      if (!apiAuth.success && apiAuth.response) return apiAuth.response;
+      isInternal = ["admin", "moderator"].includes(apiAuth.user?.role || "");
+    } else {
+      const authResult = await AuthMiddleware.authenticate(req);
+      isInternal = ["admin", "moderator"].includes(authResult.user?.role || "");
+    }
+
     const url = new URL(req.url);
     const q: GetQuery = Object.fromEntries(url.searchParams.entries());
 
@@ -32,32 +48,36 @@ export async function GET(req: NextRequest) {
 
     const cacheKey = `reviews:list:${q.user ?? ""}|${q.status ?? ""}|${q.rating ?? ""}|${q.search ?? ""}|${q.sortBy ?? ""}|${q.sortOrder ?? ""}|${page}|${limit}`;
 
-    const result = await withTtlCache<{ total: number; reviews: unknown[] }>(
-      cacheKey,
-      REF_TTL_MS,
-      async () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const query: any = {};
+    const loadReviews = async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const query: any = {};
 
-        if (q.user && Types.ObjectId.isValid(q.user)) query.user = new Types.ObjectId(q.user);
-        if (q.status) query.status = q.status;
-        if (q.rating) query.rating = Number(q.rating);
-        if (q.search) query.$or = [{ comment: { $regex: q.search, $options: "i" } }];
+      if (q.user && Types.ObjectId.isValid(q.user)) query.user = new Types.ObjectId(q.user);
+      if (q.status) query.status = q.status;
+      if (q.rating) query.rating = Number(q.rating);
+      if (q.search) query.$or = [{ comment: { $regex: q.search, $options: "i" } }];
 
-        const allowedSortFields = new Set(["createdAt", "updatedAt", "rating", "helpfulCount"]);
-        const sortBy = allowedSortFields.has(q.sortBy || "") ? q.sortBy : "createdAt";
-        const sortOrder = (q.sortOrder || "desc").toLowerCase() === "asc" ? 1 : -1;
+      const allowedSortFields = new Set(["createdAt", "updatedAt", "rating", "helpfulCount"]);
+      const sortBy = allowedSortFields.has(q.sortBy || "") ? q.sortBy : "createdAt";
+      const sortOrder = (q.sortOrder || "desc").toLowerCase() === "asc" ? 1 : -1;
 
-        const total = await Review.countDocuments(query);
-        const reviews = await Review.find(query).populate("user")
-          .sort({ [sortBy as string]: sortOrder })
-          .skip(skip)
-          .limit(limit)
-          .lean();
+      const total = await Review.countDocuments(query);
+      const reviews = await Review.find(query).populate("user")
+        .sort({ [sortBy as string]: sortOrder })
+        .skip(skip)
+        .limit(limit)
+        .lean();
 
-        return { total, reviews };
-      }
-    );
+      return { total, reviews };
+    };
+
+    const result = isInternal
+      ? await loadReviews()
+      : await withTtlCache<{ total: number; reviews: unknown[] }>(
+          cacheKey,
+          REF_TTL_MS,
+          loadReviews
+        );
 
     return successResponse({
       status: 200,

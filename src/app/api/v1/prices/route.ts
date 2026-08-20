@@ -154,22 +154,31 @@ export async function GET(req: NextRequest) {
 
     const cacheKey = `prices:list:${q.from ?? ""}|${q.to ?? ""}|${q.fromName ?? ""}|${q.toName ?? ""}|${q.rateName ?? ""}|${sortBy}|${sortOrder}|${page}|${limit}`;
 
-    const result = await withTtlCache<{ total: number; prices: unknown[] }>(
-      cacheKey,
-      REF_TTL_MS,
-      async () => {
-        const total = await Price.countDocuments(query);
-        const prices = await Price.find(query)
-          .populate("from")
-          .populate("to")
-          .sort({ [sortBy as string]: sortOrder })
-          .skip(skip)
-          .limit(limit)
-          .lean();
+    // Internal users (admin/moderator) manage these rates, so they must always
+    // see fresh data — skip the cache. Caching is only for public/API-key
+    // consumers, where a brief staleness is acceptable and saves DB load.
+    // (The in-memory cache isn't shared across serverless instances, so relying
+    // on it for admins would otherwise show stale rates after an edit.)
+    const loadPrices = async () => {
+      const total = await Price.countDocuments(query);
+      const prices = await Price.find(query)
+        .populate("from")
+        .populate("to")
+        .sort({ [sortBy as string]: sortOrder })
+        .skip(skip)
+        .limit(limit)
+        .lean();
 
-        return { total, prices };
-      }
-    );
+      return { total, prices };
+    };
+
+    const result = isInternal
+      ? await loadPrices()
+      : await withTtlCache<{ total: number; prices: unknown[] }>(
+          cacheKey,
+          REF_TTL_MS,
+          loadPrices
+        );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const prices = result.prices as any[];
