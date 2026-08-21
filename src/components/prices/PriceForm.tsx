@@ -48,6 +48,7 @@ const courierPriceSchema = z.object({
   gift: z.coerce.number().min(1),
   fuel:z.coerce.number(),
   price: weightPricesSchema,
+  serviceDetails: z.array(z.string()).optional().default([]),
 });
 
 
@@ -110,6 +111,7 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
       profitPercentage: 0,
       fuel:0,
       gift: 0,
+      serviceDetails: [],
       price: {
         gm500: 0,
         gm1000: 0,
@@ -133,6 +135,61 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
         kg501to1000: 0,
       },
     });
+  };
+
+  const renderServiceDetails = (index: number) => {
+    const details: string[] =
+      form.watch(`rate.${index}.serviceDetails`) ?? [];
+    return (
+      <div className="mt-3">
+        <FormLabel className="text-sm font-medium">Service Details</FormLabel>
+        <div className="space-y-2 mt-1">
+          {details.map((_, di) => (
+            <div key={di} className="flex items-center gap-2">
+              <Input
+                placeholder="e.g. Free doorstep pickup"
+                value={details[di] ?? ""}
+                onChange={(e) => {
+                  const next = [...details];
+                  next[di] = e.target.value;
+                  form.setValue(`rate.${index}.serviceDetails`, next, {
+                    shouldValidate: true,
+                  });
+                }}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  form.setValue(
+                    `rate.${index}.serviceDetails`,
+                    details.filter((_, i) => i !== di),
+                    { shouldValidate: true },
+                  )
+                }
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              form.setValue(
+                `rate.${index}.serviceDetails`,
+                [...details, ""],
+                { shouldValidate: true },
+              )
+            }
+          >
+            <Plus className="h-4 w-4 mr-1" /> Add Detail
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -299,6 +356,7 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
                       )
                     )}
                   </div>
+                  {renderServiceDetails(index)}
                 </Card>
               ))}
 

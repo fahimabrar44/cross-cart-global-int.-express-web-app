@@ -504,9 +504,16 @@ export default function RateChartsPage() {
                     {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
                     {/* @ts-expect-error */}
                             <div className="font-medium">$ {Number(v *(1 + r.fuel / 100) *(1 + r.profitPercentage / 100)).toFixed(3)}
-                            </div>
-                          </div>
-                        ))}
+                       </div>
+                       {r.serviceDetails && r.serviceDetails.filter(Boolean).length > 0 && (
+                         <ul className="mt-2 space-y-1 text-xs text-muted-foreground list-disc pl-5">
+                           {r.serviceDetails.filter(Boolean).map((d: string, di: number) => (
+                             <li key={di}>{d}</li>
+                           ))}
+                         </ul>
+                       )}
+                     </div>
+                   ))}
                       </div>
                     </div>
                   ))}

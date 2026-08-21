@@ -376,6 +376,7 @@ export interface PriceChart {
     gift: number;
     fuel: number;
     price: Record<string, number>; // each weight mapped to a number
+    serviceDetails?: string[]; // short bullet texts shown under each rate
   }[];
 }
 

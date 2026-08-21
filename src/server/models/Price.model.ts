@@ -28,7 +28,8 @@ interface IRate {
   profitPercentage: number;
   gift: number;
   price: IPriceCategory;
-  fuel:number;
+  fuel: number;
+  serviceDetails?: string[]; // short bullet texts shown under each rate
 }
 
 export interface IPrice extends Document {
@@ -73,7 +74,8 @@ const rateSchema = new Schema<IRate>(
     profitPercentage: { type: Number, required: true, default: 15 },
     gift: { type: Number, required: true, default: 15 },
     price: { type: priceCategorySchema, default: {} },
-    fuel:{type:Number, require:true}
+    fuel: { type: Number, require: true },
+    serviceDetails: { type: [String], default: [] },
   },
   { _id: false }
 );

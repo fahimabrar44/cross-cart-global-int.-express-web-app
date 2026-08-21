@@ -39,6 +39,7 @@ interface Rate {
   fuel: number;
 
   price: Record<string, number>;
+  serviceDetails?: string[];
 }
 
 interface PriceData {
@@ -489,9 +490,16 @@ export default function ShippingCalculatorContent({
                                   </div>
                                   <div className="font-bold text-[#12352A] pl-2">
                                     ${priceWithFees(v, r)}
-                                  </div>
-                                </div>
-                              ))}
+                           </div>
+                           {r.serviceDetails && r.serviceDetails.filter(Boolean).length > 0 && (
+                             <ul className="mt-3 space-y-1 text-sm text-gray-600 list-disc pl-5">
+                               {r.serviceDetails.filter(Boolean).map((d, di) => (
+                                 <li key={di}>{d}</li>
+                               ))}
+                             </ul>
+                           )}
+                         </div>
+                       ))}
                           </div>
                         </div>
                       ))}

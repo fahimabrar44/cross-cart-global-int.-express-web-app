@@ -74,6 +74,15 @@ function validateRates(rates: any[]): { valid: boolean; message: string } {
       return { valid: false, message: `rate[${i}].gift must be a number` };
     if (r.price && typeof r.price !== "object")
       return { valid: false, message: `rate[${i}].price must be an object` };
+    if (
+      r.serviceDetails !== undefined &&
+      (!Array.isArray(r.serviceDetails) ||
+        !r.serviceDetails.every((s: unknown) => typeof s === "string"))
+    )
+      return {
+        valid: false,
+        message: `rate[${i}].serviceDetails must be an array of strings`,
+      };
   }
   return { valid: true, message: "Valid" };
 }
