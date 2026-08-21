@@ -48,7 +48,7 @@ Our services include reliable parcel delivery, real-time shipment tracking, cust
 From Bangladesh, we operate global shipping routes covering major destinations including India, China, the USA, the UK, Canada, Europe, Australia, Malaysia, and many more countries. Our strong logistics network and strategic partnerships enable us to offer competitive pricing and faster transit times.
 Cross Cart Global also supports eCommerce businesses with complete logistics solutions, including order fulfillment, inventory handling, and return management—helping sellers expand their reach to international markets seamlessly.
 With a focus on customer satisfaction, reliability, and innovation, Cross Cart Global aims to be your trusted logistics partner for all international shipping needs.`,
-  metadataBase: new URL("https://crosscartglobal.com"),
+  metadataBase: new URL("https://www.crosscartglobal.com"),
   applicationName:
     "Cross Cart Global International Express – International Courier Solutions",
   referrer: "origin-when-cross-origin",
@@ -291,7 +291,7 @@ With a focus on customer satisfaction, reliability, and innovation, Cross Cart G
   authors: [
     {
       name: "Cross Cart Global International Express Team",
-      url: "https://crosscartglobal.com",
+      url: "https://www.crosscartglobal.com",
     },
   ],
   category:
@@ -339,7 +339,7 @@ Today, Cross Cart Global International Express continues to grow — but our fou
 
 
 To become a leading international courier company, connecting Bangladesh seamlessly with the world while providing reliable, affordable, and customer-focused shipping solutions.`,
-    url: "https://crosscartglobal.com",
+    url: "https://www.crosscartglobal.com",
     siteName:
       "Cross Cart Global International Express – International Courier Solutions",
     images: [
@@ -463,7 +463,7 @@ To become a leading international courier company, connecting Bangladesh seamles
     shortcut: ["/logo.png"],
   },
   alternates: {
-    canonical: "https://crosscartglobal.com",
+    canonical: "https://www.crosscartglobal.com",
   },
   other: {
     "facebook-domain-verification": "0z23qfw1nqjdzojtbxvrotsfgxt9u2",
@@ -475,11 +475,11 @@ To become a leading international courier company, connecting Bangladesh seamles
 
 
 const organizationSchema = {
-  "@context": "https://crosscartglobal.com",
+  "@context": "https://www.crosscartglobal.com",
   "@type": "Organization",
   name: "Cross Cart Global International Express Courier",
-  url: "https://crosscartglobal.com",
-  logo: "https://crosscartglobal.com/logo.png",
+  url: "https://www.crosscartglobal.com",
+  logo: "https://www.crosscartglobal.com/logo.png",
   sameAs: [
     "https://www.facebook.com/crosscart",
     "https://www.facebook.com/crosscartglobal",
@@ -501,30 +501,30 @@ const organizationSchema = {
 };
 
 const websiteSchema = {
-  "@context": "https://crosscartglobal.com",
+  "@context": "https://www.crosscartglobal.com",
   "@type": "WebSite",
   name: "Cross Cart Global International Express Courier",
-  url: "https://crosscartglobal.com",
+  url: "https://www.crosscartglobal.com",
   potentialAction: {
     "@type": "SearchAction",
-    target: "https://crosscartglobal.com/track?search_term_string={search_term_string}",
+    target: "https://www.crosscartglobal.com/track?search_term_string={search_term_string}",
     "query-input": "required name=search_term_string",
   },
 };
 
 const localBusinessSchema = {
-  "@context": "https://crosscartglobal.com",
+  "@context": "https://www.crosscartglobal.com",
   "@type": "CourierService",
-  "@id": "https://crosscartglobal.com/",
+  "@id": "https://www.crosscartglobal.com/",
 
   name: "Cross Cart Global International Express Courier",
   alternateName: "Cross Cart Global International Express Courier",
-  url: "https://crosscartglobal.com",
-  logo: "https://crosscartglobal.com/full-logo.png",
+  url: "https://www.crosscartglobal.com",
+  logo: "https://www.crosscartglobal.com/full-logo.png",
   image: [
-    "https://crosscartglobal.com/full-logo.png",
-    "https://crosscartglobal.com/cover-1.png",
-    "https://crosscartglobal.com/cover-2.png"
+    "https://www.crosscartglobal.com/full-logo.png",
+    "https://www.crosscartglobal.com/cover-1.png",
+    "https://www.crosscartglobal.com/cover-2.png"
   ],
 
   description:
@@ -642,7 +642,7 @@ const localBusinessSchema = {
   },
 
   parentOrganization: {
-    "@id": "https://crosscartglobal.com/#organization"
+    "@id": "https://www.crosscartglobal.com/#organization"
   }
 };
 

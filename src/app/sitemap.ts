@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import connectDB from "@/config/db";
 import { Blog } from "@/server/models/Blog.model";
 
-const baseUrl = "https://crosscartglobal.com";
+const baseUrl = "https://www.crosscartglobal.com";
 
 export const dynamic = "force-dynamic";
 

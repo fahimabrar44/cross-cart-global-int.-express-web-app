@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/dashboard", "/auth", "/api"],
       },
     ],
-    sitemap: "https://crosscartglobal.com/sitemap.xml",
-    host: "https://crosscartglobal.com",
+    sitemap: "https://www.crosscartglobal.com/sitemap.xml",
+    host: "https://www.crosscartglobal.com",
   };
 }

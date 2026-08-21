@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const SITE_URL = "https://crosscartglobal.com";
+export const SITE_URL = "https://www.crosscartglobal.com";
 export const BRAND = "Cross Cart Global International Express";
 export const BRAND_SHORT = "Cross Cart";
 
