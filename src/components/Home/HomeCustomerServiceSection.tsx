@@ -10,7 +10,7 @@ const HomeCustomerServiceSection = () => {
               <Headset size={52} className="text-primary" strokeWidth={1.5} />
             </div>
             <div className="text-center">
-              <h1 className="text-base font-bold text-foreground">Customer Support</h1>
+              <h3 className="text-base font-bold text-foreground">Customer Support</h3>
               <p className="text-sm font-normal text-muted-foreground">Inquire about due deliveries or report a problem</p>
             </div>
           </div>
@@ -20,7 +20,7 @@ const HomeCustomerServiceSection = () => {
               <LaptopMinimalCheck size={52} className="text-primary" strokeWidth={1.5} />
             </div>
             <div className="text-center">
-              <h1 className="text-base font-bold text-foreground">Business Enquiries</h1>
+              <h3 className="text-base font-bold text-foreground">Business Enquiries</h3>
               <p className="text-sm font-normal text-muted-foreground">Connect with our team to discuss your needs</p>
             </div>
           </div>
@@ -30,7 +30,7 @@ const HomeCustomerServiceSection = () => {
               <BriefcaseBusiness size={52} className="text-primary" strokeWidth={1.5} />
             </div>
             <div className="text-center">
-              <h1 className="text-base font-bold text-foreground">Careers</h1>
+              <h3 className="text-base font-bold text-foreground">Careers</h3>
               <p className="text-sm font-normal text-muted-foreground">Explore opportunities to join our team</p>
             </div>
           </div>

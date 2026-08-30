@@ -153,6 +153,8 @@ We make international delivery smarter, faster, and more affordable by offering 
                 <Link
                   href={"https://www.facebook.com/crosscart"}
                   target="_blank"
+                  aria-label="Facebook"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 p-1 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 flex justify-center align-middle items-center transition-colors"
                 >
                   <FaFacebook className="w-5 h-5 text-white" />
@@ -160,6 +162,8 @@ We make international delivery smarter, faster, and more affordable by offering 
                 <Link
                   href={"https://www.instagram.com/crosscart.global/"}
                   target="_blank"
+                  aria-label="Instagram"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 flex justify-center align-middle items-center transition-colors"
                 >
                   <LuInstagram className="w-5 h-5 text-white" />
@@ -167,6 +171,8 @@ We make international delivery smarter, faster, and more affordable by offering 
                 <Link
                   href={"https://x.com/CrossCartGlobal"}
                   target="_blank"
+                  aria-label="X"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 flex justify-center align-middle items-center transition-colors"
                 >
                   <FaTwitter className="w-5 h-5 text-white" />
@@ -174,6 +180,8 @@ We make international delivery smarter, faster, and more affordable by offering 
                 <Link
                   href={"https://www.linkedin.com/company/cross-cart-global/"}
                   target="_blank"
+                  aria-label="LinkedIn"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 flex justify-center align-middle items-center transition-colors"
                 >
                   <IoLogoLinkedin className="w-5 h-5 text-white" />
@@ -181,6 +189,8 @@ We make international delivery smarter, faster, and more affordable by offering 
                 <Link
                   href={"https://www.youtube.com/@crosscart.global"}
                   target="_blank"
+                  aria-label="YouTube"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 flex justify-center align-middle items-center transition-colors"
                 >
                   <FaYoutube className="w-5 h-5 text-white" />
@@ -188,9 +198,9 @@ We make international delivery smarter, faster, and more affordable by offering 
               </div>
             </div>
             <div className="group lg:border-r border-white/10 border-dashed relative">
-              <h3 className=" text-lg text-white font-semibold ">
+              <h2 className=" text-lg text-white font-semibold ">
                 Solutions
-              </h3>
+              </h2>
 
               <span className="group-hover:w-[200px] w-[120px] transition-all duration-600 h-[2px] bg-[#F5C400] block"></span>
 
@@ -213,7 +223,7 @@ We make international delivery smarter, faster, and more affordable by offering 
               </ul>
             </div>
             <div className="group ">
-              <h3 className=" text-lg text-white ">Our Company</h3>
+              <h2 className=" text-lg text-white ">Our Company</h2>
 
               <span className="group-hover:w-[200px] w-[120px] transition-all duration-600 h-[2px] bg-[#F5C400] block"></span>
 

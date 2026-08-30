@@ -11,7 +11,22 @@ import Script from "next/script";
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+  weight: ["400", "600", "700"],
+});
 
 export const metadata: Metadata = {
   manifest: "/manifest.json",
@@ -654,7 +669,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${plusJakartaSans.variable}`}>
       <body>
         <AuthProvider>
           <SiteLayout>{children}</SiteLayout>
@@ -667,8 +682,8 @@ export default function RootLayout({
         </AuthProvider>
         <PwaRegister />
 
-        {/* Google Tag Manager */}
-        <Script id="gtm-script" strategy="afterInteractive">
+        {/* Google Tag Manager — deferred so it doesn't compete with LCP */}
+        <Script id="gtm-script" strategy="lazyOnload">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],

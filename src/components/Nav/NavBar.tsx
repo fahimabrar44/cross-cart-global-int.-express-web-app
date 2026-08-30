@@ -320,11 +320,11 @@ const NavBar = () => {
 
                     <li className=" rounded-lg overflow-hidden ">
                       <Image
-                        src={"/solutions.png"}
+                        src={"/solutions.webp"}
                         width={380}
                         height={160}
                         className="w-[380px] h-[160px] rounded-xl object-cover"
-                        alt="logistic-image"
+                        alt="Cross Cart Global logistics solutions"
                       />
                     </li>
                   </ul>
@@ -456,6 +456,7 @@ const NavBar = () => {
                   <Button
                     variant="outline"
                     size="icon"
+                    aria-label="Open navigation menu"
                     className=" sm:px-5.5 px-5 py-6 text-foreground hover:bg-primary hover:text-white border-border cursor-pointer"
                   >
                     <Menu className="size-6" />

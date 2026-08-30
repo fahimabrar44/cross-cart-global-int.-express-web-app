@@ -37,7 +37,7 @@ const HomeServiceQuickLinksSection = () => {
                 <Icon size={52} className="text-primary" strokeWidth={1.5} />
               </div>
               <div className="text-center">
-                <h1 className="text-base font-bold text-foreground">{title}</h1>
+                <h3 className="text-base font-bold text-foreground">{title}</h3>
                 <p className="text-sm font-normal text-muted-foreground">
                   {description}
                 </p>

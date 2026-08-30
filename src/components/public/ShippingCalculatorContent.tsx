@@ -199,20 +199,20 @@ export default function ShippingCalculatorContent({
   const carriers = [
     {
       name: "DHL Express",
-      logo: "/dhl-logo.png",
+      logo: "/logos/dhl-logo.webp",
       deliveryTime: "1-3 business days",
     },
     {
       name: "FedEx",
-      logo: "/fedex-logo.png",
+      logo: "/logos/fedex-logo.webp",
       deliveryTime: "3-5 business days",
     },
     {
       name: "Aramex",
-      logo: "/aramex-logo.png",
+      logo: "/logos/aramex-logo.webp",
       deliveryTime: "5-7 business days",
     },
-    { name: "UPS", logo: "/ups-logo.png", deliveryTime: "1-3 business days" },
+    { name: "UPS", logo: "/logos/ups-logo.webp", deliveryTime: "1-3 business days" },
     {
       name: "Local Partner",
       logo: "/logo.png",
@@ -602,3 +602,4 @@ export default function ShippingCalculatorContent({
     </div>
   );
 }
+

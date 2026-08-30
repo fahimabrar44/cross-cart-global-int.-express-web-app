@@ -5,43 +5,43 @@ const searvices = [
     title: "DHL Courier",
     description:
       "Cross Cart Global International Express offers premium DHL courier services, providing fast, reliable, and secure international shipping. Whether sending personal parcels, important documents, or business consignments, DHL ensures your shipments reach their destination quickly. With door-to-door pickup, real-time tracking, and careful handling, customers can trust that their packages are safe at every step. Cross Cart Global International Express’s partnership with DHL allows us to offer these top-tier services at competitive rates, making global shipping accessible to everyone in Bangladesh.",
-    logo: "/dhl-logo.png",
+    logo: "/logos/dhl-logo.webp",
   },
   {
     title: "FedEx Courier",
     description:
       "Through Cross Cart Global International Express, FedEx courier services are made convenient and affordable for individuals and businesses alike. FedEx specializes in express delivery solutions, ensuring urgent parcels reach their destination on time. Cross Cart Global International Express provides full support including door-to-door pickup, tracking updates, and assistance with customs clearance. From sending gifts to exporting commercial goods, FedEx through Cross Cart Global International Express guarantees reliability, efficiency, and security for every shipment.",
-    logo: "/fedex-logo.png",
+    logo: "/logos/fedex-logo.webp",
   },
   {
     title: "UPS Courier",
     description:
       "UPS is a globally trusted courier known for timely and dependable delivery. Cross Cart Global International Express brings UPS services to Bangladesh with the convenience of doorstep pickup, real-time parcel tracking, and secure handling of fragile or valuable items. Businesses and individuals benefit from UPS’s extensive international network, ensuring shipments reach over 220 countries. With Cross Cart Global International Express, UPS shipping becomes more cost-effective while maintaining the same high-quality service.",
-    logo: "/ups-logo.png",
+    logo: "/logos/ups-logo.webp",
   },
   {
     title: "Aramex Courier",
     description:
       "Cross Cart Global International Express offers Aramex courier services for customers seeking flexible, cost-effective international shipping solutions. Aramex is ideal for medium-sized parcels and regular shipments to multiple countries. Cross Cart Global International Express handles the entire process, from pickup to delivery, including customs documentation. With competitive rates and a reliable international network, Aramex via Cross Cart Global International Express ensures your shipments are handled efficiently, safely, and affordably.",
-    logo: "/aramex-logo.png",
+    logo: "/logos/aramex-logo.webp",
   },
   {
     title: "DPD Courier",
     description:
       "DPD specializes in fast, efficient shipping across Europe, and Cross Cart Global International Express provides access to this service for Bangladeshi customers. DPD offers real-time tracking, delivery notifications, and secure handling to ensure packages arrive on time. Whether for e-commerce orders or personal parcels, DPD through Cross Cart Global International Express guarantees reliability and ease of shipping to European destinations, making international deliveries simpler and faster.",
-    logo: "/dpd-logo.png",
+    logo: "/logos/dpd-logo.webp",
   },
   {
     title: "Air Freight",
     description:
       "Cross Cart Global International Express’s air freight service provides a fast, reliable solution for large or urgent shipments. Businesses and individuals can ship bulk or oversized cargo internationally with confidence. Cross Cart Global International Express handles the logistics from pickup to delivery, including all necessary documentation and customs requirements. Air freight ensures time-sensitive shipments reach their destination quickly, making it ideal for high-priority goods that cannot wait for sea transport.",
-    logo: "/dpd-logo.png",
+    logo: "/logos/dpd-logo.webp",
   },
   {
     title: "Sea Freight",
     description:
       "For heavy or bulk shipments, Cross Cart Global International Express offers sea freight services, the most cost-effective option for large-scale international shipping. Perfect for commercial consignments, machinery, or personal goods, sea freight allows customers to ship large volumes safely. Cross Cart Global International Express manages container booking, port handling, documentation, and customs clearance, providing a smooth end-to-end solution for importers and exporters looking for affordable and reliable shipping.",
-    logo: "/dpd-logo.png",
+    logo: "/logos/dpd-logo.webp",
   },
   {
     title: "Customs Clearance",
@@ -89,3 +89,5 @@ const OurServiceSection = () => {
 };
 
 export default OurServiceSection;
+
+

@@ -8,18 +8,18 @@ interface LogoProps {
   height?: number;
 }
 
-const Logo: React.FC<LogoProps> = ({width, height}) => {
+const Logo: React.FC<LogoProps> = ({ width, height }) => {
   const imgWidth = width ?? 160;
-  const imgHeight = height ?? 75;
+  const imgHeight = height ?? 55;
   return (
-    <Link href={"/"}>
+    <Link href={"/"} aria-label="Cross Cart Global - Home">
       <Image
-        src="/full-logo.png"
-        alt="CrossCart Logo"
+        src="/logos/full-logo.webp"
+        alt="Cross Cart Global - Home"
         width={imgWidth}
         height={imgHeight}
+        sizes="(max-width: 768px) 140px, 220px"
         className="object-contain"
-        priority
       />
     </Link>
   )

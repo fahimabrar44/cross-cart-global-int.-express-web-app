@@ -14,7 +14,7 @@ const OurStorySection = () => {
               width={500}
               height={500}
               alt="CrossCart Global Int Express Man"
-              src={"/crosscart-man.jpg"}
+              src={"/crosscart-man.webp"}
               className="w-full h-auto rounded-lg"
             />
           </div>

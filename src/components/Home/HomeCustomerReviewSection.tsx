@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 const fallbackTestimonials = [
   {
     name: "John Doe",
-    avatar: "/professional-male-avatar.png",
+    avatar: "",
     quote:
       "This platform has transformed how we manage our business. The results speak for themselves.",
     rating: 5,
@@ -22,7 +22,7 @@ const fallbackTestimonials = [
   },
   {
     name: "Jane Doe",
-    avatar: "/professional-female-avatar.png",
+    avatar: "",
     quote:
       "Outstanding technical capabilities and seamless integration. Highly recommended.",
     rating: 5,
@@ -30,7 +30,7 @@ const fallbackTestimonials = [
   },
   {
     name: "John Smith",
-    avatar: "/business-professional-avatar.png",
+    avatar: "",
     quote:
       "The efficiency gains we've seen are remarkable. This solution exceeded all expectations.",
     rating: 4,
@@ -38,7 +38,7 @@ const fallbackTestimonials = [
   },
   {
     name: "Jane Smith",
-    avatar: "/tech-professional-avatar.png",
+    avatar: "",
     quote:
       "Clean, intuitive interface with powerful features. Perfect for our development workflow.",
     rating: 5,
@@ -46,7 +46,7 @@ const fallbackTestimonials = [
   },
   {
     name: "Richard Doe",
-    avatar: "/creative-professional-avatar.png",
+    avatar: "",
     quote:
       "Beautiful design and excellent user experience. Everything we needed in one platform.",
     rating: 5,
@@ -54,7 +54,7 @@ const fallbackTestimonials = [
   },
   {
     name: "Gordon Doe",
-    avatar: "/developer-professional-avatar.png",
+    avatar: "",
     quote:
       "Robust architecture and great developer tools. Makes our job so much easier.",
     rating: 4,
@@ -155,10 +155,12 @@ const HomeCustomerReviewSection = ({
         <Card className="max-w-68 p-3 select-none bg-white border border-border shadow-card h-full flex flex-col">
           <div className="mb-2 flex gap-4 items-center align-middle">
             <Avatar className="size-9 ring-1 ring-input">
-              <AvatarImage
-                src={testimonial.avatar || "/placeholder.svg"}
-                alt={testimonial.name}
-              />
+              {testimonial.avatar && (
+                <AvatarImage
+                  src={testimonial.avatar}
+                  alt={testimonial.name}
+                />
+              )}
               <AvatarFallback>
                 {testimonial.name
                   .split(" ")
