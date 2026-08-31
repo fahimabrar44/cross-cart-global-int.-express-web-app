@@ -9,25 +9,20 @@ export interface PriceFilters extends PaginationParams {
 }
 
 export interface CreatePriceData {
-  fromCountry: string;
-  toCountry: string;
-  serviceType: "standard" | "express" | "overnight";
-  weightTiers: {
-    minWeight: number;
-    maxWeight: number;
-    pricePerKg: number;
-    basePrice: number;
+  from: string;
+  to: string;
+  rate: {
+    name: string;
+    profitPercentage: number;
+    gift: number;
+    fuel: number;
+    price: Record<string, number>;
+    serviceDetails?: string[];
   }[];
-  additionalCharges: {
-    fuelSurcharge?: number;
-    remoteSurcharge?: number;
-    securitySurcharge?: number;
-    customsClearance?: number;
-  };
   isActive?: boolean;
 }
 
-export type UpdatePriceData = Partial<CreatePriceData> 
+export type UpdatePriceData = Partial<CreatePriceData>;
 
 class PriceService {
   private baseEndpoint = "/prices";

@@ -29,12 +29,12 @@ export const createPriceColumns = ({
 }: PriceColumnsProps): ColumnDef<PriceChart>[] => [
   {
     accessorKey: "route",
-
     header: "Route",
-    accessorFn: (row) =>
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
-      `${row.from?.name ?? "N/A"} → ${row.to?.name ?? "N/A"}`,
+    accessorFn: (row) => {
+      const fromName = typeof row.from === "object" ? (row.from as unknown as { name?: string })?.name ?? "N/A" : row.from ?? "N/A";
+      const toName = typeof row.to === "object" ? (row.to as unknown as { name?: string })?.name ?? "N/A" : row.to ?? "N/A";
+      return `${fromName} → ${toName}`;
+    },
     cell: (info) => info.getValue(),
   },
   {
@@ -48,12 +48,16 @@ export const createPriceColumns = ({
         return <div>No couriers</div>;
       }
 
+      const isAdmin = userRole === "admin" || userRole === "moderator";
       let minPrice = Infinity;
       let maxPrice = 0;
 
       price.rate.forEach((c) => {
-        const values = Object.values(c.price);
-        if (values.length > 0) {
+        const rawValues = Object.values(c.price).filter((v) => typeof v === "number") as number[];
+        if (rawValues.length > 0) {
+          const values = isAdmin
+            ? rawValues.map((v) => Number(v * (1 + (c.fuel || 0) / 100) * (1 + (c.profitPercentage || 0) / 100)))
+            : rawValues;
           const localMin = Math.min(...values);
           const localMax = Math.max(...values);
           if (localMin < minPrice) minPrice = localMin;

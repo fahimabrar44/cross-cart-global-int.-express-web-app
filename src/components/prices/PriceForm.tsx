@@ -44,9 +44,9 @@ export const weightPricesSchema = z.object({
 
 const courierPriceSchema = z.object({
   name: z.string().min(1),
-  profitPercentage: z.coerce.number().min(1),
-  gift: z.coerce.number().min(1),
-  fuel:z.coerce.number(),
+  profitPercentage: z.coerce.number().min(0),
+  gift: z.coerce.number().min(0),
+  fuel: z.coerce.number().min(0),
   price: weightPricesSchema,
   serviceDetails: z.array(z.string()).optional().default([]),
 });
@@ -68,6 +68,7 @@ interface PriceFormProps {
   price?: PriceChart;
   onSubmit: (data: PriceFormData) => void;
   onCancel: () => void;
+  loading?: boolean;
 }
 
 export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {

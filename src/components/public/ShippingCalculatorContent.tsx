@@ -82,7 +82,6 @@ export default function ShippingCalculatorContent({
   initialZones: ZoneOption[];
 }) {
   const [countries] = useState<CountryOption[]>(initialCountries);
-  const [zones] = useState<ZoneOption[]>(initialZones);
   const [fromCountry, setFromCountry] = useState<string>(
     () =>
       initialCountries.find((c) => c.name === "Bangladesh")?._id ||
@@ -97,6 +96,7 @@ export default function ShippingCalculatorContent({
   const [zonesData, setZonesData] = useState<FetchedZone[]>(
     () => initialZones as FetchedZone[]
   );
+  const effectiveZones = zonesData as unknown as ZoneOption[];
   const [loadingZones, setLoadingZones] = useState(() => initialZones.length === 0);
   const [zoneSearch, setZoneSearch] = useState("");
 
@@ -138,7 +138,7 @@ export default function ShippingCalculatorContent({
     countries.find((c) => c._id === id)?.name || "";
 
   const getZoneName = (id: string) =>
-    zones.find((z) => z._id === id)?.name || "";
+    (effectiveZones as ZoneOption[]).find((z) => z._id === id)?.name || "";
 
   const handleCalculate = async () => {
     setError("");
@@ -189,13 +189,7 @@ export default function ShippingCalculatorContent({
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const priceWithFees = (base: any, rate: any) =>
-    Number(
-      base *
-        (1 + (rate.fuel || 0) / 100) *
-        (1 + (rate.profitPercentage || 0) / 100),
-    ).toFixed(3);
+  const displayPrice = (base: number | string) => Number(base).toFixed(3);
   const carriers = [
     {
       name: "DHL Express",
@@ -404,7 +398,7 @@ export default function ShippingCalculatorContent({
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   >
                     <option value="">Select Zone</option>
-                    {zones.map((z) => (
+                    {(effectiveZones as ZoneOption[]).map((z) => (
                       <option key={z._id} value={z._id}>
                         {z.name}
                       </option>
@@ -489,7 +483,7 @@ export default function ShippingCalculatorContent({
                                     {WEIGHT_LABELS[k] || k}
                                   </div>
                                   <div className="font-bold text-[#12352A] pl-2">
-                                    ${priceWithFees(v, r)}
+                                    ${displayPrice(v as number)}
                                   </div>
                                 </div>
                               ))}

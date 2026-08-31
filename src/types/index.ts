@@ -368,8 +368,9 @@ export interface Zone {
 }
 
 export interface PriceChart {
-  from: string;
-  to: string;
+  _id?: string;
+  from: string | Country;
+  to: string | Zone;
   rate: {
     name: string;
     profitPercentage: number;
@@ -378,6 +379,9 @@ export interface PriceChart {
     price: Record<string, number>; // each weight mapped to a number
     serviceDetails?: string[]; // short bullet texts shown under each rate
   }[];
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type WeightPrices = {

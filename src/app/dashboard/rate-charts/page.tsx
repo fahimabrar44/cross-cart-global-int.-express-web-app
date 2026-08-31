@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/AuthContext";
 import { PriceFilters, priceService } from "@/services/priceService";
-import { PriceChart } from "@/types";
+import { Country, PriceChart, Zone } from "@/types";
 import {
   ArrowUpDown,
   DollarSign,
@@ -124,9 +124,7 @@ export default function RateChartsPage() {
 
     try {
       setActionLoading(true);
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
-      const response = await priceService.updatePrice(selectedPrice._id, data);
+      const response = await priceService.updatePrice(selectedPrice._id as string, data);
 
       if (response.status == 200) {
         toast.success("Price chart updated successfully");
@@ -147,9 +145,7 @@ export default function RateChartsPage() {
 
     try {
       setActionLoading(true);
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
-      const response = await priceService.deletePrice(selectedPrice._id);
+      const response = await priceService.deletePrice(selectedPrice._id as string);
 
       if (response.status == 200) {
         toast.success("Price chart deleted successfully");
@@ -167,14 +163,9 @@ export default function RateChartsPage() {
 
   const handleToggleStatus = async (price: PriceChart) => {
     try {
-      
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
-      const response = await priceService.togglePriceStatus(price._id,!price.isActive);
+      const response = await priceService.togglePriceStatus(price._id as string, !price.isActive);
 
       if (response.status == 200) {
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
         toast.success(`Price chart ${!price.isActive ? "activated" : "deactivated"} successfully`);
         loadPrices();
       }
@@ -231,16 +222,21 @@ export default function RateChartsPage() {
     onCalculate: handleCalculateClick,
   });
 
-  // helper to safely compute average of min price per route
+  const isAdminView = user?.role === "admin" || user?.role === "moderator";
+  // helper to safely compute average of min final price per route
   const computeAvgMinBasePrice = () => {
     if (!prices || prices.length === 0) return "0.00";
 {/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
     const totalMin = prices.reduce((sum, p: any) => {
-      // gather all numeric values from each rate.price
       {/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
-      const allPrices: number[] = (p.rate || []).flatMap((r: any) =>
-        Object.values(r.price || {}).filter((v) => typeof v === "number")
-      );
+      const allPrices: number[] = (p.rate || []).flatMap((r: any) => {
+        const vals = Object.values(r.price || {}).filter((v) => typeof v === "number") as number[];
+        if (!vals.length) return [];
+        if (isAdminView) {
+          return vals.map((v) => Number(v * (1 + (r.fuel || 0) / 100) * (1 + (r.profitPercentage || 0) / 100)));
+        }
+        return vals;
+      });
       const minPrice = allPrices.length ? Math.min(...allPrices) : 0;
       return sum + minPrice;
     }, 0);
@@ -291,12 +287,11 @@ export default function RateChartsPage() {
             <div
               className="text-2xl font-bold text-green-600"
               data-testid="active-routes"
-            >{/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
-              {prices.filter((p: any) => p.to?.isActive).length}
+            >
+              {prices.filter((p) => p.isActive !== false).length}
             </div>
             <p className="text-xs text-muted-foreground">
-              {/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
-              {prices.filter((p: any) => !p.to?.isActive).length} inactive
+              {prices.filter((p) => p.isActive === false).length} inactive
             </p>
           </CardContent>
         </Card>
@@ -368,8 +363,6 @@ export default function RateChartsPage() {
           <PriceForm
             onSubmit={handleCreatePrice}
             onCancel={() => setIsCreateModalOpen(false)}
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
             loading={actionLoading}
           />
         </DialogContent>
@@ -394,9 +387,6 @@ export default function RateChartsPage() {
                 setIsEditModalOpen(false);
                 setSelectedPrice(null);
               }}
-              
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
               loading={actionLoading}
             />
           )}
@@ -417,21 +407,12 @@ export default function RateChartsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-semibold">
-                    
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
-                    {selectedPrice.from?.name} → {selectedPrice.to?.name}
+                    {(typeof selectedPrice.from === "object" ? (selectedPrice.from as Country).name : selectedPrice.from) as string} →{" "}
+                    {(typeof selectedPrice.to === "object" ? (selectedPrice.to as Zone).name : selectedPrice.to) as string}
                   </h3>
                   <div className="flex items-center space-x-2 mt-1">
-                    <Badge
-                    
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-                      variant={selectedPrice?.to?.isActive ? "default" : "secondary"}
-                    >
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
-                      {selectedPrice?.to?.isActive ? "Active" : "Inactive"}
+                    <Badge variant={selectedPrice?.isActive !== false ? "default" : "secondary"}>
+                      {selectedPrice?.isActive !== false ? "Active" : "Inactive"}
                     </Badge>
                   </div>
                 </div>
@@ -451,14 +432,13 @@ export default function RateChartsPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2  gap-2 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                         {Object.entries(r.price || {}).map(([k, v]) => (
                           <div
                             key={k}
                             className="p-2 bg-white/5 rounded flex items-center justify-between"
                           >
                             <div className="truncate">
-                              {" "}
                               {k == "gm500"
                                 ? "500 GM"
                                 : k == "gm1000"
@@ -501,20 +481,23 @@ export default function RateChartsPage() {
                                 ? "501 TO 1000 PER KG"
                                 : ""}
                             </div>
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
-                            <div className="font-medium">$ {Number(v *(1 + r.fuel / 100) *(1 + r.profitPercentage / 100)).toFixed(3)}
-                       </div>
-                       {r.serviceDetails && r.serviceDetails.filter(Boolean).length > 0 && (
-                         <ul className="mt-2 space-y-1 text-xs text-muted-foreground list-disc pl-5">
-                           {r.serviceDetails.filter(Boolean).map((d: string, di: number) => (
-                             <li key={di}>{d}</li>
-                           ))}
-                         </ul>
-                       )}
-                     </div>
-                   ))}
+                            <div className="font-medium">
+                              ${" "}
+                              {isAdminView
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                ? Number((v as number) * (1 + (r.fuel || 0) / 100) * (1 + (r.profitPercentage || 0) / 100)).toFixed(3)
+                                : Number(v as number).toFixed(3)}
+                            </div>
+                          </div>
+                        ))}
                       </div>
+                      {r.serviceDetails && r.serviceDetails.filter(Boolean).length > 0 && (
+                        <ul className="mt-3 space-y-1 text-xs text-muted-foreground list-disc pl-5">
+                          {r.serviceDetails.filter(Boolean).map((d: string, di: number) => (
+                            <li key={di}>{d}</li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -537,9 +520,8 @@ export default function RateChartsPage() {
               affected.
               {selectedPrice && (
                 <div className="mt-2 p-2 bg-muted rounded">
-                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
-                  <strong>Route:</strong> {selectedPrice.from?.name} →{" "} {selectedPrice.to?.name}
+                  <strong>Route:</strong> {(typeof selectedPrice.from === "object" ? (selectedPrice.from as Country).name : selectedPrice.from) as string} →{" "}
+                  {(typeof selectedPrice.to === "object" ? (selectedPrice.to as Zone).name : selectedPrice.to) as string}
                 </div>
               )}
             </AlertDialogDescription>
