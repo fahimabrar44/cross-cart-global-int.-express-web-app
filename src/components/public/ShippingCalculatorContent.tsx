@@ -81,7 +81,7 @@ export default function ShippingCalculatorContent({
   initialCountries: CountryOption[];
   initialZones: ZoneOption[];
 }) {
-  const [countries] = useState<CountryOption[]>(initialCountries);
+  const [countries, setCountries] = useState<CountryOption[]>(initialCountries);
   const [fromCountry, setFromCountry] = useState<string>(
     () =>
       initialCountries.find((c) => c.name === "Bangladesh")?._id ||
@@ -97,8 +97,33 @@ export default function ShippingCalculatorContent({
     () => initialZones as FetchedZone[]
   );
   const effectiveZones = zonesData as unknown as ZoneOption[];
+  const [loadingCountries, setLoadingCountries] = useState(() => initialCountries.length === 0);
   const [loadingZones, setLoadingZones] = useState(() => initialZones.length === 0);
   const [zoneSearch, setZoneSearch] = useState("");
+
+  useEffect(() => {
+    if (initialCountries.length > 0) return;
+    let active = true;
+    (async () => {
+      try {
+        const params = new URLSearchParams({ limit: "250", isActive: "true", sortBy: "name", sortOrder: "asc" });
+        const res = await getRequestSend<CountryOption[]>(
+          `${ROOT_API}countrys?${params.toString()}`,
+        );
+        if (res.status === 200 && Array.isArray(res.data) && res.data.length > 0) {
+          if (active) setCountries(res.data);
+        }
+      } catch {
+        /* ignore country fetch errors */
+      } finally {
+        if (active) setLoadingCountries(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // Zones are already server-rendered; only refetch when SSR had none.
@@ -124,6 +149,18 @@ export default function ShippingCalculatorContent({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!fromCountry && countries.length > 0) {
+      setFromCountry(countries.find((c) => c.name === "Bangladesh")?._id || countries[0]._id);
+    }
+  }, [countries, fromCountry]);
+
+  useEffect(() => {
+    if (!toZone && effectiveZones.length > 0) {
+      setToZone(effectiveZones[0]._id);
+    }
+  }, [effectiveZones, toZone]);
 
   const filteredZones = zonesData.filter((z) => {
     const term = zoneSearch.trim().toLowerCase();
@@ -375,10 +412,13 @@ export default function ShippingCalculatorContent({
                     value={fromCountry}
                     onChange={(e) => setFromCountry(e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                    disabled={loadingCountries && countries.length === 0}
                   >
-                    {countries.length === 0 && (
+                    {loadingCountries && countries.length === 0 ? (
+                      <option value="">Loading countries…</option>
+                    ) : countries.length === 0 ? (
                       <option value="">Select Country</option>
-                    )}
+                    ) : null}
                     {countries.map((c) => (
                       <option key={c._id} value={c._id}>
                         {c.name}
@@ -396,8 +436,13 @@ export default function ShippingCalculatorContent({
                     value={toZone}
                     onChange={(e) => setToZone(e.target.value)}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                    disabled={loadingZones && effectiveZones.length === 0}
                   >
-                    <option value="">Select Zone</option>
+                    {loadingZones && effectiveZones.length === 0 ? (
+                      <option value="">Loading zones…</option>
+                    ) : (
+                      <option value="">Select Zone</option>
+                    )}
                     {(effectiveZones as ZoneOption[]).map((z) => (
                       <option key={z._id} value={z._id}>
                         {z.name}
@@ -426,7 +471,7 @@ export default function ShippingCalculatorContent({
               <div className="mt-8 text-center">
                 <button
                   onClick={handleCalculate}
-                  disabled={loading}
+                  disabled={loading || !fromCountry || !toZone || loadingCountries || loadingZones}
                   className="bg-primary text-white py-4 px-12 rounded-lg hover:bg-[#087F4F] transition-colors font-bold text-lg disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
                 >
                   {loading && <Loader2 className="w-5 h-5 animate-spin" />}
