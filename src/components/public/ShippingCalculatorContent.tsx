@@ -84,7 +84,7 @@ export default function ShippingCalculatorContent({
   const [countries, setCountries] = useState<CountryOption[]>(initialCountries);
   const [fromCountry, setFromCountry] = useState<string>(
     () =>
-      initialCountries.find((c) => c.name === "Bangladesh")?._id ||
+      initialCountries.find((c) => c.name.toLowerCase() === "bangladesh")?._id ||
       initialCountries[0]?._id ||
       "",
   );
@@ -152,7 +152,7 @@ export default function ShippingCalculatorContent({
 
   useEffect(() => {
     if (!fromCountry && countries.length > 0) {
-      setFromCountry(countries.find((c) => c.name === "Bangladesh")?._id || countries[0]._id);
+      setFromCountry(countries.find((c) => c.name.toLowerCase() === "bangladesh")?._id || countries[0]._id);
     }
   }, [countries, fromCountry]);
 
@@ -414,11 +414,9 @@ export default function ShippingCalculatorContent({
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                     disabled={loadingCountries && countries.length === 0}
                   >
-                    {loadingCountries && countries.length === 0 ? (
-                      <option value="">Loading countries…</option>
-                    ) : countries.length === 0 ? (
-                      <option value="">Select Country</option>
-                    ) : null}
+                    <option value="">
+                      {loadingCountries && countries.length === 0 ? "Loading countries…" : "Select Country"}
+                    </option>
                     {countries.map((c) => (
                       <option key={c._id} value={c._id}>
                         {c.name}
@@ -438,11 +436,9 @@ export default function ShippingCalculatorContent({
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                     disabled={loadingZones && effectiveZones.length === 0}
                   >
-                    {loadingZones && effectiveZones.length === 0 ? (
-                      <option value="">Loading zones…</option>
-                    ) : (
-                      <option value="">Select Zone</option>
-                    )}
+                    <option value="">
+                      {loadingZones && effectiveZones.length === 0 ? "Loading zones…" : "Select Zone"}
+                    </option>
                     {(effectiveZones as ZoneOption[]).map((z) => (
                       <option key={z._id} value={z._id}>
                         {z.name}
