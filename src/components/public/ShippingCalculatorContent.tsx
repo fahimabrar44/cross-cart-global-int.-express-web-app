@@ -162,6 +162,11 @@ export default function ShippingCalculatorContent({
     }
   }, [effectiveZones, toZone]);
 
+  useEffect(() => {
+    setPriceData(null);
+    setError("");
+  }, [fromCountry, toZone]);
+
   const filteredZones = zonesData.filter((z) => {
     const term = zoneSearch.trim().toLowerCase();
     if (!term) return true;
@@ -202,16 +207,38 @@ export default function ShippingCalculatorContent({
         Array.isArray(response.data) &&
         response.data.length > 0
       ) {
-        setPriceData(response.data[0]);
-        trackClarityEvent("quote_calculated");
-        setClarityTag("quote_route", `${fromCountry} -> ${toZone}`);
-        gaEvent("quote_calculated", { route: `${fromCountry} -> ${toZone}` });
-        trackMarketingEvent("quote_calculated", {
-          route: `${fromCountry} -> ${toZone}`,
-        });
+        const candidate = response.data[0] as PriceData;
+        const candFromId =
+          typeof candidate.from === "string"
+            ? candidate.from
+            : (candidate.from as unknown as { _id?: string })?._id || "";
+        const candToId =
+          typeof candidate.to === "string"
+            ? candidate.to
+            : (candidate.to as unknown as { _id?: string })?._id || "";
+        const isExactMatch =
+          String(candFromId) === String(fromCountry) && String(candToId) === String(toZone);
+        if (!isExactMatch) {
+          setError(
+            `No pricing found for ${getCountryName(fromCountry) || "selected origin"} → ${getZoneName(toZone) || "selected zone"} yet. Please contact our support team.`,
+          );
+          setClarityTag("quote_result", "no_price_mismatch");
+          gaEvent("quote_no_price", { route: `${fromCountry} -> ${toZone}` });
+          trackMarketingEvent("quote_no_price", {
+            route: `${fromCountry} -> ${toZone}`,
+          });
+        } else {
+          setPriceData(candidate);
+          trackClarityEvent("quote_calculated");
+          setClarityTag("quote_route", `${fromCountry} -> ${toZone}`);
+          gaEvent("quote_calculated", { route: `${fromCountry} -> ${toZone}` });
+          trackMarketingEvent("quote_calculated", {
+            route: `${fromCountry} -> ${toZone}`,
+          });
+        }
       } else {
         setError(
-          "No pricing found for this route yet. Please contact our support team.",
+          `No pricing found for ${getCountryName(fromCountry) || "selected origin"} → ${getZoneName(toZone) || "selected zone"} yet. Please contact our support team.`,
         );
         setClarityTag("quote_result", "no_price");
         gaEvent("quote_no_price", { route: `${fromCountry} -> ${toZone}` });
@@ -487,8 +514,7 @@ export default function ShippingCalculatorContent({
                   <div className="bg-soft-green border border-gray-200 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-xl font-bold text-[#12352A]">
-                        {priceData.from?.name || getCountryName(fromCountry)} →{" "}
-                        {priceData.to?.name || getZoneName(toZone)}
+                        {getCountryName(fromCountry)} → {getZoneName(toZone)}
                       </h4>
                       <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full">
                         {shipmentType === "b2b" ? "B2B" : "B2C"}
