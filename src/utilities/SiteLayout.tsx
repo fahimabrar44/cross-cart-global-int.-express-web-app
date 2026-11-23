@@ -15,14 +15,13 @@ export default function SiteLayout({
   const pathName = usePathname().split("/")[1];
   const router = useRouter();
   const auth = useAuth();
+  const isAuthenticated = Boolean(auth?.isAuthenticated);
 
   useEffect(() => {
-    // The AuthContext already handles auto-refresh, so no need to manually trigger it here
-  }, []);
-
-  if (pathName == "auth" && auth?.accessToken) {
-    router.push("/dashboard");
-  }
+    if (pathName === "auth" && isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [pathName, isAuthenticated, router]);
 
   // Dashboard has its own layout, so don't handle it here
   if (pathName == "dashboard") {

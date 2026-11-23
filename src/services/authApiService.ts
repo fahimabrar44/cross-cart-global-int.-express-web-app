@@ -26,6 +26,7 @@ class AuthApiService {
 
       const response = await fetch(url, {
         ...options,
+        credentials: 'include',
         headers,
       });
 
@@ -176,24 +177,13 @@ class AuthApiService {
   }
 
   async refreshToken() {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) {
-      return {
-        success: false,
-        status: 400,
-        message: 'No refresh token available',
-        data: null,
-      };
-    }
-
     return this.makeRequest<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
       user: any;
-      accessToken: string;
-      refreshToken: string;
+      accessToken?: string;
+      refreshToken?: string;
     }>('/auth/refresh-token', {
       method: 'POST',
-      body: JSON.stringify({ refreshToken }),
     });
   }
 

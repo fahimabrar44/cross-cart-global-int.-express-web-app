@@ -2,9 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { successResponse } from "@/server/common/response";
 import connectDB from "@/config/db";
 
+/**
+ * GET /api/health
+ *
+ * Public health checks expose only what a monitor needs. Memory usage,
+ * environment names, versions and uptime are omitted in production so the
+ * endpoint cannot be used for reconnaissance.
+ */
 export async function GET(req: NextRequest) {
+  const isProduction = process.env.NODE_ENV === "production";
+
   try {
-    // Test database connection
     let dbStatus = "disconnected";
     try {
       await connectDB();
@@ -13,32 +21,24 @@ export async function GET(req: NextRequest) {
       dbStatus = "error";
     }
 
-    // Get system info
-    const uptime = process.uptime();
-    const memoryUsage = process.memoryUsage();
-    
-    const healthData = {
-      status: "healthy",
+    const healthData: Record<string, unknown> = {
+      status: dbStatus === "connected" ? "healthy" : "degraded",
       timestamp: new Date().toISOString(),
-      uptime: `${Math.floor(uptime / 60)} minutes`,
-      uptimeSeconds: uptime,
-      database: {
-        status: dbStatus,
-      },
-      memory: {
+      database: { status: dbStatus },
+    };
+
+    if (!isProduction) {
+      const memoryUsage = process.memoryUsage();
+      healthData.uptime = `${Math.floor(process.uptime() / 60)} minutes`;
+      healthData.uptimeSeconds = process.uptime();
+      healthData.memory = {
         used: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)} MB`,
         total: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)} MB`,
         external: `${Math.round(memoryUsage.external / 1024 / 1024)} MB`,
-      },
-      environment: process.env.NODE_ENV || "development",
-      version: process.env.npm_package_version || "1.0.0",
-      services: {
-        api: "running",
-        notifications: "active",
-        auth: "active",
-        analytics: "active"
-      }
-    };
+      };
+      healthData.environment = process.env.NODE_ENV || "development";
+      healthData.version = process.env.npm_package_version || "1.0.0";
+    }
 
     return successResponse({
       status: 200,
@@ -48,12 +48,14 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("Health check error:", error);
-    
-    return NextResponse.json({
-      status: "error",
-      message: "Health check failed",
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : "Unknown error"
-    }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        status: "error",
+        message: "Health check failed",
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 }
+    );
   }
 }

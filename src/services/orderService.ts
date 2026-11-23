@@ -147,9 +147,7 @@ class OrderService {
     
     const response = await fetch(`/api/v1${this.baseEndpoint}/export?${new URLSearchParams(params)}`, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
+      credentials: "include",
     });
 
     if (!response.ok) {

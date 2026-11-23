@@ -155,32 +155,48 @@ const orderSchema = new Schema<IOrder>(
   { timestamps: true }
 );
 
-orderSchema.pre("save", async function (next) {
-  if (!this.trackId) {
+async function nextSequence(name: string): Promise<number> {
+  // Retry the first upsert if two requests race to create the counter document.
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const counter = await Counter.findOneAndUpdate(
-        { name: "order" },
+        { name },
         { $inc: { seq: 1 } },
         { new: true, upsert: true }
       );
-
-      // Example Format: CCG000001
-      this.trackId = `CCG${counter.seq.toString().padStart(8, "0")}`;
+      return counter.seq;
     } catch (err) {
-      return next(err as Error); // ✅ use Error type instead of any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((err as any)?.code === 11000) continue;
+      throw err;
     }
   }
+  throw new Error(`Could not generate the ${name} sequence`);
+}
 
+// trackId is generated before validation so `required` passes. Using a
+// database counter avoids the old Date.now()-based collisions (and the
+// infinite retry loop they caused).
+orderSchema.pre("validate", async function (next) {
+  if (!this.trackId) {
+    try {
+      const seq = await nextSequence("order");
+      // Example format: CCG00000001
+      this.trackId = `CCG${seq.toString().padStart(8, "0")}`;
+    } catch (err) {
+      return next(err as Error);
+    }
+  }
+  next();
+});
+
+orderSchema.pre("save", async function (next) {
   // Auto-generate AWB (IATA style: 3-digit airline prefix + 8-digit serial)
   if (!this.awb) {
     try {
-      const awbCounter = await Counter.findOneAndUpdate(
-        { name: "awb" },
-        { $inc: { seq: 1 } },
-        { new: true, upsert: true }
-      );
+      const seq = await nextSequence("awb");
       const prefix = process.env.AWB_PREFIX || "132";
-      this.awb = `${prefix}-${awbCounter.seq.toString().padStart(8, "0")}`;
+      this.awb = `${prefix}-${seq.toString().padStart(8, "0")}`;
     } catch (err) {
       return next(err as Error);
     }

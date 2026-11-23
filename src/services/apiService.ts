@@ -51,6 +51,7 @@ export class ApiService {
     try {
       const response = await fetch(url, {
         ...options,
+        credentials: "include",
         headers,
       });
 
@@ -80,27 +81,16 @@ export class ApiService {
 
   private async refreshToken(): Promise<boolean> {
     try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken) return false;
-
       const response = await fetch(`${this.getBaseUrl()}/api/v1/auth/refresh-token`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
       });
 
       if (!response.ok) return false;
 
       const data = await response.json();
-      if (!data.success || !data.data) return false;
-
-      // Update tokens
-      localStorage.setItem("accessToken", data.data.accessToken);
-      if (data.data.refreshToken) {
-        localStorage.setItem("refreshToken", data.data.refreshToken);
-      }
-
-      return true;
+      return Boolean(data?.success && data?.data);
     } catch {
       return false;
     }

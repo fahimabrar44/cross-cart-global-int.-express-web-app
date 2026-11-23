@@ -619,6 +619,7 @@ export default function SettingsPage() {
                     <Label>Profile Photo</Label>
                     <div className="border rounded-lg p-4 flex flex-col items-center gap-3">
                       {user?.avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- avatar URLs are user-provided and can be any host
                         <img
                           src={user.avatar}
                           alt="Profile"
@@ -662,6 +663,7 @@ export default function SettingsPage() {
                         <Label className="capitalize">NID {side}</Label>
                         <div className="border rounded-lg p-4 flex flex-col items-center gap-3">
                           {currentUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- NID URLs are user uploads
                             <img
                               src={currentUrl}
                               alt={`NID ${side}`}

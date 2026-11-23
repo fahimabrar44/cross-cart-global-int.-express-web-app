@@ -12,13 +12,13 @@ export const metadata: Metadata = {
     "send package abroad",
   ],
   alternates: {
-    canonical: "https://crosscartglobal.com/ship-and-track/create-shipment",
+    canonical: "https://www.crosscartglobal.com/ship-and-track/create-shipment",
   },
   openGraph: {
     title: "Create Shipment | Cross Cart Global International Express",
     description:
       "Book your international shipment online with doorstep pickup, label generation and real-time tracking from Cross Cart Global International Express.",
-    url: "https://crosscartglobal.com/ship-and-track/create-shipment",
+    url: "https://www.crosscartglobal.com/ship-and-track/create-shipment",
     siteName: "Cross Cart Global International Express",
     type: "website",
     locale: "en_US",

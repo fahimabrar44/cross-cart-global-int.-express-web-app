@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { NextRequest } from "next/server";
 import { User } from "@/server/models/User.model";
 import connectDB from "@/config/db";
+import { getAccessToken } from "@/server/common/authCookies";
 
 export interface AuthenticatedUser {
   id: string;
@@ -19,8 +20,8 @@ export interface AuthRequest extends NextRequest {
 
 export const authenticateToken = async (req: NextRequest): Promise<AuthenticatedUser | null> => {
   try {
-    const authHeader = req.headers.get("authorization");
-    const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
+    // Authorization header first (API clients), then the httpOnly cookie (web).
+    const token = getAccessToken(req);
 
     if (!token) {
       return null;

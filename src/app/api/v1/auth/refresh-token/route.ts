@@ -3,77 +3,70 @@ import { createRateLimitedHandler } from "@/server/common/apiWrapper";
 import { errorResponse, successResponse } from "@/server/common/response";
 import { User } from "@/server/models/User.model";
 import jwt, { Secret } from "jsonwebtoken";
-
-interface RefreshTokenBody {
-  refreshToken: string;
-}
+import {
+  clearAuthCookies,
+  getRefreshToken,
+  setAuthCookies,
+} from "@/server/common/authCookies";
 
 export const POST = createRateLimitedHandler(
   async ({ req }) => {
+    const failAuth = (status: number, message: string) => {
+      const response = errorResponse({ status, message, req });
+      clearAuthCookies(response);
+      return response;
+    };
+
     try {
       await connectDB();
 
-      const body = (await req.json()) as RefreshTokenBody;
-      const { refreshToken } = body;
+      // Web clients send the refresh token as an httpOnly cookie; API clients
+      // may still send it in the JSON body.
+      let refreshToken = getRefreshToken(req);
+      const bodyText = await req.text().catch(() => "");
+      if (bodyText.trim()) {
+        try {
+          const body = JSON.parse(bodyText) as { refreshToken?: string };
+          if (body.refreshToken) refreshToken = body.refreshToken;
+        } catch {
+          // Ignore malformed bodies; the cookie fallback is still valid.
+        }
+      }
 
       if (!refreshToken) {
-        return errorResponse({
-          status: 400,
-          message: "Refresh token is required",
-          req,
-        });
+        return failAuth(400, "Refresh token is required");
       }
 
       const refreshSecret =
         process.env.REFRESH_TOKEN_SECRET || process.env.JWT_SECRET;
-      if (!refreshSecret) {
+      if (!refreshSecret || !process.env.JWT_SECRET) {
         throw new Error("JWT_SECRET or REFRESH_TOKEN_SECRET not configured");
       }
 
       const decodedRaw = jwt.verify(refreshToken, refreshSecret as Secret);
       if (typeof decodedRaw === "string") {
-        return errorResponse({
-          status: 401,
-          message: "Invalid refresh token format",
-          req,
-        });
+        return failAuth(401, "Invalid refresh token format");
       }
       const decoded = decodedRaw as { id: string; type: string; role?: string };
 
       // Ensure token type
       if (decoded.type !== "refresh") {
-        return errorResponse({
-          status: 401,
-          message: "Invalid token type",
-          req,
-        });
+        return failAuth(401, "Invalid token type");
       }
 
       // Fetch user with refresh tokens
       const user = await User.findById(decoded.id).select("+refreshTokens");
       if (!user) {
-        return errorResponse({
-          status: 401,
-          message: "User not found",
-          req,
-        });
+        return failAuth(401, "User not found");
       }
 
       if (!user.isActive) {
-        return errorResponse({
-          status: 403,
-          message: "Account deactivated",
-          req,
-        });
+        return failAuth(403, "Account deactivated");
       }
 
       // Check if refresh token is still valid (exists in user's array)
       if (!user.refreshTokens.includes(refreshToken)) {
-        return errorResponse({
-          status: 401,
-          message: "Refresh token revoked",
-          req,
-        });
+        return failAuth(401, "Refresh token revoked");
       }
 
       // Generate new access token
@@ -102,7 +95,7 @@ export const POST = createRateLimitedHandler(
       await user.save();
 
       // Respond with new tokens and user info
-      return successResponse({
+      const response = successResponse({
         status: 200,
         message: "Token refreshed successfully",
         data: {
@@ -123,23 +116,18 @@ export const POST = createRateLimitedHandler(
         },
         req,
       });
+
+      setAuthCookies(response, newAccessToken, newRefreshToken);
+      return response;
     } catch (error: unknown) {
       console.error("Refresh Token API Error:", error);
 
       if (error instanceof Error) {
         if (error.name === "JsonWebTokenError") {
-          return errorResponse({
-            status: 401,
-            message: "Invalid refresh token format",
-            req,
-          });
+          return failAuth(401, "Invalid refresh token format");
         }
         if (error.name === "TokenExpiredError") {
-          return errorResponse({
-            status: 401,
-            message: "Refresh token expired",
-            req,
-          });
+          return failAuth(401, "Refresh token expired");
         }
       }
 

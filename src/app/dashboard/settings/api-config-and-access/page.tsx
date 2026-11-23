@@ -112,14 +112,12 @@ export default function ApiConfigPage() {
   const handleDelete = async (config: ApiConfig) => {
     if (!confirm(`Are you sure you want to delete "${config.name}"?`)) return;
     try {
-      const token = localStorage.getItem("accessToken");
       const response = await fetch(
         `/api/v1/accounts/${phone}/api-config`,
         {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({ configId: config._id }),
         }

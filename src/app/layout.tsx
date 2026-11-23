@@ -755,6 +755,7 @@ export default function RootLayout({
           />
         </noscript>
         <noscript>
+          {/* eslint-disable-next-line @next/next/no-img-element -- Meta pixel noscript fallback requires a plain img */}
           <img
             height="1"
             width="1"

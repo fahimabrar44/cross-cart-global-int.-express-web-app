@@ -165,7 +165,6 @@ export async function POST(
   } catch (error: unknown) {
     const msg =
       error instanceof Error ? error.message : "Failed to create API config";
-    // eslint-disable-next-line no-console
     console.error("Create API config error:", error);
     return errorResponse({ status: 500, message: msg, error, req });
   }

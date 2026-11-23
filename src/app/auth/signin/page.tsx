@@ -28,7 +28,7 @@ interface User {
   name: string;
   email: string;
   phone: string;
-  role: string;
+  role: "user" | "admin" | "moderator";
   isVerified:boolean;
   isActive:boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,8 +37,6 @@ interface User {
 
 interface SigninResponse {
   user: User;
-  accessToken: string;
-  refreshToken: string;
 }
 
 interface SigninFormErrors {
@@ -96,16 +94,11 @@ export default function SigninPage() {
         { phone, password }
       )) as { data: SigninResponse; message: string; status: number };
 
-      console.log("Signin response:", response); // Debug log
-
-      // Check if signin was successful (status 200)
-      if (response && response.status == 200 && response.data?.accessToken && response.data?.user) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
-        const success = await login(response.data.user, {
-          accessToken: response.data.accessToken,
-          refreshToken: response.data.refreshToken,
-        });
+      // Check if signin was successful (status 200). The API sets httpOnly
+      // cookies, so the browser session is authenticated without exposing
+      // tokens to JavaScript.
+      if (response && response.status == 200 && response.data?.user) {
+        const success = await login(response.data.user);
 
         if (success) {
           router.push("/dashboard");

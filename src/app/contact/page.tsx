@@ -1,11 +1,11 @@
-﻿import PageHeader from "@/utilities/PageHeader";
+import PageHeader from "@/utilities/PageHeader";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
 
 import { Mail, MessageCircle, Phone } from "lucide-react";
 
 const siteName = "Cross Cart Global International Express";
-const pageUrl = "https://crosscartglobal.com/contact";
+const pageUrl = "https://www.crosscartglobal.com/contact";
 
 export const dynamic = "force-dynamic";
 export const metadata = pageMetadata({

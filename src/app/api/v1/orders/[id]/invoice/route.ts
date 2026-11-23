@@ -117,19 +117,6 @@ export async function GET(
       0,
     );
 
-    const totalUnitPrice = items.reduce(
-      (
-        sum: number,
-        item: {
-          name?: string;
-          quantity?: number;
-          unitPrice?: number;
-          totalPrice?: number;
-        },
-      ) => sum + (Number(item.unitPrice) || 0),
-      0,
-    );
-
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>

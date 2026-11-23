@@ -327,8 +327,13 @@ const userSchema = new Schema<IUser>(
 userSchema.index({ role: 1, isActive: 1 });
 userSchema.index({ isVerified: 1, isActive: 1 });
 userSchema.index({ lockUntil: 1 }, { sparse: true });
-userSchema.index({ "emailVerification.expires": 1 }, { sparse: true, expireAfterSeconds: 0 });
-userSchema.index({ "passwordReset.expires": 1 }, { sparse: true, expireAfterSeconds: 0 });
+
+// IMPORTANT: never add TTL indexes on nested verification/reset expiry fields.
+// MongoDB TTL indexes delete the entire document, which would delete the user
+// account 15/30 minutes after signup or a password-reset request. Expired
+// codes are rejected in the API routes instead; stale fields are harmless.
+// If an old deployment still has these indexes, run:
+//   npm run db:drop-unsafe-indexes
 
 // Password hashing with stronger rounds
 userSchema.pre("save", async function (next) {

@@ -7,17 +7,14 @@ import { notificationService } from "@/services/notificationService";
 import { User as IUser } from "@/types";
 import jwt, { Secret } from "jsonwebtoken";
 import { Types } from "mongoose";
+import type { NextRequest } from "next/server";
+import { getClientIp } from "@/server/common/requestIp";
+import { consumeRateLimit } from "@/server/services/rateLimitService";
+import { setAuthCookies } from "@/server/common/authCookies";
 
 interface SigninBody {
   phone: string;
   password: string;
-}
-
-interface LoginAttempt {
-  phone: string;
-  ipAddress: string;
-  userAgent: string;
-  timestamp: Date;
 }
 
 // ==================== CONFIG ====================
@@ -26,33 +23,11 @@ const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_ATTEMPTS_PER_IP = 10;
 
-// In-memory storage for rate limiting (use Redis for production)
-const failedAttempts = new Map<string, LoginAttempt[]>();
-
 // ==================== HELPERS ====================
-function getClientInfo(req: Request) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const headers = req.headers as any;
-  const ipAddress =
-    headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    headers.get("x-real-ip") ||
-    "unknown";
-  const userAgent = headers.get("user-agent") || "unknown";
+function getClientInfo(req: NextRequest) {
+  const ipAddress = getClientIp(req);
+  const userAgent = req.headers.get("user-agent") || "unknown";
   return { ipAddress, userAgent };
-}
-
-function isRateLimited(key: string): boolean {
-  const attempts = failedAttempts.get(key) || [];
-  const now = Date.now();
-  const recent = attempts.filter((a) => now - a.timestamp.getTime() < RATE_LIMIT_WINDOW);
-  failedAttempts.set(key, recent);
-  return recent.length >= MAX_ATTEMPTS_PER_IP;
-}
-
-function addFailedAttempt(key: string, attempt: LoginAttempt) {
-  const attempts = failedAttempts.get(key) || [];
-  attempts.push(attempt);
-  failedAttempts.set(key, attempts);
 }
 
 async function logLoginAttempt(
@@ -91,9 +66,23 @@ export const POST = createRateLimitedHandler(
     try {
       await connectDB();
 
-      // Rate limit by IP
-      if (isRateLimited(ipAddress)) {
-        return errorResponse({ status: 429, message: "Too many requests. Try again later.", req });
+      // Rate limit by IP (shared across instances when Redis is configured)
+      const ipLimit = await consumeRateLimit(
+        `signin-ip:${ipAddress}`,
+        MAX_ATTEMPTS_PER_IP,
+        RATE_LIMIT_WINDOW
+      );
+      if (!ipLimit.allowed) {
+        const response = errorResponse({
+          status: 429,
+          message: "Too many requests. Try again later.",
+          req,
+        });
+        response.headers.set(
+          "Retry-After",
+          String(Math.max(1, Math.ceil((ipLimit.resetAt - Date.now()) / 1000)))
+        );
+        return response;
       }
 
       const body = (await req.json()) as SigninBody;
@@ -112,16 +101,9 @@ export const POST = createRateLimitedHandler(
         return errorResponse({ status: 400, message: "Invalid phone number format", req });
       }
 
-      // Rate limit by phone
-      if (isRateLimited(phone)) {
-        return errorResponse({ status: 429, message: "Too many failed attempts. Try again later.", req });
-      }
-
       // Find user
       const user = await User.findOne({ phone }).select("+password +loginAttempts +lockUntil");
       if (!user) {
-        addFailedAttempt(ipAddress, { phone, ipAddress, userAgent, timestamp: new Date() });
-        addFailedAttempt(phone, { phone, ipAddress, userAgent, timestamp: new Date() });
         await logLoginAttempt(null, phone, ipAddress, userAgent, false, "User not found");
         return errorResponse({ status: 401, message: "Invalid phone number or password", req });
       }
@@ -151,8 +133,6 @@ export const POST = createRateLimitedHandler(
         if (user.loginAttempts >= MAX_FAILED_ATTEMPTS) user.lockUntil = new Date(Date.now() + LOCKOUT_DURATION);
         await user.save();
 
-        addFailedAttempt(ipAddress, { phone, ipAddress, userAgent, timestamp: new Date() });
-        addFailedAttempt(phone, { phone, ipAddress, userAgent, timestamp: new Date() });
         await logLoginAttempt(user, phone, ipAddress, userAgent, false, "Invalid password");
 
         return errorResponse({ status: 401, message: "Invalid phone number or password", req });
@@ -185,7 +165,7 @@ export const POST = createRateLimitedHandler(
       // Send login notification
       notificationService.sendAuthNotification({ phone: user.phone, email: user.email, name: user.name }, "login_alert").catch(console.error);
 
-      return successResponse({
+      const response = successResponse({
         status: 200,
         message: "Sign in successful",
         data: {
@@ -206,6 +186,11 @@ export const POST = createRateLimitedHandler(
         },
         req,
       });
+
+      // Browser sessions use httpOnly cookies; API clients may keep using
+      // the Bearer tokens returned above.
+      setAuthCookies(response, accessToken, refreshToken);
+      return response;
 
     } catch (err: unknown) {
       console.error("Signin API Error:", err);

@@ -68,7 +68,7 @@ export default function ReferralsPage() {
   };
 
   const baseOrigin =
-    typeof window !== "undefined" ? window.location.origin : "https://crosscartglobal.com";
+    typeof window !== "undefined" ? window.location.origin : "https://www.crosscartglobal.com";
   const rewardsText = `Use my CrossCart referral code ${myInfo?.referralCode || ""} and get exclusive shipping discounts! Sign up here: ${baseOrigin}/auth/signup?ref=${myInfo?.referralCode || ""}`;
 
   return (

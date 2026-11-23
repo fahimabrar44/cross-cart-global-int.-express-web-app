@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RoleGuard } from "@/middleware/roleGuard";
 import { FaqService } from "@/services/dashboardService";
-import { Edit, Eye, HelpCircle, Plus } from "lucide-react";
+import { HelpCircle, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -50,7 +50,6 @@ export default function FaqsPage() {
     register,
     handleSubmit,
     setValue,
-    watch,
     reset,
     formState: { errors },
   } = useForm<FaqFormData>({

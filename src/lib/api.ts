@@ -5,18 +5,12 @@ export const API_BASE_URL = typeof window !== "undefined"
   ? `${window.location.origin}/api/v1`
   : `${process.env.PUBLIC_APP_URL || "http://localhost:3000"}/api/v1`;
 
-// Auth headers helper
+// Auth is stored in httpOnly cookies and attached automatically by the
+// browser for same-origin requests, so no Authorization header is needed.
 export const getAuthHeaders = (): HeadersInit => {
   const headers: HeadersInit = {
     "Content-Type": "application/json",
   };
-
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-  }
 
   return headers;
 };
@@ -36,41 +30,36 @@ export class ApiError extends Error {
 
 // Refresh access token using the stored refresh token.
 // Shared promise prevents concurrent 401s from racing the rotation.
-let refreshPromise: Promise<string | null> | null = null;
+let refreshPromise: Promise<boolean> | null = null;
 
-async function refreshAccessToken(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
+async function refreshAccessToken(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
 
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
     try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken) return null;
-
+      // The refresh token lives in an httpOnly cookie, so the request only
+      // needs to include credentials; no token is readable by JavaScript.
       const response = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
       });
 
-      if (!response.ok) return null;
+      if (!response.ok) return false;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = await response.json();
-      if (!data || !data.data || !data.data.accessToken) return null;
+      if (!data || !data.data) return false;
 
-      localStorage.setItem("accessToken", data.data.accessToken);
-      if (data.data.refreshToken) {
-        localStorage.setItem("refreshToken", data.data.refreshToken);
-      }
       if (data.data.user) {
         localStorage.setItem("authUser", JSON.stringify(data.data.user));
       }
 
-      return data.data.accessToken as string;
+      return true;
     } catch {
-      return null;
+      return false;
     } finally {
       setTimeout(() => {
         refreshPromise = null;
@@ -91,6 +80,7 @@ async function apiRequest<T>(
     
     const config: RequestInit = {
       ...options,
+      credentials: "include",
       headers: {
         ...getAuthHeaders(),
         ...options.headers,
@@ -102,10 +92,11 @@ async function apiRequest<T>(
     // Access token may be stale (15min TTL) right after a page load.
     // Refresh once and retry the request before giving up.
     if (response.status === 401) {
-      const newToken = await refreshAccessToken();
-      if (newToken) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
         const retryConfig: RequestInit = {
           ...options,
+          credentials: "include",
           headers: {
             ...getAuthHeaders(),
             ...options.headers,
@@ -303,13 +294,6 @@ export async function uploadFile(
     });
 
     xhr.open('POST', `${API_BASE_URL}${endpoint}`);
-    
-    // Add auth header
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-    }
-    
     xhr.send(formData);
   });
 }

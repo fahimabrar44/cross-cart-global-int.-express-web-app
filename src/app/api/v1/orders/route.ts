@@ -5,6 +5,7 @@ import { Order } from "@/server/models/Order.model";
 import { Track } from "@/server/models/Track.model";
 import { Coupon } from "@/server/models/Coupon.model";
 import { notificationService } from "@/services/notificationService";
+import { Types } from "mongoose";
 
 type GetQuery = {
   trackId?: string;
@@ -70,6 +71,134 @@ function validateAndFixItems(items: any[]): {
 
   return { valid: true };
 }
+
+/** Keep only fields the client is allowed to set, with sane types/limits. */
+function toText(value: unknown, maxLength: number): string {
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+function toAmount(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.round(n * 100) / 100;
+}
+
+function toWholeNumber(value: unknown, max = 100_000): number {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(n, max);
+}
+
+function toObjectIdOrNull(value: unknown): Types.ObjectId | null {
+  if (value instanceof Types.ObjectId) return value;
+  if (typeof value === "string" && Types.ObjectId.isValid(value)) {
+    return new Types.ObjectId(value);
+  }
+  return null;
+}
+
+function sanitizeAddress(value: unknown) {
+  const raw =
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : {};
+
+  return {
+    address: toText(raw.address, 500),
+    city: toText(raw.city, 120),
+    zipCode: toText(raw.zipCode, 30),
+    country: toObjectIdOrNull(raw.country),
+  };
+}
+
+function sanitizePerson(
+  value: unknown,
+  fallback: { name?: string; phone?: string; email?: string }
+) {
+  const raw =
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : {};
+
+  return {
+    name: toText(raw.name, 120) || toText(fallback.name, 120),
+    phone: toText(raw.phone, 30) || toText(fallback.phone, 30),
+    email: toText(raw.email, 200) || toText(fallback.email, 200),
+    address: sanitizeAddress(raw.address),
+  };
+}
+
+function sanitizeItems(value: unknown) {
+  if (!Array.isArray(value)) return [];
+
+  return value.slice(0, 50).map((entry) => {
+    const raw =
+      entry && typeof entry === "object"
+        ? (entry as Record<string, unknown>)
+        : {};
+    const quantity = toWholeNumber(raw.quantity, 10_000);
+    const unitPrice = toAmount(raw.unitPrice);
+
+    return {
+      name: toText(raw.name, 200),
+      quantity,
+      unitPrice,
+      totalPrice: Math.round(quantity * unitPrice * 100) / 100,
+    };
+  });
+}
+
+function sanitizeBoxes(value: unknown) {
+  if (!Array.isArray(value)) return [];
+
+  return value.slice(0, 50).map((entry) => {
+    const raw =
+      entry && typeof entry === "object"
+        ? (entry as Record<string, unknown>)
+        : {};
+
+    return {
+      length: toAmount(raw.length),
+      width: toAmount(raw.width),
+      height: toAmount(raw.height),
+      fragile: raw.fragile === true,
+    };
+  });
+}
+
+function sanitizePayment(value: unknown, allowAmounts: boolean) {
+  const defaults = {
+    pType: "Due",
+    pAmount: 0,
+    pOfferDiscount: 0,
+    pExtraCharge: 0,
+    pDiscount: 0,
+    pReceived: 0,
+    pRefunded: 0,
+  };
+
+  // Regular users and guests cannot set financial values on creation.
+  if (!allowAmounts) return defaults;
+
+  const raw =
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : {};
+
+  return {
+    pType: toText(raw.pType, 50) || "Due",
+    pAmount: toAmount(raw.pAmount),
+    pOfferDiscount: toAmount(raw.pOfferDiscount),
+    pExtraCharge: toAmount(raw.pExtraCharge),
+    pDiscount: toAmount(raw.pDiscount),
+    pReceived: toAmount(raw.pReceived),
+    pRefunded: toAmount(raw.pRefunded),
+  };
+}
+
+const ORDER_TYPES = new Set(["document", "parcel", "e-commerce"]);
+const PRIORITIES = new Set(["normal", "express", "super-express", "tax-paid"]);
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // GET: Everyone can view orders, but filtered by role
 export const GET = createAuthHandler(async ({ req, user }) => {
@@ -202,40 +331,59 @@ export const GET = createAuthHandler(async ({ req, user }) => {
   }
 });
 
-// POST: Everyone can create orders (public access with optional auth)
+// POST: Everyone can create orders (public access with optional auth).
+//
+// Security notes:
+// - Only whitelisted fields are copied into the order document, so clients
+//   cannot inject trackId, status, awb, assignment, handover details, etc.
+// - Guests and regular users cannot set payment amounts.
+// - Coupon discount is computed from item totals on the server and consumed
+//   atomically, so two concurrent requests cannot exceed the usage limit.
 export const POST = createPublicHandler(async ({ req, user }) => {
+  let couponUsage:
+    | { couponId: Types.ObjectId; userId?: Types.ObjectId }
+    | null = null;
+
   try {
     await connectDB();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const body = (await req.json()) as any;
 
-    // Validate parcel existence
-    if (!body || !body.parcel || typeof body.parcel !== "object") {
+    const body =
+      (await req.json()) as Record<string, unknown>;
+
+    const parcelInput =
+      body.parcel && typeof body.parcel === "object"
+        ? (body.parcel as Record<string, unknown>)
+        : null;
+
+    if (!parcelInput) {
       return errorResponse({
         status: 400,
         message: "Parcel information is required",
         req,
       });
     }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parcel = body.parcel as Record<string, any>;
 
     // Validate required parcel fields
-    if (!parcel.from) {
+    const from = toObjectIdOrNull(parcelInput.from);
+    if (!from) {
       return errorResponse({
         status: 400,
-        message: "Origin country (parcel.from) is required",
+        message: "A valid origin country (parcel.from) is required",
         req,
       });
     }
-    if (!parcel.to) {
+
+    const to = toObjectIdOrNull(parcelInput.to);
+    if (!to) {
       return errorResponse({
         status: 400,
-        message: "Destination country (parcel.to) is required",
+        message: "A valid destination country (parcel.to) is required",
         req,
       });
     }
-    if (!parcel.weight && parcel.weight !== 0) {
+
+    const weight = toText(parcelInput.weight, 50);
+    if (!weight) {
       return errorResponse({
         status: 400,
         message: "Package weight (parcel.weight) is required",
@@ -243,8 +391,16 @@ export const POST = createPublicHandler(async ({ req, user }) => {
       });
     }
 
-    // Validate sender information
-    if (!parcel.sender) {
+    const senderInput =
+      parcelInput.sender && typeof parcelInput.sender === "object"
+        ? (parcelInput.sender as Record<string, unknown>)
+        : null;
+    const receiverInput =
+      parcelInput.receiver && typeof parcelInput.receiver === "object"
+        ? (parcelInput.receiver as Record<string, unknown>)
+        : null;
+
+    if (!senderInput) {
       return errorResponse({
         status: 400,
         message: "Sender information (parcel.sender) is required",
@@ -252,38 +408,7 @@ export const POST = createPublicHandler(async ({ req, user }) => {
       });
     }
 
-    if (!parcel.sender.name || !parcel.sender.phone) {
-      return errorResponse({
-        status: 400,
-        message: "Sender name and phone are required",
-        req,
-      });
-    }
-
-    // Add authenticated user info if available, otherwise use provided sender info
-    if (user) {
-      // If user is authenticated, use their info
-      parcel.sender.phone = user.phone;
-      parcel.sender.email = user.email;
-      if (!parcel.sender.name) {
-        parcel.sender.name = user.name;
-      }
-    } else {
-      // For non-authenticated users, validate email format if provided
-      if (parcel.sender.email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(parcel.sender.email)) {
-          return errorResponse({
-            status: 400,
-            message: "Invalid email format",
-            req,
-          });
-        }
-      }
-    }
-
-    // Validate receiver information
-    if (!parcel.receiver) {
+    if (!receiverInput) {
       return errorResponse({
         status: 400,
         message: "Receiver information (parcel.receiver) is required",
@@ -291,7 +416,28 @@ export const POST = createPublicHandler(async ({ req, user }) => {
       });
     }
 
-    if (!parcel.receiver.name || !parcel.receiver.phone) {
+    const sender = sanitizePerson(senderInput, {
+      name: user?.name,
+      phone: user?.phone,
+      email: user?.email,
+    });
+    const receiver = sanitizePerson(receiverInput, {});
+
+    // Authenticated customers always ship under their own account identity.
+    if (user) {
+      sender.phone = user.phone;
+      sender.email = user.email;
+    }
+
+    if (!sender.name || !sender.phone) {
+      return errorResponse({
+        status: 400,
+        message: "Sender name and phone are required",
+        req,
+      });
+    }
+
+    if (!receiver.name || !receiver.phone) {
       return errorResponse({
         status: 400,
         message: "Receiver name and phone are required",
@@ -299,9 +445,33 @@ export const POST = createPublicHandler(async ({ req, user }) => {
       });
     }
 
-    // If items provided, validate each
-    if (parcel.item) {
-      const validation = validateAndFixItems(parcel.item);
+    if (sender.email && !EMAIL_REGEX.test(sender.email)) {
+      return errorResponse({
+        status: 400,
+        message: "Invalid sender email format",
+        req,
+      });
+    }
+
+    if (receiver.email && !EMAIL_REGEX.test(receiver.email)) {
+      return errorResponse({
+        status: 400,
+        message: "Invalid receiver email format",
+        req,
+      });
+    }
+
+    // Items (optional, but every provided entry must be valid)
+    if (parcelInput.item !== undefined && !Array.isArray(parcelInput.item)) {
+      return errorResponse({
+        status: 400,
+        message: "parcel.item must be an array",
+        req,
+      });
+    }
+
+    if (Array.isArray(parcelInput.item)) {
+      const validation = validateAndFixItems(parcelInput.item);
       if (!validation.valid) {
         return errorResponse({
           status: 400,
@@ -309,71 +479,44 @@ export const POST = createPublicHandler(async ({ req, user }) => {
           req,
         });
       }
-      body.parcel.item = parcel.item;
     }
 
-    // Set default values for optional fields
-    if (!parcel.orderType) parcel.orderType = "parcel";
-    if (!parcel.priority) parcel.priority = "normal";
-    if (!parcel.description) parcel.description = "";
+    const items = sanitizeItems(parcelInput.item);
+    const itemsTotal = Math.round(
+      items.reduce((sum, item) => sum + item.totalPrice, 0) * 100
+    ) / 100;
 
-    // If payment not provided, create default
-    if (!body.payment || typeof body.payment !== "object") {
-      body.payment = {
-        pType: "Due",
-        pAmount: 0,
-        pOfferDiscount: 0,
-        pExtraCharge: 0,
-        pDiscount: 0,
-        pReceived: 0,
-        pRefunded: 0,
-      };
-    } else {
-      // coerce numeric fields
-      const numericFields = [
-        "pAmount",
-        "pOfferDiscount",
-        "pExtraCharge",
-        "pDiscount",
-        "pReceived",
-        "pRefunded",
-      ];
-      for (const f of numericFields) {
-        if (body.payment[f] == null || Number.isNaN(Number(body.payment[f]))) {
-          body.payment[f] = 0;
-        } else {
-          body.payment[f] = Number(body.payment[f]);
-        }
-      }
-      if (!body.payment.pType) body.payment.pType = "Due";
+    const orderType = ORDER_TYPES.has(String(parcelInput.orderType))
+      ? String(parcelInput.orderType)
+      : "parcel";
+    const priority = PRIORITIES.has(String(parcelInput.priority))
+      ? String(parcelInput.priority)
+      : "normal";
+
+    const dimensionsInput =
+      parcelInput.dimensions && typeof parcelInput.dimensions === "object"
+        ? (parcelInput.dimensions as Record<string, unknown>)
+        : {};
+    const insuranceInput =
+      parcelInput.insurance && typeof parcelInput.insurance === "object"
+        ? (parcelInput.insurance as Record<string, unknown>)
+        : {};
+
+    // Only staff can set financial amounts when creating an order.
+    const isStaff = user?.role === "admin" || user?.role === "moderator";
+    const payment = sanitizePayment(body.payment, isStaff);
+
+    // ---- Coupon (server-computed discount + atomic consumption) ----
+    let couponCode = "";
+    let couponDiscount = 0;
+
+    if (parcelInput.couponCode) {
+      couponCode = toText(parcelInput.couponCode, 50).toUpperCase();
     }
 
-    // set to genaret trackId
-    const generateTrackId = () => {
-      const prefix = "CCG";
-      const timestampPart = Date.now().toString().slice(-5);
-      return `${prefix}-${timestampPart}`;
-    }
-    body.trackId = generateTrackId();
-    
-    // Ensure trackId is unique (in rare case of collision)
-    let exists = await Order.findOne({ trackId: body.trackId }).lean();
-    while (exists) {
-      body.trackId = generateTrackId();
-      exists = await Order.findOne({ trackId: body.trackId }).lean();
-    }
-    
-    body.orderDate = new Date();
-    body.handover_by = {
-      company: "",
-      tracking: "",
-      payment: 0,
-    };
-    
-    // Apply coupon discount if couponCode provided
-    const couponCode = String(body.parcel?.couponCode || "").trim().toUpperCase();
     if (couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode, isActive: true });
+
       if (!coupon) {
         return errorResponse({
           status: 400,
@@ -390,8 +533,8 @@ export const POST = createPublicHandler(async ({ req, user }) => {
         return errorResponse({ status: 400, message: "Coupon has expired", req });
       }
 
-      const orderAmount = Number(body.payment?.pAmount) || 0;
-      if (orderAmount < coupon.minOrderAmount) {
+      // Discount applies to the item subtotal, never to a client-supplied amount.
+      if (itemsTotal < (coupon.minOrderAmount || 0)) {
         return errorResponse({
           status: 400,
           message: `Minimum order amount of ${coupon.minOrderAmount} required for this coupon`,
@@ -403,60 +546,194 @@ export const POST = createPublicHandler(async ({ req, user }) => {
         return errorResponse({ status: 400, message: "Coupon usage limit reached", req });
       }
 
-      const userId = body.userId || user?.id;
+      const userId =
+        user?.id && Types.ObjectId.isValid(user.id)
+          ? new Types.ObjectId(user.id)
+          : null;
+
       if (userId && coupon.perUserLimit > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const userUses = coupon.usedBy.filter((id: any) => id.toString() === userId).length;
+        const userUses = (coupon.usedBy || []).filter(
+          (id: Types.ObjectId) => id.toString() === userId.toString()
+        ).length;
         if (userUses >= coupon.perUserLimit) {
-          return errorResponse({ status: 400, message: "You have already used this coupon", req });
+          return errorResponse({
+            status: 400,
+            message: "You have already used this coupon",
+            req,
+          });
         }
       }
 
-      let discount = 0;
-      if (coupon.discountType === "percentage") {
-        discount = (orderAmount * coupon.discountValue) / 100;
-      } else {
-        discount = coupon.discountValue;
-      }
+      let discount =
+        coupon.discountType === "percentage"
+          ? (itemsTotal * coupon.discountValue) / 100
+          : coupon.discountValue;
+
       if (coupon.maxDiscount > 0 && discount > coupon.maxDiscount) {
         discount = coupon.maxDiscount;
       }
-      discount = Math.min(discount, orderAmount);
+      discount = Math.min(discount, itemsTotal);
+      couponDiscount = Math.round(discount * 100) / 100;
 
-      body.parcel.couponDiscount = Number(discount.toFixed(2));
-      body.payment.pDiscount = (Number(body.payment.pDiscount) || 0) + Number(discount.toFixed(2));
-      body.payment.pAmount = Math.max(0, orderAmount - Number(discount.toFixed(2)));
-
-      coupon.usedCount = (coupon.usedCount || 0) + 1;
-      if (userId) coupon.usedBy.push(userId);
-      await coupon.save();
-    }
-    
-
-    // Construct order document and save
-    const order = new Order(body);
-    await order.save();
-
-    const track = new Track({
-        order: order._id, // Link to the newly created order
-        // The trackId will be automatically populated by the Track model's pre-validate hook
-        currentStatus: "created", // Initial status
-        estimatedDelivery: body.estimatedDelivery
-          ? new Date(body.estimatedDelivery)
-          : undefined,
-        history: [{
-          status: "created",
-          description: "Order has been placed and is being processed",
-          location: {
-            city: parcel.sender.address?.city || "",
-            country: parcel.sender.address?.country || ""
+      // Atomic guard: re-check limits in the update query so concurrent
+      // requests cannot push usedCount past usageLimit / perUserLimit.
+      const conditions: Record<string, unknown>[] = [];
+      if (coupon.usageLimit > 0) {
+        conditions.push({ $expr: { $lt: ["$usedCount", "$usageLimit"] } });
+      }
+      if (userId && coupon.perUserLimit > 0) {
+        conditions.push({
+          $expr: {
+            $lt: [
+              {
+                $size: {
+                  $filter: {
+                    input: { $ifNull: ["$usedBy", []] },
+                    as: "used",
+                    cond: { $eq: ["$$used", userId] },
+                  },
+                },
+              },
+              "$perUserLimit",
+            ],
           },
-          updatedBy: user?.id || null,
-          timestamp: new Date(),
-        }],
+        });
+      }
+
+      const consumeFilter: Record<string, unknown> = {
+        _id: coupon._id,
+        isActive: true,
+        validFrom: { $lte: now },
+        validUntil: { $gte: now },
+      };
+      if (conditions.length > 0) consumeFilter.$and = conditions;
+
+      const consumed = await Coupon.findOneAndUpdate(
+        consumeFilter,
+        {
+          $inc: { usedCount: 1 },
+          ...(userId ? { $push: { usedBy: userId } } : {}),
+        },
+        { new: true }
+      );
+
+      if (!consumed) {
+        return errorResponse({
+          status: 409,
+          message: "Coupon is no longer available. Please try again.",
+          req,
+        });
+      }
+
+      couponUsage = {
+        couponId: coupon._id as Types.ObjectId,
+        ...(userId ? { userId } : {}),
+      };
+
+      payment.pDiscount = Math.round((payment.pDiscount + couponDiscount) * 100) / 100;
+      if (payment.pAmount > 0) {
+        payment.pAmount = Math.max(
+          0,
+          Math.round((payment.pAmount - couponDiscount) * 100) / 100
+        );
+      }
+    }
+
+    const estimatedDeliveryRaw = body.estimatedDelivery;
+    const estimatedDelivery =
+      typeof estimatedDeliveryRaw === "string" ||
+      estimatedDeliveryRaw instanceof Date
+        ? new Date(estimatedDeliveryRaw)
+        : null;
+
+    // ---- Build the order from whitelisted fields only ----
+    const orderPayload = {
+      parcel: {
+        from,
+        to,
+        sender,
+        receiver,
+        box: sanitizeBoxes(parcelInput.box),
+        weight,
+        packagingType: toText(parcelInput.packagingType, 100),
+        boxCount: toWholeNumber(parcelInput.boxCount, 10_000),
+        dimensions: {
+          length: toAmount(dimensionsInput.length),
+          width: toAmount(dimensionsInput.width),
+          height: toAmount(dimensionsInput.height),
+        },
+        serviceType: toText(parcelInput.serviceType, 100),
+        priority,
+        orderType,
+        item: items,
+        customerNote: toText(parcelInput.customerNote, 2_000),
+        insurance: {
+          enabled: insuranceInput.enabled === true,
+          declaredValue: toAmount(insuranceInput.declaredValue),
+          // The client never determines the insurance charge.
+          charge: 0,
+        },
+        couponCode,
+        couponDiscount,
+      },
+      payment,
+      handover_by: { company: "", tracking: "", payment: 0 },
+      orderDate: new Date(),
+      status: "pending",
+    };
+
+    let order;
+    try {
+      order = await Order.create(orderPayload);
+    } catch (error) {
+      // The order failed after the coupon was consumed: give it back.
+      if (couponUsage) {
+        await Coupon.updateOne(
+          { _id: couponUsage.couponId },
+          {
+            $inc: { usedCount: -1 },
+            ...(couponUsage.userId
+              ? { $pull: { usedBy: couponUsage.userId } }
+              : {}),
+          }
+        ).catch((rollbackError) => {
+          console.error("Failed to roll back coupon usage:", rollbackError);
+        });
+      }
+      throw error;
+    }
+
+    // Tracking is created after the order; a tracking failure must not turn a
+    // successfully stored order into a 500 response.
+    try {
+      const track = new Track({
+        order: order._id,
+        currentStatus: "created",
+        estimatedDelivery:
+          estimatedDelivery && !Number.isNaN(estimatedDelivery.getTime())
+            ? estimatedDelivery
+            : undefined,
+        history: [
+          {
+            status: "created",
+            description: "Order has been placed and is being processed",
+            location: {
+              city: sender.address.city,
+              country: toText(senderInput.address && (senderInput.address as Record<string, unknown>).country, 100),
+            },
+            updatedBy: user?.id || null,
+            timestamp: new Date(),
+          },
+        ],
       });
-      
+
       await track.save();
+    } catch (trackError) {
+      console.error(
+        `Failed to create tracking record for order ${order.trackId}:`,
+        trackError
+      );
+    }
 
     // Send order creation notifications (only if user is authenticated)
     if (user) {
@@ -474,8 +751,8 @@ export const POST = createPublicHandler(async ({ req, user }) => {
           data: {
             orderId: order._id,
             trackId: order.trackId,
-            from: parcel.from,
-            to: parcel.to,
+            from,
+            to,
           },
         });
       } catch (notificationError) {
@@ -489,7 +766,7 @@ export const POST = createPublicHandler(async ({ req, user }) => {
       message: "Order created successfully",
       data: {
         ...order.toObject(),
-        instructions: user 
+        instructions: user
           ? "You can track this order in your dashboard"
           : "Please save your tracking ID to track this order later",
         trackingUrl: `/ship-and-track/track-shipment?trackId=${order.trackId}`,

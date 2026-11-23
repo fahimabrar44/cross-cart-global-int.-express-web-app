@@ -280,7 +280,6 @@ export function DashboardOverview() {
     try {
       const response = await fetch("/api/v1/analytics?days=30", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           "Content-Type": "application/json",
         },
       });

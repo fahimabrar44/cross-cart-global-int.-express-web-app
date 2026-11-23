@@ -1,169 +1,109 @@
 import connectDB from "@/config/db";
-import { errorResponse, successResponse } from "@/server/common/response";
+import { successResponse } from "@/server/common/response";
 import { LoginHistory } from "@/server/models/LoginHistory.model";
 import { User } from "@/server/models/User.model";
 import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import { NextRequest } from "next/server";
+import {
+  clearAuthCookies,
+  getAccessToken,
+  getRefreshToken,
+} from "@/server/common/authCookies";
+import { getClientIp } from "@/server/common/requestIp";
 
+/**
+ * POST /api/v1/auth/signout
+ *
+ * Idempotent logout: clears the httpOnly cookies even if the access token is
+ * already expired, and revokes the refresh token when it can be identified.
+ */
 export async function POST(req: NextRequest) {
-  const getIp = () =>
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    req.headers.get("x-real-ip") ||
-    "unknown";
-  const getAgent = () => req.headers.get("user-agent") || "unknown";
+  const ipAddress = getClientIp(req);
+  const userAgent = req.headers.get("user-agent") || "unknown";
+
+  const accessToken = getAccessToken(req);
+  let refreshToken = getRefreshToken(req);
+
+  // API clients may send the refresh token in the body instead of a cookie.
+  try {
+    const bodyText = await req.text();
+    if (bodyText.trim()) {
+      const body = JSON.parse(bodyText) as { refreshToken?: string };
+      if (body.refreshToken) refreshToken = body.refreshToken;
+    }
+  } catch {
+    // Empty or malformed body is fine for logout.
+  }
+
+  const accessSecret = process.env.JWT_SECRET;
+  const refreshSecret = process.env.REFRESH_TOKEN_SECRET || accessSecret;
+
+  let userId: string | undefined;
+
+  if (accessToken && accessSecret) {
+    try {
+      const verified = jwt.verify(accessToken, accessSecret as Secret);
+      if (typeof verified !== "string" && (verified as JwtPayload).id) {
+        userId = String((verified as JwtPayload).id);
+      }
+    } catch {
+      // Expired/invalid access token: still clear the cookies below.
+    }
+  }
+
+  if (!userId && refreshToken && refreshSecret) {
+    try {
+      const verified = jwt.verify(refreshToken, refreshSecret as Secret);
+      if (typeof verified !== "string" && (verified as JwtPayload).id) {
+        userId = String((verified as JwtPayload).id);
+      }
+    } catch {
+      // Invalid refresh token: nothing to revoke.
+    }
+  }
 
   try {
     await connectDB();
 
-    // Get token from Authorization header
-    const authHeader =
-      req.headers.get("authorization") || req.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return errorResponse({
-        status: 400,
-        message: "Authorization header missing or malformed",
-        req,
-      });
-    }
+    if (userId) {
+      const user = await User.findById(userId);
 
-    const token = authHeader.split(" ")[1].trim();
-    if (!token) {
-      return errorResponse({
-        status: 400,
-        message: "Token not provided",
-        req,
-      });
-    }
+      if (user) {
+        if (refreshToken) {
+          await User.updateOne(
+            { _id: user._id },
+            { $pull: { refreshTokens: refreshToken } }
+          );
+        } else {
+          // No refresh token supplied: invalidate every stored session.
+          await User.updateOne(
+            { _id: user._id },
+            { $set: { refreshTokens: [] } }
+          );
+        }
 
-    // Ensure JWT secret available
-    if (!process.env.JWT_SECRET) {
-      return errorResponse({
-        status: 500,
-        message: "JWT secret not configured on server",
-        req,
-      });
-    }
-    const secret: Secret = process.env.JWT_SECRET as Secret;
-
-    // Verify token
-    let verified: string | JwtPayload;
-    try {
-      verified = jwt.verify(token, secret) as string | JwtPayload;
-    } catch {
-      await LoginHistory.create({
-        phone: "unknown",
-        ipAddress: getIp(),
-        userAgent: getAgent(),
-        success: false,
-        failureReason: "Invalid or expired token on signout",
-        timestamp: new Date(),
-      });
-
-      return errorResponse({
-        status: 401,
-        message: "Invalid or expired token",
-        req,
-      });
-    }
-
-    // Extract user id from payload
-    if (typeof verified === "string") {
-      return errorResponse({
-        status: 400,
-        message: "Invalid token payload",
-        req,
-      });
-    }
-    const userId = verified?.id ? String(verified.id) : undefined;
-    if (!userId) {
-      return errorResponse({
-        status: 400,
-        message: "Token does not contain user id",
-        req,
-      });
-    }
-
-    // Find user
-    const user = await User.findById(userId);
-    if (!user) {
-      await LoginHistory.create({
-        user: null,
-        phone: "unknown",
-        ipAddress: getIp(),
-        userAgent: getAgent(),
-        success: false,
-        failureReason: "User not found during signout",
-        timestamp: new Date(),
-      }).catch(() => undefined);
-
-      return errorResponse({
-        status: 404,
-        message: "User not found",
-        req,
-      });
-    }
-
-    // Revoke the session. Prefer the refresh token supplied in the body;
-    // otherwise clear all stored refresh tokens so nothing stays valid after logout.
-    const bodyText = await req.text().catch(() => "");
-    const refreshToken =
-      bodyText
-        ? (JSON.parse(bodyText) as { refreshToken?: string }).refreshToken
-        : undefined;
-
-    try {
-      if (refreshToken) {
-        await User.updateOne(
-          { _id: user._id },
-          { $pull: { refreshTokens: refreshToken } }
-        );
-      } else {
-        await User.updateOne(
-          { _id: user._id },
-          { $set: { refreshTokens: [] } }
-        );
+        await LoginHistory.create({
+          user: user._id,
+          phone: user.phone || "unknown",
+          ipAddress,
+          userAgent,
+          success: true,
+          action: "logout",
+          timestamp: new Date(),
+        }).catch(() => undefined);
       }
-    } catch (err) {
-      console.error("Token removal during signout failed (ignored):", err);
     }
-
-    // Log logout into LoginHistory
-    await LoginHistory.create({
-      user: user._id,
-      phone: user.phone || "unknown",
-      ipAddress: getIp(),
-      userAgent: getAgent(),
-      success: true,
-      action: "logout",
-      timestamp: new Date(),
-    }).catch(() => undefined);
-
-    // Return successful response
-    return successResponse({
-      status: 200,
-      message: "Signed out successfully",
-      data: { userId: user._id, phone: user.phone || null },
-      req,
-    });
-  } catch (error: unknown) {
-    console.error("Signout API Error:", error);
-    const message =
-      error instanceof Error ? error.message : "Something went wrong";
-
-    await LoginHistory.create({
-      phone: getIp(),
-      ipAddress: getIp(),
-      userAgent: req.headers.get("user-agent") || "unknown",
-      success: false,
-      failureReason: message,
-      timestamp: new Date(),
-    });
-
-    return errorResponse({
-      status: 500,
-      message,
-      error,
-      req,
-    });
+  } catch (error) {
+    // Logout must not fail because the database is temporarily unavailable.
+    console.error("Signout cleanup failed (ignored):", error);
   }
+
+  const response = successResponse({
+    status: 200,
+    message: "Signed out successfully",
+    data: {},
+    req,
+  });
+  clearAuthCookies(response);
+  return response;
 }

@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageHeader from "@/utilities/PageHeader";
@@ -58,12 +58,12 @@ export async function generateMetadata({
     description,
     keywords,
     alternates: {
-      canonical: `https://crosscartglobal.com${slugPath}`,
+      canonical: `https://www.crosscartglobal.com${slugPath}`,
     },
     openGraph: {
       title: `${title} | Cross Cart Global International Express`,
       description,
-      url: `https://crosscartglobal.com${slugPath}`,
+      url: `https://www.crosscartglobal.com${slugPath}`,
       siteName: "Cross Cart Global International Express",
       type: "article",
       publishedTime: blog.createdAt,

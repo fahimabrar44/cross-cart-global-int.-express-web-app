@@ -264,7 +264,6 @@ export default function ParcelTrackingPage() {
 
       const response = await fetch(`/api/v1/tracks?${queryParams.toString()}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
 
@@ -309,7 +308,6 @@ export default function ParcelTrackingPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
         body: JSON.stringify({
           ...newTrack,
@@ -349,7 +347,6 @@ export default function ParcelTrackingPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
         body: JSON.stringify({
           currentStatus: updateTrack.currentStatus,
@@ -396,7 +393,6 @@ export default function ParcelTrackingPage() {
       const response = await fetch(`/api/v1/tracks/${selectedTrack.trackId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
 
@@ -443,7 +439,6 @@ export default function ParcelTrackingPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
           body: JSON.stringify({
             carrier: track.order?.handover_by?.company || "",

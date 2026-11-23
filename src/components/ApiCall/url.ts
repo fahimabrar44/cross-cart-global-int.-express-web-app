@@ -154,17 +154,15 @@ export interface ApiResponse<T> {
   requestId?: string;
 }
 
+/**
+ * Auth is carried by an httpOnly cookie, which the browser attaches to
+ * same-origin requests automatically. Do not read tokens from localStorage:
+ * that would make them accessible to XSS again.
+ */
 export const getAuthHeaders = () => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-  }
 
   return headers;
 };

@@ -3,6 +3,8 @@ import { ApiNotificationMiddleware } from "@/middleware/apiNotification";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { errorResponse } from "./response";
+import { getClientIp } from "./requestIp";
+import { consumeRateLimit } from "@/server/services/rateLimitService";
 
 interface ApiHandlerOptions {
   requireAuth?: boolean;
@@ -25,9 +27,6 @@ interface ApiContext {
 
 type ApiHandler = (context: ApiContext) => Promise<NextResponse>;
 
-// Rate limiting storage
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-
 export function createApiHandler(
   handler: ApiHandler,
   options: ApiHandlerOptions = {}
@@ -44,43 +43,26 @@ export function createApiHandler(
     let errorMessage: string | undefined;
 
     try {
-      // Rate limiting
+      // Rate limiting (Redis-backed when configured, in-memory otherwise)
       if (options.rateLimit) {
-        const clientIP =
-          req.headers.get("x-forwarded-for")?.split(",")[0] ||
-          req.headers.get("x-real-ip") ||
-          
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
-          req.ip ||
-          "unknown";
+        const rateLimitKey = `${getClientIp(req)}:${endpoint}`;
+        const result = await consumeRateLimit(
+          rateLimitKey,
+          options.rateLimit.max,
+          options.rateLimit.windowMs
+        );
 
-        const rateLimitKey = `${clientIP}:${endpoint}`;
-        const now = Date.now();
-        const rateLimitData = rateLimitMap.get(rateLimitKey);
-
-        if (rateLimitData) {
-          if (now < rateLimitData.resetTime) {
-            if (rateLimitData.count >= options.rateLimit.max) {
-              return errorResponse({
-                status: 429,
-                message: "Too many requests. Please try again later.",
-                req,
-              });
-            }
-            rateLimitData.count++;
-          } else {
-            // Reset the counter
-            rateLimitMap.set(rateLimitKey, {
-              count: 1,
-              resetTime: now + options.rateLimit.windowMs,
-            });
-          }
-        } else {
-          rateLimitMap.set(rateLimitKey, {
-            count: 1,
-            resetTime: now + options.rateLimit.windowMs,
+        if (!result.allowed) {
+          const response = errorResponse({
+            status: 429,
+            message: "Too many requests. Please try again later.",
+            req,
           });
+          response.headers.set(
+            "Retry-After",
+            String(Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000)))
+          );
+          return response;
         }
       }
 
@@ -147,14 +129,17 @@ export function createApiHandler(
       success = response.status >= 200 && response.status < 300;
       statusCode = response.status;
     } catch (error) {
+      // Keep full details in the server log, never in the response body.
       console.error("API Handler Error:", error);
       errorMessage =
         error instanceof Error ? error.message : "Internal server error";
 
       response = errorResponse({
         status: 500,
-        message: errorMessage,
-        error: error instanceof Error ? error.stack : error,
+        message:
+          process.env.NODE_ENV === "production"
+            ? "Internal server error"
+            : errorMessage,
         req,
       });
 
@@ -220,12 +205,3 @@ export const createAuthRateLimitedHandler = (
     notifyActivity: true,
   });
 
-// Cleanup rate limit data periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, data] of rateLimitMap.entries()) {
-    if (now >= data.resetTime) {
-      rateLimitMap.delete(key);
-    }
-  }
-}, 60000); // Cleanup every minute

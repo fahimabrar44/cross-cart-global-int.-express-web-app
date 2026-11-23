@@ -289,14 +289,12 @@ export default function OrdersPage() {
 
     setActionLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
       const response = await fetch(
         `/api/v1/orders/${selectedOrder._id}/tracking-update`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             company: trackingCompany.trim(),
@@ -334,12 +332,10 @@ export default function OrdersPage() {
     setDetectingCourier(true);
     setDetectedCouriers([]);
     try {
-      const token = localStorage.getItem("accessToken");
       const response = await fetch(`/api/v1/tracking/detect`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ tracking_number: trackingNumber.trim() }),
       });
@@ -415,7 +411,6 @@ export default function OrdersPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
           body: JSON.stringify(paymentData),
         }
@@ -451,14 +446,12 @@ export default function OrdersPage() {
       return;
     }
     try {
-      const token = localStorage.getItem("accessToken");
       const response = await fetch(
         `/api/v1/orders/${selectedOrder._id}/assignment`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ rider: selectedRiderId }),
         }

@@ -12,13 +12,13 @@ export const metadata: Metadata = {
     "worldwide delivery destinations",
   ],
   alternates: {
-    canonical: "https://crosscartglobal.com/about/coverage-area",
+    canonical: "https://www.crosscartglobal.com/about/coverage-area",
   },
   openGraph: {
     title: "Coverage Area | Cross Cart Global International Express",
     description:
       "We deliver to 100+ countries and territories worldwide — explore popular routes and all supported destinations from Bangladesh.",
-    url: "https://crosscartglobal.com/about/coverage-area",
+    url: "https://www.crosscartglobal.com/about/coverage-area",
     siteName: "Cross Cart Global International Express",
     type: "website",
     locale: "en_US",

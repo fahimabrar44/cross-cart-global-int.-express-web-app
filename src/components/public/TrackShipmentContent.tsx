@@ -361,7 +361,7 @@ export default function TrackShipmentContent({
 
           <p style="margin-top:24px; font-size:11px; color:#6b7280; text-align:center;">
             Track online: ${escapeReceiptHtml(
-              `${process.env.NEXT_PUBLIC_APP_URL || "https://crosscartglobal.com"}/ship-and-track/track-shipment?trackId=${trackingData.trackId}`
+              `${process.env.NEXT_PUBLIC_APP_URL || "https://www.crosscartglobal.com"}/ship-and-track/track-shipment?trackId=${trackingData.trackId}`
             )}
             <br/>This is a system-generated receipt from CrossCart Global Int Express.
           </p>

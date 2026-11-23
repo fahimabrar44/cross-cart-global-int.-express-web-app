@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RoleGuard } from "@/middleware/roleGuard";
 import { apiService } from "@/services/apiService";
 import { TeamMemberService } from "@/services/dashboardService";
-import { Edit, Eye, ImagePlus, Loader2, Plus, Users } from "lucide-react";
+import { ImagePlus, Loader2, Plus, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Controller } from "react-hook-form";

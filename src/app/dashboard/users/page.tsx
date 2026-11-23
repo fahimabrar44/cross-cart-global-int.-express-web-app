@@ -486,6 +486,7 @@ export default function UsersPage() {
               <div className="flex items-center space-x-4">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
                   {selectedUser.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- avatar URLs are user-provided and can be any host
                     <img
                       src={selectedUser.avatar}
                       alt={selectedUser.name}
@@ -553,6 +554,7 @@ export default function UsersPage() {
                       <div className="space-y-1">
                         <p className="text-sm font-medium">Front</p>
                         <a href={selectedUser.nid.front} target="_blank" rel="noreferrer">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- NID uploads can be any host */}
                           <img
                             src={selectedUser.nid.front}
                             alt="NID Front"
@@ -565,6 +567,7 @@ export default function UsersPage() {
                       <div className="space-y-1">
                         <p className="text-sm font-medium">Back</p>
                         <a href={selectedUser.nid.back} target="_blank" rel="noreferrer">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- NID uploads can be any host */}
                           <img
                             src={selectedUser.nid.back}
                             alt="NID Back"

@@ -34,9 +34,6 @@ export function NotificationPanel() {
     try {
       setLoading(true);
       
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
-
       const queryParams = new URLSearchParams({
         limit: "20",
         sortBy: "createdAt",
@@ -49,7 +46,6 @@ export function NotificationPanel() {
 
       const response = await fetch(`${NOTIFICATION_API}?${queryParams}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -75,13 +71,9 @@ export function NotificationPanel() {
     if (!user) return;
 
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
-
       const response = await fetch(NOTIFICATION_API, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

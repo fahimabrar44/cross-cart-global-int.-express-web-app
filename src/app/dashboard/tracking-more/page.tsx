@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/AuthContext";
 import { Loader2, Search, Truck } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -40,7 +41,7 @@ export default function TrackingMorePage() {
     try {
       setLoading(true);
       const res = await fetch("/api/v1/tracking/couriers", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+        credentials: "include",
       });
       const result = await res.json();
       if (res.ok) {
@@ -70,7 +71,6 @@ export default function TrackingMorePage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
         body: JSON.stringify({ tracking_number: detectNumber.trim() }),
       });
@@ -103,7 +103,6 @@ export default function TrackingMorePage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
         body: JSON.stringify(createForm),
       });
@@ -141,7 +140,7 @@ export default function TrackingMorePage() {
           <Truck className="h-4 w-4 mr-2" />
           {loading ? (
             <>
-              <img src="/world.svg" alt="" className="h-4 w-4" />
+              <Image src="/world.svg" alt="" width={16} height={16} className="h-4 w-4" />
               Refreshing...
             </>
           ) : (

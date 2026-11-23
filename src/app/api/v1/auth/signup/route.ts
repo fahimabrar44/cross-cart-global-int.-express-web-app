@@ -5,6 +5,8 @@ import { User } from "@/server/models/User.model";
 import { Referral } from "@/server/models/Referral.model";
 import { emailService } from "@/services/emailService";
 import { notificationService } from "@/services/notificationService";
+import { getClientIp } from "@/server/common/requestIp";
+import { consumeRateLimit } from "@/server/services/rateLimitService";
 
 interface SignupBody {
   name: string;
@@ -15,10 +17,9 @@ interface SignupBody {
   referralCode?: string;
 }
 
-// Rate limiting for signup attempts
-const signupAttempts = new Map<string, number>();
-const SIGNUP_RATE_LIMIT = 3; // Max 3 signups per IP per hour
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
+// Max 3 signup attempts per IP per hour (shared via Redis when configured).
+const SIGNUP_RATE_LIMIT = 3;
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000;
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -67,41 +68,32 @@ function sanitizeInput(input: string): string {
   return input.trim().replace(/[<>]/g, "");
 }
 
-function isRateLimited(ipAddress: string): boolean {
-  const now = Date.now();
-  const attempts = signupAttempts.get(ipAddress) || 0;
-
-  // Clean up old entries
-  signupAttempts.forEach((timestamp, ip) => {
-    if (now - timestamp > RATE_LIMIT_WINDOW) signupAttempts.delete(ip);
-  });
-
-  return attempts >= SIGNUP_RATE_LIMIT;
-}
-
-function recordSignupAttempt(ipAddress: string): void {
-  const current = signupAttempts.get(ipAddress) || 0;
-  signupAttempts.set(ipAddress, current + 1);
-}
-
 export const POST = createRateLimitedHandler(
   async ({ req }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const headers = req.headers as any;
-    const ipAddress =
-      headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-      headers.get("x-real-ip") ||
-      "unknown";
+    const ipAddress = getClientIp(req);
 
     try {
       await connectDB();
 
-      if (isRateLimited(ipAddress)) {
-        return errorResponse({
+      const signupLimit = await consumeRateLimit(
+        `signup:${ipAddress}`,
+        SIGNUP_RATE_LIMIT,
+        RATE_LIMIT_WINDOW
+      );
+
+      if (!signupLimit.allowed) {
+        const response = errorResponse({
           status: 429,
           message: "Too many signup attempts. Please try again later.",
           req,
         });
+        response.headers.set(
+          "Retry-After",
+          String(
+            Math.max(1, Math.ceil((signupLimit.resetAt - Date.now()) / 1000))
+          )
+        );
+        return response;
       }
 
       const body = (await req.json()) as SignupBody;
@@ -172,7 +164,6 @@ export const POST = createRateLimitedHandler(
       }).select("email phone isActive");
 
       if (existingUser) {
-        recordSignupAttempt(ipAddress);
         return errorResponse({
           status: 409,
           message: "An account with this email or phone number already exists",
@@ -251,8 +242,6 @@ export const POST = createRateLimitedHandler(
         )
         .catch((err) => console.error("Notification send error:", err));
 
-      recordSignupAttempt(ipAddress);
-
       const responseData = {
         user: {
           id: newUser._id,
@@ -275,7 +264,6 @@ export const POST = createRateLimitedHandler(
       });
     } catch (error: unknown) {
       console.error("Signup API Error:", error);
-      recordSignupAttempt(ipAddress);
 
       const msg =
         error instanceof Error ? error.message : "An error occurred during registration";

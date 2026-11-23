@@ -484,7 +484,6 @@ export default function RateChartsPage() {
                             <div className="font-medium">
                               ${" "}
                               {isAdminView
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 ? Number((v as number) * (1 + (r.fuel || 0) / 100) * (1 + (r.profitPercentage || 0) / 100)).toFixed(3)
                                 : Number(v as number).toFixed(3)}
                             </div>

@@ -29,7 +29,6 @@ export default function ExportPage() {
   const download = async (format: "csv" | "xlsx") => {
     try {
       setDownloading(true);
-      const token = localStorage.getItem("accessToken");
       const params = new URLSearchParams({ format });
       if (status) params.set("status", status);
       if (from) params.set("from", from);
@@ -38,7 +37,7 @@ export default function ExportPage() {
       const response = await fetch(
         `/api/v1/orders/export?${params.toString()}`,
         {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          credentials: "include",
         }
       );
 

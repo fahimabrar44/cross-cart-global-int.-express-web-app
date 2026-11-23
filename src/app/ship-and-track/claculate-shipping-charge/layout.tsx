@@ -13,13 +13,13 @@ export const metadata: Metadata = {
   ],
   alternates: {
     canonical:
-      "https://crosscartglobal.com/ship-and-track/claculate-shipping-charge",
+      "https://www.crosscartglobal.com/ship-and-track/claculate-shipping-charge",
   },
   openGraph: {
     title: "Calculate Shipping Charge | Cross Cart Global International Express",
     description:
       "Get instant, transparent international shipping quotes from Bangladesh to any destination with Cross Cart Global International Express.",
-    url: "https://crosscartglobal.com/ship-and-track/claculate-shipping-charge",
+    url: "https://www.crosscartglobal.com/ship-and-track/claculate-shipping-charge",
     siteName: "Cross Cart Global International Express",
     type: "website",
     locale: "en_US",

@@ -1,4 +1,4 @@
-﻿import { pageMetadata } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 import PageHeader from "@/utilities/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -170,11 +170,11 @@ const ApiIntegrationPage = () => {
               <p className="text-muted-foreground">
                 Public tracking (external websites / resellers):
               </p>
-              <CodeBlock code={`https://crosscartglobal.com/api`} />
+              <CodeBlock code={`https://www.crosscartglobal.com/api`} />
               <p className="text-muted-foreground">
                 Core services (prices, countries, zones, admin APIs):
               </p>
-              <CodeBlock code={`https://crosscartglobal.com/api/v1`} />
+              <CodeBlock code={`https://www.crosscartglobal.com/api/v1`} />
             </div>
           </section>
 
@@ -202,7 +202,7 @@ const ApiIntegrationPage = () => {
                   tracking history in a clean shape.
                 </p>
                 <CodeBlock
-                  code={`curl -X GET "https://crosscartglobal.com/api/track/CROSS00123" \\
+                  code={`curl -X GET "https://www.crosscartglobal.com/api/track/CROSS00123" \\
   -H "X-API-Key: ccg_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"`}
                 />
                 <div>
@@ -260,7 +260,7 @@ const ApiIntegrationPage = () => {
                   the price calculator.
                 </p>
                 <CodeBlock
-                  code={`curl -X GET "https://crosscartglobal.com/api/v1/countrys" \\
+                  code={`curl -X GET "https://www.crosscartglobal.com/api/v1/countrys" \\
   -H "X-API-Key: ccg_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"`}
                 />
                 <div>
@@ -319,7 +319,7 @@ const ApiIntegrationPage = () => {
                   it via <code className="font-mono">countryIds</code>.
                 </p>
                 <CodeBlock
-                  code={`curl -X GET "https://crosscartglobal.com/api/v1/zones" \\
+                  code={`curl -X GET "https://www.crosscartglobal.com/api/v1/zones" \\
   -H "X-API-Key: ccg_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"`}
                 />
                 <div>
@@ -465,7 +465,7 @@ curl -X GET "https://<your-domain>/api/v1/prices?fromName=Bangladesh&toName=EURO
                 </div>
 
                 <CodeBlock
-                  code={`curl -X POST "https://crosscartglobal.com/api/v1/prices/calculate" \\
+                  code={`curl -X POST "https://www.crosscartglobal.com/api/v1/prices/calculate" \\
   -H "X-API-Key: ccg_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" \\
   -H "Content-Type: application/json" \\
   -d '{

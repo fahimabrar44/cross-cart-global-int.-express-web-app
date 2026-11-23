@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 type WorldLoaderProps = {
   fullScreen?: boolean;
@@ -12,9 +13,11 @@ export default function WorldLoader({
   className,
 }: WorldLoaderProps) {
   const globe = (
-    <img
+    <Image
       src="/loading-world.svg"
       alt="Loading"
+      width={192}
+      height={192}
       className={cn("h-48 w-48", className)}
     />
   );
