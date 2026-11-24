@@ -34,17 +34,18 @@ import { useCallback, useEffect, useState } from "react";
 interface HealthData {
   status: string;
   timestamp: string;
-  uptime: string;
-  uptimeSeconds: number;
+  uptime?: string;
+  uptimeSeconds?: number;
   database: { status: string };
-  memory: { used: string; total: string; external: string };
-  environment: string;
-  version: string;
-  services: {
+  memory?: { used: string; total: string; external: string };
+  environment?: string;
+  version?: string;
+  services?: {
     api: string;
     notifications: string;
     auth: string;
     analytics: string;
+    database?: string;
   };
 }
 
@@ -186,7 +187,9 @@ const HealthStatus = ({ health }: { health: HealthData | null }) => {
             <Server className="h-4 w-4 text-gray-500" />
             <div>
               <div className="text-sm font-medium">Uptime</div>
-              <div className="text-xs text-gray-500">{health.uptime}</div>
+              <div className="text-xs text-gray-500">
+                {health.uptime || "—"}
+              </div>
             </div>
           </div>
 
@@ -213,7 +216,9 @@ const HealthStatus = ({ health }: { health: HealthData | null }) => {
             <div>
               <div className="text-sm font-medium">Memory</div>
               <div className="text-xs text-gray-500">
-                {health.memory.used} / {health.memory.total}
+                {health.memory
+                  ? `${health.memory.used} / ${health.memory.total}`
+                  : "Hidden in production"}
               </div>
             </div>
           </div>
@@ -222,7 +227,9 @@ const HealthStatus = ({ health }: { health: HealthData | null }) => {
             <Globe className="h-4 w-4 text-gray-500" />
             <div>
               <div className="text-sm font-medium">Environment</div>
-              <div className="text-xs text-gray-500">{health.environment}</div>
+              <div className="text-xs text-gray-500">
+                {health.environment || "production"}
+              </div>
             </div>
           </div>
         </div>
@@ -234,7 +241,7 @@ const HealthStatus = ({ health }: { health: HealthData | null }) => {
             Services Status
           </h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {Object.entries(health.services).map(([service, status]) => {
+            {Object.entries(health.services || {}).map(([service, status]) => {
               const StatusIcon = getStatusIcon(status);
               return (
                 <div key={service} className="flex items-center gap-2">

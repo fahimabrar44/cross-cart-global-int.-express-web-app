@@ -13,6 +13,7 @@ type GetQuery = {
   trackId?: string;
   priority?: string;
   orderType?: string;
+  status?: string;
   from?: string;
   to?: string;
   createdFrom?: string;
@@ -280,6 +281,19 @@ export const GET = createAuthHandler(async ({ req, user }) => {
 
     if (q.priority) query["parcel.priority"] = q.priority;
     if (q.orderType) query["parcel.orderType"] = q.orderType;
+
+    if (q.status && q.status !== "all") {
+      const statuses = q.status
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (statuses.length === 1) {
+        query.status = statuses[0];
+      } else if (statuses.length > 1) {
+        query.status = { $in: statuses };
+      }
+    }
+
     if (q.from && Types.ObjectId.isValid(q.from)) {
       query["parcel.from"] = new Types.ObjectId(q.from);
     }

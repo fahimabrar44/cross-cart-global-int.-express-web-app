@@ -48,6 +48,19 @@ const ME_API = "/api/v1/auth/me";
 const REFRESH_API = "/api/v1/auth/refresh-token";
 const SIGNOUT_API = "/api/v1/auth/signout";
 const AUTH_USER_KEY = "authUser";
+const SESSION_HINT_COOKIE = "cc_session";
+
+/**
+ * The session hint cookie is set by the server on sign-in and cleared on
+ * sign-out. It lets guests skip the /auth/me 401 and refresh-token 400 dance
+ * on every page load, without exposing the actual JWT (which stays httpOnly).
+ */
+function hasSessionHint(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split(";")
+    .some((part) => part.trim().startsWith(`${SESSION_HINT_COOKIE}=`));
+}
 
 async function fetchCurrentUser(): Promise<User | null> {
   try {
@@ -125,7 +138,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         }
 
+        // A guest has neither a cached profile nor a session cookie: skip both
+        // auth calls so the console stays clean (no 401/400 on every load).
+        if (!cached && !hasSessionHint()) {
+          return;
+        }
+
         let currentUser = await fetchCurrentUser();
+        // The short-lived access cookie may have expired; rotate it with the
+        // refresh cookie before giving up on the session.
         if (!currentUser) currentUser = await refreshSession();
 
         if (cancelled) return;

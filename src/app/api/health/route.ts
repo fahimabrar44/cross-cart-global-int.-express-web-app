@@ -21,10 +21,20 @@ export async function GET(req: NextRequest) {
       dbStatus = "error";
     }
 
+    const dbReady = dbStatus === "connected";
+
     const healthData: Record<string, unknown> = {
-      status: dbStatus === "connected" ? "healthy" : "degraded",
+      status: dbReady ? "healthy" : "degraded",
       timestamp: new Date().toISOString(),
       database: { status: dbStatus },
+      // Non-sensitive service map for the dashboard. Memory/uptime/version are
+      // still only exposed outside production.
+      services: {
+        api: "running",
+        database: dbStatus,
+        auth: dbReady ? "active" : "degraded",
+        notifications: dbReady ? "active" : "degraded",
+      },
     };
 
     if (!isProduction) {
