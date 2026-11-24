@@ -1,10 +1,22 @@
 "use client";
 
-import { getRequestSend } from "@/components/ApiCall/methord";
+import {
+  getRequestSend,
+  postRequestSend,
+} from "@/components/ApiCall/methord";
 import { ROOT_API } from "@/components/ApiCall/url";
+import { MAX_WEIGHT_KG, weightTierLabel } from "@/lib/weightTiers";
 import PageHeader from "@/utilities/PageHeader";
-import { Calculator, Clock, DollarSign, Globe, Loader2 } from "lucide-react";
+import {
+  BadgeCheck,
+  Calculator,
+  Clock,
+  DollarSign,
+  Globe,
+  Loader2,
+} from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
 export interface CountryOption {
@@ -27,41 +39,39 @@ interface Rate {
   profitPercentage: number;
   gift: number;
   fuel: number;
-
   price: Record<string, number>;
+  serviceDetails?: string[];
 }
 
 interface PriceData {
   _id: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  from?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  to?: any;
+  from?: { name?: string };
+  to?: { name?: string };
   rate: Rate[];
 }
 
-const WEIGHT_LABELS: Record<string, string> = {
-  gm500: "500 GM",
-  gm1000: "1000 GM",
-  gm1500: "1500 GM",
-  gm2000: "2000 GM",
-  gm2500: "2500 GM",
-  gm3000: "3000 GM",
-  gm3500: "3500 GM",
-  gm4000: "4000 GM",
-  gm4500: "4500 GM",
-  gm5000: "5000 GM",
-  gm5500: "5500 GM",
-  kg6to10: "6 TO 10 PER KG",
-  kg11to20: "11 TO 20 PER KG",
-  kg21to30: "21 TO 30 PER KG",
-  kg31to40: "31 TO 40 PER KG",
-  kg41to50: "41 TO 50 PER KG",
-  kg51to80: "51 TO 80 PER KG",
-  kg81to100: "81 TO 100 PER KG",
-  kg101to500: "101 TO 500 PER KG",
-  kg501to1000: "501 TO 1000 PER KG",
-};
+interface QuoteRate {
+  name: string;
+  profitPercentage: number;
+  gift: number;
+  fuel: number;
+  tier: string;
+  tierLabel: string;
+  basePrice: number;
+  finalPrice: number;
+  serviceDetails: string[];
+}
+
+interface QuoteData {
+  from: { _id: string; name?: string; code?: string };
+  to: { _id: string; name?: string; code?: string };
+  weight: number;
+  weightKg: number;
+  tier: string;
+  tierLabel: string;
+  perKg: boolean;
+  rates: QuoteRate[];
+}
 
 export default function ShippingCalculatorContent({
   initialCountries,
@@ -76,23 +86,31 @@ export default function ShippingCalculatorContent({
     () =>
       initialCountries.find((c) => c.name === "Bangladesh")?._id ||
       initialCountries[0]?._id ||
-      "",
+      ""
   );
   const [toZone, setToZone] = useState<string>(() => initialZones[0]?._id || "");
-  const [shipmentType, setShipmentType] = useState("b2b");
+  const [weightKg, setWeightKg] = useState("1");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [quote, setQuote] = useState<QuoteData | null>(null);
   const [priceData, setPriceData] = useState<PriceData | null>(null);
 
   const getCountryName = (id: string) =>
     countries.find((c) => c._id === id)?.name || "";
-
   const getZoneName = (id: string) =>
     zones.find((z) => z._id === id)?.name || "";
 
+  const resetResults = () => {
+    setQuote(null);
+    setPriceData(null);
+    setError("");
+  };
+
   const handleCalculate = async () => {
     setError("");
+    setQuote(null);
     setPriceData(null);
+
     if (!fromCountry) {
       setError("Please select an origin country");
       return;
@@ -101,25 +119,59 @@ export default function ShippingCalculatorContent({
       setError("Please select a destination zone");
       return;
     }
+
+    const parsedKg = Number(weightKg);
+    if (!Number.isFinite(parsedKg) || parsedKg <= 0) {
+      setError("Please enter a valid parcel weight in kilograms");
+      return;
+    }
+    if (parsedKg > MAX_WEIGHT_KG) {
+      setError(`Weight cannot exceed ${MAX_WEIGHT_KG} kg`);
+      return;
+    }
+
+    const weightGrams = Math.round(parsedKg * 1000);
+
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        from: fromCountry,
-        to: toZone,
-      });
-      const response = await getRequestSend<PriceData[]>(
-        `${ROOT_API}prices?${params.toString()}`,
-      );
+      // Quote for the exact weight + full rate chart for this route. The full
+      // chart is already fee-inclusive on the public endpoint, so the values
+      // must not be multiplied again in the UI.
+      const [quoteResponse, chartResponse] = await Promise.all([
+        postRequestSend<Record<string, unknown>, QuoteData>(
+          `${ROOT_API}prices/calculate`,
+          undefined,
+          {
+            fromCountryId: fromCountry,
+            toZoneId: toZone,
+            weight: weightGrams,
+          }
+        ),
+        getRequestSend<PriceData[]>(
+          `${ROOT_API}prices?from=${fromCountry}&to=${toZone}&limit=1`
+        ),
+      ]);
+
       if (
-        response.status === 200 &&
-        Array.isArray(response.data) &&
-        response.data.length > 0
+        quoteResponse.status === 200 &&
+        quoteResponse.data &&
+        Array.isArray(quoteResponse.data.rates) &&
+        quoteResponse.data.rates.length > 0
       ) {
-        setPriceData(response.data[0]);
+        setQuote(quoteResponse.data);
       } else {
         setError(
-          "No pricing found for this route yet. Please contact our support team.",
+          quoteResponse.message ||
+            "No pricing found for this route yet. Please contact our support team."
         );
+      }
+
+      if (
+        chartResponse.status === 200 &&
+        Array.isArray(chartResponse.data) &&
+        chartResponse.data.length > 0
+      ) {
+        setPriceData(chartResponse.data[0]);
       }
     } catch {
       setError("Failed to fetch prices. Please try again.");
@@ -128,13 +180,11 @@ export default function ShippingCalculatorContent({
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const priceWithFees = (base: any, rate: any) =>
-    Number(
-      base *
-        (1 + (rate.fuel || 0) / 100) *
-        (1 + (rate.profitPercentage || 0) / 100),
-    ).toFixed(3);
+  const sortedRates = quote
+    ? [...quote.rates].sort((a, b) => a.finalPrice - b.finalPrice)
+    : [];
+  const cheapestPrice = sortedRates[0]?.finalPrice;
+
   const carriers = [
     {
       name: "DHL Express",
@@ -199,8 +249,8 @@ export default function ShippingCalculatorContent({
               Calculate Shipping Charges
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Select origin country, destination zone and shipment type (B2B or
-              B2C) to get instant shipping quotes.
+              Select the origin country, destination zone and parcel weight to
+              get an instant, all-in shipping quote.
             </p>
           </div>
 
@@ -217,15 +267,22 @@ export default function ShippingCalculatorContent({
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* From Country */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="calc-from"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     From Country
                   </label>
                   <select
+                    id="calc-from"
                     value={fromCountry}
-                    onChange={(e) => setFromCountry(e.target.value)}
+                    onChange={(e) => {
+                      setFromCountry(e.target.value);
+                      resetResults();
+                    }}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   >
                     {countries.length === 0 && (
@@ -241,12 +298,19 @@ export default function ShippingCalculatorContent({
 
                 {/* To Zone */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="calc-to"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     To Zone
                   </label>
                   <select
+                    id="calc-to"
                     value={toZone}
-                    onChange={(e) => setToZone(e.target.value)}
+                    onChange={(e) => {
+                      setToZone(e.target.value);
+                      resetResults();
+                    }}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   >
                     <option value="">Select Zone</option>
@@ -257,22 +321,39 @@ export default function ShippingCalculatorContent({
                     ))}
                   </select>
                 </div>
+
+                {/* Weight */}
+                <div>
+                  <label
+                    htmlFor="calc-weight"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Parcel Weight (kg)
+                  </label>
+                  <input
+                    id="calc-weight"
+                    type="number"
+                    inputMode="decimal"
+                    min="0.1"
+                    max={MAX_WEIGHT_KG}
+                    step="0.1"
+                    value={weightKg}
+                    onChange={(e) => {
+                      setWeightKg(e.target.value);
+                      resetResults();
+                    }}
+                    placeholder="e.g., 1.5"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                  />
+                </div>
               </div>
 
-              {/* Shipment Type */}
-              <div className="mt-8">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Shipment Type
-                </label>
-                <select
-                  value={shipmentType}
-                  onChange={(e) => setShipmentType(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
-                >
-                  <option value="b2b">B2B (Business to Business)</option>
-                  <option value="b2c">B2C (Business to Customer)</option>
-                </select>
-              </div>
+              {(countries.length === 0 || zones.length === 0) && (
+                <div className="mt-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-center text-sm">
+                  Shipping routes are being updated. Please contact support for a
+                  manual quote.
+                </div>
+              )}
 
               {/* Calculate Button */}
               <div className="mt-8 text-center">
@@ -293,56 +374,105 @@ export default function ShippingCalculatorContent({
                 </div>
               )}
 
-              {priceData && (
+              {quote && (
                 <div className="mt-8">
                   <div className="bg-soft-green border border-gray-200 rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                       <h4 className="text-xl font-bold text-[#12352A]">
-                        {priceData.from?.name || getCountryName(fromCountry)} →{" "}
-                        {priceData.to?.name || getZoneName(toZone)}
+                        {quote.from?.name || getCountryName(fromCountry)} →{" "}
+                        {quote.to?.name || getZoneName(toZone)}
                       </h4>
-                      <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full">
-                        {shipmentType === "b2b" ? "B2B" : "B2C"}
+                      <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full">
+                        {quote.weightKg} kg • {quote.tierLabel}
                       </span>
                     </div>
 
-                    <div className="space-y-4">
-                      {(priceData.rate || []).map((r, idx) => (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {sortedRates.map((rate) => (
                         <div
-                          key={idx}
-                          className="p-4 bg-white rounded-lg border border-gray-200"
+                          key={rate.name}
+                          className="p-4 bg-white rounded-lg border border-gray-200 flex flex-col gap-3"
                         >
-                          <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-start justify-between gap-2">
                             <div className="font-bold text-[#12352A] capitalize">
-                              {r.name}
+                              {rate.name}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              Gift: {r.gift ?? 0}
-                            </div>
+                            {rate.finalPrice === cheapestPrice && (
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-full">
+                                <BadgeCheck className="w-3.5 h-3.5" />
+                                Best price
+                              </span>
+                            )}
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-                            {Object.entries(r.price || {})
-                              .filter(
-                                ([, v]) =>
-                                  typeof v === "number" && Number(v) > 0,
-                              )
-                              .map(([k, v]) => (
-                                <div
-                                  key={k}
-                                  className="p-2 bg-gray-50 rounded flex items-center justify-between"
-                                >
-                                  <div className="font-medium text-gray-600 truncate">
-                                    {WEIGHT_LABELS[k] || k}
-                                  </div>
-                                  <div className="font-bold text-[#12352A] pl-2">
-                                    ${priceWithFees(v, r)}
-                                  </div>
-                                </div>
+
+                          <div className="text-3xl font-extrabold text-[#12352A]">
+                            ${rate.finalPrice.toFixed(2)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Base ${rate.basePrice.toFixed(2)} + fuel{" "}
+                            {rate.fuel}% + service {rate.profitPercentage}%
+                          </div>
+
+                          {rate.serviceDetails.length > 0 && (
+                            <ul className="text-sm text-gray-600 space-y-1 list-disc pl-5">
+                              {rate.serviceDetails.map((detail, index) => (
+                                <li key={index}>{detail}</li>
                               ))}
-                          </div>
+                            </ul>
+                          )}
                         </div>
                       ))}
                     </div>
+
+                    <p className="mt-4 text-xs text-gray-500">
+                      All prices are in USD and include the fuel surcharge and
+                      service margin. Final charges may vary with packaging and
+                      remote-area fees.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Full rate chart for the selected route */}
+              {priceData && priceData.rate?.length > 0 && (
+                <div className="mt-8">
+                  <h4 className="text-lg font-bold text-[#12352A] mb-3">
+                    Full rate chart
+                  </h4>
+                  <div className="space-y-4">
+                    {priceData.rate.map((r, idx) => {
+                      const tiers = Object.entries(r.price || {}).filter(
+                        ([, value]) =>
+                          typeof value === "number" && Number(value) > 0
+                      );
+                      if (tiers.length === 0) return null;
+
+                      return (
+                        <div
+                          key={`${r.name}-${idx}`}
+                          className="p-4 bg-white rounded-lg border border-gray-200"
+                        >
+                          <div className="font-bold text-[#12352A] capitalize mb-3">
+                            {r.name}
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+                            {tiers.map(([key, value]) => (
+                              <div
+                                key={key}
+                                className="p-2 bg-gray-50 rounded flex items-center justify-between gap-2"
+                              >
+                                <div className="font-medium text-gray-600">
+                                  {weightTierLabel(key)}
+                                </div>
+                                <div className="font-bold text-[#12352A]">
+                                  ${Number(value).toFixed(3)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -429,12 +559,18 @@ export default function ShippingCalculatorContent({
             pickup service.
           </p>
           <div className="flex justify-center align-middle items-center gap-3 flex-col sm:flex-row">
-            <button className="bg-primary text-white py-2.5 px-7 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold">
+            <Link
+              href="/ship-and-track/create-shipment"
+              className="bg-primary text-white py-2.5 px-7 rounded-lg hover:bg-[#087F4F] transition-colors font-semibold"
+            >
               Create Shipment
-            </button>
-            <button className="border-2 border-white text-white py-2 px-8 rounded-lg hover:bg-white hover:text-[#12352A] transition-colors font-semibold">
+            </Link>
+            <Link
+              href="/contact"
+              className="border-2 border-white text-white py-2 px-8 rounded-lg hover:bg-white hover:text-[#12352A] transition-colors font-semibold"
+            >
               Get Help
-            </button>
+            </Link>
           </div>
         </div>
       </div>

@@ -27,7 +27,7 @@ import {
   ArrowUpDown
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
+import { formatDate, formatDateTime } from "@/lib/formatDate";
 
 interface UserColumnsProps {
   userRole: Role;
@@ -184,7 +184,7 @@ export const createUserColumns = ({
       const lastLogin = row.getValue("lastLogin") as string;
       return (
         <div className="text-sm" data-testid={`user-last-login-${row.original.id}`}>
-          {lastLogin ? format(new Date(lastLogin), "MMM dd, yyyy HH:mm") : "Never"}
+          {lastLogin ? formatDateTime(lastLogin) : "Never"}
         </div>
       );
     },
@@ -207,7 +207,7 @@ export const createUserColumns = ({
       const date = row.getValue("createdAt") as string;
       return (
         <div className="text-sm" data-testid={`user-created-at-${row.original.id}`}>
-          {format(new Date(date), "MMM dd, yyyy")}
+          {formatDate(date)}
         </div>
       );
     },

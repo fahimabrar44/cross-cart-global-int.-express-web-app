@@ -10,6 +10,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  WEIGHT_TIER_KEYS,
+  emptyWeightPrices,
+  weightTierLabel,
+} from "@/lib/weightTiers";
 import { countryService } from "@/services/countryService";
 import { zoneService } from "@/services/zoneService";
 import { Country, PriceChart, Zone } from "@/types";
@@ -18,32 +33,18 @@ import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "../ui/form";
-export const weightPricesSchema = z.object({
-  gm500: z.coerce.number(),
-  gm1000: z.coerce.number(),
-  gm1500: z.coerce.number(),
-  gm2000: z.coerce.number(),
-  gm2500: z.coerce.number(),
-  gm3000: z.coerce.number(),
-  gm3500: z.coerce.number(),
-  gm4000: z.coerce.number(),
-  gm4500: z.coerce.number(),
-  gm5000: z.coerce.number(),
-  gm5500: z.coerce.number(),
-  kg6to10: z.coerce.number(),
-  kg11to20: z.coerce.number(),
-  kg21to30: z.coerce.number(),
-  kg31to40: z.coerce.number(),
-  kg41to50: z.coerce.number(),
-  kg51to80: z.coerce.number(),
-  kg81to100: z.coerce.number(),
-  kg101to500: z.coerce.number(),
-  kg501to1000: z.coerce.number(),
-});
+
+const weightPricesSchema = z.object(
+  Object.fromEntries(
+    WEIGHT_TIER_KEYS.map((key) => [
+      key,
+      z.coerce.number().min(0, "Price cannot be negative"),
+    ])
+  ) as Record<(typeof WEIGHT_TIER_KEYS)[number], z.ZodNumber>
+);
 
 const courierPriceSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1, "Courier name is required"),
   profitPercentage: z.coerce.number().min(0),
   gift: z.coerce.number().min(0),
   fuel: z.coerce.number().min(0),
@@ -51,15 +52,13 @@ const courierPriceSchema = z.object({
   serviceDetails: z.array(z.string()).optional().default([]),
 });
 
-
 export type WeightPrices = z.infer<typeof weightPricesSchema>;
 
-
 const priceFormSchema = z.object({
-  from: z.string(),
-  to: z.string(),
-  rate: z.array(courierPriceSchema).min(1),
- 
+  from: z.string().min(1, "Origin country is required"),
+  to: z.string().min(1, "Destination zone is required"),
+  isActive: z.boolean().default(true),
+  rate: z.array(courierPriceSchema).min(1, "Add at least one courier"),
 });
 
 type PriceFormData = z.infer<typeof priceFormSchema>;
@@ -71,20 +70,49 @@ interface PriceFormProps {
   loading?: boolean;
 }
 
-export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
+function normalizeRate(rate: PriceChart["rate"][number]) {
+  const price = emptyWeightPrices();
+  for (const key of WEIGHT_TIER_KEYS) {
+    price[key] = Number(rate.price?.[key]) || 0;
+  }
+
+  return {
+    name: rate.name ?? "",
+    profitPercentage: Number(rate.profitPercentage) || 0,
+    gift: Number(rate.gift) || 0,
+    fuel: Number(rate.fuel) || 0,
+    serviceDetails: Array.isArray(rate.serviceDetails)
+      ? rate.serviceDetails
+      : [],
+    price,
+  };
+}
+
+export function PriceForm({ price, onSubmit, onCancel, loading }: PriceFormProps) {
   const [countries, setCountries] = useState<Country[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const initialFrom = typeof (price as any)?.from === "string" ? (price as any).from : (price as any)?.from?._id ?? "";
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const initialTo = typeof (price as any)?.to === "string" ? (price as any).to : (price as any)?.to?._id ?? "";
+
+  const initialFrom =
+    typeof price?.from === "string" ? price.from : price?.from?._id ?? "";
+  const initialTo =
+    typeof price?.to === "string" ? price.to : price?.to?._id ?? "";
+
   const form = useForm<PriceFormData>({
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
+    // @ts-expect-error react-hook-form + zod resolver generic mismatch
     resolver: zodResolver(priceFormSchema),
     defaultValues: (price
-      ? { ...price, from: initialFrom, to: initialTo }
-      : { from: "", to: "", rate: [] }) as PriceFormData,
+      ? {
+          from: initialFrom,
+          to: initialTo,
+          isActive: price.isActive !== false,
+          rate: (price.rate ?? []).map(normalizeRate),
+        }
+      : {
+          from: "",
+          to: "",
+          isActive: true,
+          rate: [],
+        }) as PriceFormData,
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -95,14 +123,14 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
   useEffect(() => {
     (async () => {
       const res = await countryService.getActiveCountries();
-      if (res.status == 200) setCountries(res.data || []);
+      if (res.status === 200) setCountries(res.data || []);
     })();
   }, []);
 
   useEffect(() => {
     (async () => {
       const res = await zoneService.getActiveZones();
-      if (res.status == 200) setZones(res.data || []);
+      if (res.status === 200) setZones(res.data || []);
     })();
   }, []);
 
@@ -110,37 +138,15 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
     append({
       name: "",
       profitPercentage: 0,
-      fuel:0,
+      fuel: 0,
       gift: 0,
       serviceDetails: [],
-      price: {
-        gm500: 0,
-        gm1000: 0,
-        gm1500: 0,
-        gm2000: 0,
-        gm2500: 0,
-        gm3000: 0,
-        gm3500: 0,
-        gm4000: 0,
-        gm4500: 0,
-        gm5000: 0,
-        gm5500: 0,
-        kg6to10: 0,
-        kg11to20: 0,
-        kg21to30: 0,
-        kg31to40: 0,
-        kg41to50: 0,
-        kg51to80: 0,
-        kg81to100: 0,
-        kg101to500: 0,
-        kg501to1000: 0,
-      },
+      price: emptyWeightPrices(),
     });
   };
 
   const renderServiceDetails = (index: number) => {
-    const details: string[] =
-      form.watch(`rate.${index}.serviceDetails`) ?? [];
+    const details: string[] = form.watch(`rate.${index}.serviceDetails`) ?? [];
     return (
       <div className="mt-3">
         <FormLabel className="text-sm font-medium">Service Details</FormLabel>
@@ -166,7 +172,7 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
                   form.setValue(
                     `rate.${index}.serviceDetails`,
                     details.filter((_, i) => i !== di),
-                    { shouldValidate: true },
+                    { shouldValidate: true }
                   )
                 }
               >
@@ -179,11 +185,9 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
             variant="outline"
             size="sm"
             onClick={() =>
-              form.setValue(
-                `rate.${index}.serviceDetails`,
-                [...details, ""],
-                { shouldValidate: true },
-              )
+              form.setValue(`rate.${index}.serviceDetails`, [...details, ""], {
+                shouldValidate: true,
+              })
             }
           >
             <Plus className="h-4 w-4 mr-1" /> Add Detail
@@ -195,11 +199,8 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
 
   return (
     <Form {...form}>
-      <form 
-      
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
-      onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      {/* @ts-expect-error react-hook-form submit handler generic mismatch */}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>
@@ -209,54 +210,98 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error
+                // @ts-expect-error react-hook-form field typing
                 control={form.control}
                 name="from"
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Origin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countries.map((c) => (
-                        <SelectItem key={c._id} value={c._id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormItem>
+                    <FormLabel>Origin Country</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Origin" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {countries.length === 0 && (
+                          <SelectItem value="__none__" disabled>
+                            No active countries. Add a country first.
+                          </SelectItem>
+                        )}
+                        {countries.map((c) => (
+                          <SelectItem key={c._id} value={c._id}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
 
               <FormField
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error
+                // @ts-expect-error react-hook-form field typing
                 control={form.control}
                 name="to"
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Destination Zone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {zones.length === 0 && (
-                        <SelectItem value="__none__" disabled>
-                          No active zones. Add zones first.
-                        </SelectItem>
-                      )}
-                      {zones.map((z) => (
-                        <SelectItem key={z._id} value={z._id}>
-                          {z.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormItem>
+                    <FormLabel>Destination Zone</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Destination Zone" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {zones.length === 0 && (
+                          <SelectItem value="__none__" disabled>
+                            No active zones. Add zones first.
+                          </SelectItem>
+                        )}
+                        {zones.map((z) => (
+                          <SelectItem key={z._id} value={z._id}>
+                            {z.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
             </div>
 
+            <FormField
+              // @ts-expect-error react-hook-form field typing
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Active Route</FormLabel>
+                    <FormDescription>
+                      Inactive routes are hidden from the public calculator
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
             <div className="space-y-4">
+              {fields.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No couriers added yet. Use “Add Courier” to create the first
+                  rate.
+                </p>
+              )}
+
               {fields.map((field, index) => (
                 <Card key={field.id} className="p-4">
                   <div className="flex justify-between items-center mb-2">
@@ -276,13 +321,18 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
                       placeholder="Courier Name"
                       {...form.register(`rate.${index}.name` as const)}
                     />
-                     <Input
+                    <Input
                       placeholder="Fuel %"
+                      type="number"
+                      step="0.01"
+                      min="0"
                       {...form.register(`rate.${index}.fuel` as const)}
                     />
                     <Input
                       placeholder="Profit %"
                       type="number"
+                      step="0.01"
+                      min="0"
                       {...form.register(
                         `rate.${index}.profitPercentage` as const
                       )}
@@ -290,72 +340,41 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
                     <Input
                       placeholder="Gift %"
                       type="number"
+                      step="0.01"
+                      min="0"
                       {...form.register(`rate.${index}.gift` as const)}
                     />
                   </div>
+
+                  {form.formState.errors.rate?.[index]?.name && (
+                    <p className="text-sm text-destructive mt-1">
+                      {form.formState.errors.rate[index]?.name?.message}
+                    </p>
+                  )}
+
                   {/* Weight Prices */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-                    {(Object.keys(field.price) as (keyof WeightPrices)[]).map(
-                      (key) => (
-                        <FormField
-                          key={key}
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
-                          control={form.control}
-                          name={`rate.${index}.price.${key}`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>
-                                {key == "gm500"
-                                  ? "500 GM"
-                                  : key == "gm1000"
-                                  ? "1000 GM"
-                                  : key == "gm1500"
-                                  ? "1500 GM"
-                                  : key == "gm2000"
-                                  ? "2000 GM"
-                                  : key == "gm2500"
-                                  ? "2500 GM"
-                                  : key == "gm3000"
-                                  ? "3000 GM"
-                                  : key == "gm3500"
-                                  ? "3500 GM"
-                                  : key == "gm4000"
-                                  ? "4000 GM"
-                                  : key == "gm4500"
-                                  ? "4500 GM"
-                                  : key == "gm5000"
-                                  ? "5000 GM"
-                                  : key == "gm5500"
-                                  ? "5500 GM"
-                                  : key == "kg6to10"
-                                  ? "6 TO 10 PER KG"
-                                  : key == "kg11to20"
-                                  ? "11 TO 20 PER KG"
-                                  : key == "kg21to30"
-                                  ? "21 TO 30 PER KG"
-                                  : key == "kg31to40"
-                                  ? "31 TO 40 PER KG"
-                                  : key == "kg41to50"
-                                  ? "41 TO 50 PER KG"
-                                  : key == "kg51to80"
-                                  ? "51 TO 80 PER KG"
-                                  : key == "kg81to100"
-                                  ? "81 TO 100 PER KG"
-                                  : key == "kg101to500"
-                                  ? "101 TO 500 PER KG"
-                                  : key == "kg501to1000"
-                                  ? "501 TO 1000 PER KG"
-                                  : ""}
-                              </FormLabel>
-                              <FormControl>
-                                <Input type="number" {...field} />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      )
-                    )}
+                    {WEIGHT_TIER_KEYS.map((key) => (
+                      <FormField
+                        key={key}
+                        // @ts-expect-error react-hook-form field typing
+                        control={form.control}
+                        name={`rate.${index}.price.${key}`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{weightTierLabel(key)}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.001"
+                                min="0"
+                                {...field}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    ))}
                   </div>
                   {renderServiceDetails(index)}
                 </Card>
@@ -366,11 +385,13 @@ export function PriceForm({ price, onSubmit, onCancel }: PriceFormProps) {
               </Button>
             </div>
 
-            <div className="flex flex-wrap justify-end space-x-2 mt-4">
+            <div className="flex flex-wrap justify-end gap-2 mt-4">
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button type="submit">{price ? "Update" : "Create"}</Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Saving..." : price ? "Update" : "Create"}
+              </Button>
             </div>
           </CardContent>
         </Card>

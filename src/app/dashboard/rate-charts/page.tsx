@@ -29,12 +29,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/AuthContext";
+import { weightTierLabel } from "@/lib/weightTiers";
 import { PriceFilters, priceService } from "@/services/priceService";
 import { Country, PriceChart, Zone } from "@/types";
 import {
   ArrowUpDown,
   DollarSign,
   Loader2,
+  PowerOff,
   Route,
   TrendingUp,
 } from "lucide-react";
@@ -65,6 +67,7 @@ export default function RateChartsPage() {
     page: 1,
     limit: 10,
     total: 0,
+    activeTotal: 0,
     totalPages: 0,
   });
 
@@ -83,6 +86,10 @@ export default function RateChartsPage() {
             page: response.meta.page || 1,
             limit: response.meta.limit || 10,
             total: response.meta.total || 0,
+            activeTotal:
+              typeof response.meta.activeTotal === "number"
+                ? response.meta.activeTotal
+                : response.data.filter((p) => p.isActive !== false).length,
             totalPages: response.meta.totalPages || 0,
           });
         }
@@ -113,14 +120,16 @@ export default function RateChartsPage() {
       }
     } catch (error) {
       console.error("Failed to create price chart:", error);
-      toast.error("Failed to create price chart");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create price chart"
+      );
     } finally {
       setActionLoading(false);
     }
   };
 {/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
   const handleEditPrice = async (data: any) => {
-    if (!selectedPrice) return;
+    if (!selectedPrice?._id) return;
 
     try {
       setActionLoading(true);
@@ -134,14 +143,16 @@ export default function RateChartsPage() {
       }
     } catch (error) {
       console.error("Failed to update price chart:", error);
-      toast.error("Failed to update price chart");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update price chart"
+      );
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleDeletePrice = async () => {
-    if (!selectedPrice) return;
+    if (!selectedPrice?._id) return;
 
     try {
       setActionLoading(true);
@@ -155,23 +166,36 @@ export default function RateChartsPage() {
       }
     } catch (error) {
       console.error("Failed to delete price chart:", error);
-      toast.error("Failed to delete price chart");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete price chart"
+      );
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleToggleStatus = async (price: PriceChart) => {
+    if (!price._id) return;
+
     try {
-      const response = await priceService.togglePriceStatus(price._id as string, !price.isActive);
+      const response = await priceService.togglePriceStatus(
+        price._id,
+        price.isActive === false
+      );
 
       if (response.status == 200) {
-        toast.success(`Price chart ${!price.isActive ? "activated" : "deactivated"} successfully`);
+        toast.success(
+          `Price chart ${
+            price.isActive === false ? "activated" : "deactivated"
+          } successfully`
+        );
         loadPrices();
       }
     } catch (error) {
       console.error("Failed to toggle price status:", error);
-      toast.error("Failed to toggle price status");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to toggle price status"
+      );
     }
   };
 
@@ -191,22 +215,16 @@ export default function RateChartsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleCalculateClick = (price: PriceChart) => {
-    if (price) {
-      toast.info("Price calculator coming soon!");
-    }
-  };
-
   const handleSearch = (searchTerm: string) => {
-    setFilters({ ...filters, search: searchTerm, page: 1 });
+    setFilters((prev) => ({ ...prev, search: searchTerm, page: 1 }));
   };
 
   const handlePageChange = (page: number) => {
-    setFilters({ ...filters, page });
+    setFilters((prev) => ({ ...prev, page }));
   };
 
   const handleLimitChange = (limit: number) => {
-    setFilters({ ...filters, limit, page: 1 });
+    setFilters((prev) => ({ ...prev, limit, page: 1 }));
   };
 
   const handleRefresh = () => {
@@ -214,34 +232,46 @@ export default function RateChartsPage() {
   };
 
 
-  const columns = createPriceColumns({userRole: user?.role || "user",
+  const columns = createPriceColumns({
+    userRole: user?.role || "user",
     onView: handleViewPrice,
     onEdit: handleEditClick,
     onDelete: handleDeleteClick,
     onToggleStatus: handleToggleStatus,
-    onCalculate: handleCalculateClick,
   });
 
   const isAdminView = user?.role === "admin" || user?.role === "moderator";
   // helper to safely compute average of min final price per route
   const computeAvgMinBasePrice = () => {
     if (!prices || prices.length === 0) return "0.00";
-{/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
-    const totalMin = prices.reduce((sum, p: any) => {
-      {/*eslint-disable-next-line @typescript-eslint/no-explicit-any*/}
-      const allPrices: number[] = (p.rate || []).flatMap((r: any) => {
-        const vals = Object.values(r.price || {}).filter((v) => typeof v === "number") as number[];
-        if (!vals.length) return [];
-        if (isAdminView) {
-          return vals.map((v) => Number(v * (1 + (r.fuel || 0) / 100) * (1 + (r.profitPercentage || 0) / 100)));
-        }
-        return vals;
-      });
-      const minPrice = allPrices.length ? Math.min(...allPrices) : 0;
-      return sum + minPrice;
-    }, 0);
+    // Only routes that actually have a configured price count towards the
+    // average; an empty route must not drag it down to $0.
+    const routeMins = prices
+      .map((p) => {
+        const allPrices: number[] = (p.rate || []).flatMap((r) => {
+          const vals = Object.values(r.price || {}).filter(
+            (v): v is number => typeof v === "number" && v > 0
+          );
+          if (!vals.length) return [];
+          if (isAdminView) {
+            return vals.map((v) =>
+              Number(
+                v *
+                  (1 + (r.fuel || 0) / 100) *
+                  (1 + (r.profitPercentage || 0) / 100)
+              )
+            );
+          }
+          return vals;
+        });
+        return allPrices.length ? Math.min(...allPrices) : null;
+      })
+      .filter((v): v is number => v !== null);
 
-    return (totalMin / prices.length).toFixed(2);
+    if (routeMins.length === 0) return "0.00";
+    return (
+      routeMins.reduce((sum, v) => sum + v, 0) / routeMins.length
+    ).toFixed(2);
   };
 
   if (!user) return null;
@@ -269,11 +299,11 @@ export default function RateChartsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="total-routes">
-              {prices.length}
+              {pagination.total}
             </div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 mr-1" />
-              Active price configurations
+              Configured routes
             </p>
           </CardContent>
         </Card>
@@ -288,10 +318,25 @@ export default function RateChartsPage() {
               className="text-2xl font-bold text-green-600"
               data-testid="active-routes"
             >
-              {prices.filter((p) => p.isActive !== false).length}
+              {pagination.activeTotal}
             </div>
             <p className="text-xs text-muted-foreground">
-              {prices.filter((p) => p.isActive === false).length} inactive
+              Visible in the public calculator
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Inactive Routes</CardTitle>
+            <PowerOff className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="inactive-routes">
+              {Math.max(0, pagination.total - pagination.activeTotal)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Hidden from public pricing
             </p>
           </CardContent>
         </Card>
@@ -299,7 +344,7 @@ export default function RateChartsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Avg. Base Price
+              Avg. Starting Price
             </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -308,7 +353,7 @@ export default function RateChartsPage() {
               ${computeAvgMinBasePrice()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Average starting price
+              Lowest final price on this page
             </p>
           </CardContent>
         </Card>
@@ -438,54 +483,16 @@ export default function RateChartsPage() {
                             key={k}
                             className="p-2 bg-white/5 rounded flex items-center justify-between"
                           >
-                            <div className="truncate">
-                              {k == "gm500"
-                                ? "500 GM"
-                                : k == "gm1000"
-                                ? "1000 GM"
-                                : k == "gm1500"
-                                ? "1500 GM"
-                                : k == "gm2000"
-                                ? "2000 GM"
-                                : k == "gm2500"
-                                ? "2500 GM"
-                                : k == "gm3000"
-                                ? "3000 GM"
-                                : k == "gm3500"
-                                ? "3500 GM"
-                                : k == "gm4000"
-                                ? "4000 GM"
-                                : k == "gm4500"
-                                ? "4500 GM"
-                                : k == "gm5000"
-                                ? "5000 GM"
-                                : k == "gm5500"
-                                ? "5500 GM"
-                                : k == "kg6to10"
-                                ? "6 TO 10 PER KG"
-                                : k == "kg11to20"
-                                ? "11 TO 20 PER KG"
-                                : k == "kg21to30"
-                                ? "21 TO 30 PER KG"
-                                : k == "kg31to40"
-                                ? "31 TO 40 PER KG"
-                                : k == "kg41to50"
-                                ? "41 TO 50 PER KG"
-                                : k == "kg51to80"
-                                ? "51 TO 80 PER KG"
-                                : k == "kg81to100"
-                                ? "81 TO 100 PER KG"
-                                : k == "kg101to500"
-                                ? "101 TO 500 PER KG"
-                                : k == "kg501to1000"
-                                ? "501 TO 1000 PER KG"
-                                : ""}
-                            </div>
+                            <div className="truncate">{weightTierLabel(k)}</div>
                             <div className="font-medium">
                               ${" "}
                               {isAdminView
-                                ? Number((v as number) * (1 + (r.fuel || 0) / 100) * (1 + (r.profitPercentage || 0) / 100)).toFixed(3)
-                                : Number(v as number).toFixed(3)}
+                                ? Number(
+                                    (Number(v) || 0) *
+                                      (1 + (r.fuel || 0) / 100) *
+                                      (1 + (r.profitPercentage || 0) / 100)
+                                  ).toFixed(3)
+                                : (Number(v) || 0).toFixed(3)}
                             </div>
                           </div>
                         ))}

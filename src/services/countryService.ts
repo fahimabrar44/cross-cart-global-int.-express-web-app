@@ -1,28 +1,28 @@
 import { api, withPagination, PaginationParams } from "@/lib/api";
-import { Country, ApiResponse } from "@/types";
+import {
+  Country,
+  CreateCountryData,
+  UpdateCountryData,
+  ApiResponse,
+} from "@/types";
 
 export interface CountryFilters extends PaginationParams {
-  region?: string;
-  currency?: string;
-  isActive?: boolean;
-  code?: string;
   name?: string;
-}
-
-export interface CreateCountryData {
-  name: string;
-  code: string;
-  region: string;
-  currency: string;
+  code?: string;
+  zone?: string;
+  timezone?: string;
+  phoneCode?: string;
   isActive?: boolean;
-  deliveryDays: {
-    standard: number;
-    express: number;
-    overnight: number;
-  };
 }
 
-export type UpdateCountryData = Partial<CreateCountryData> 
+export interface CountryStats {
+  total: number;
+  active: number;
+  inactive: number;
+  zones: Record<string, number>;
+  regions: Record<string, number>;
+  phoneCodes: Record<string, number>;
+}
 
 class CountryService {
   private baseEndpoint = "/countrys";
@@ -40,7 +40,10 @@ class CountryService {
     return api.post<Country>(this.baseEndpoint, data);
   }
 
-  async updateCountry(countryId: string, data: UpdateCountryData): Promise<ApiResponse<Country>> {
+  async updateCountry(
+    countryId: string,
+    data: UpdateCountryData
+  ): Promise<ApiResponse<Country>> {
     return api.put<Country>(`${this.baseEndpoint}/${countryId}`, data);
   }
 
@@ -48,24 +51,25 @@ class CountryService {
     return api.delete<void>(`${this.baseEndpoint}/${countryId}`);
   }
 
-  async getCountryStats(): Promise<ApiResponse<{
-    total: number;
-    active: number;
-    inactive: number;
-    regions: { [key: string]: number };
-    currencies: { [key: string]: number };
-  }>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return api.get<any>(`${this.baseEndpoint}/stats`);
+  async getCountryStats(): Promise<ApiResponse<CountryStats>> {
+    return api.get<CountryStats>(`${this.baseEndpoint}/stats`);
   }
 
-  async toggleCountryStatus(countryId: string, isActive: boolean): Promise<ApiResponse<Country>> {
-    return api.patch<Country>(`${this.baseEndpoint}/${countryId}`, { isActive:isActive });
+  async toggleCountryStatus(
+    countryId: string,
+    isActive: boolean
+  ): Promise<ApiResponse<Country>> {
+    return api.patch<Country>(`${this.baseEndpoint}/${countryId}`, { isActive });
   }
 
   // Get all active countries for dropdowns
   async getActiveCountries(): Promise<ApiResponse<Country[]>> {
-    return api.get<Country[]>(`${this.baseEndpoint}`, { isActive: true, limit: 1000 });
+    return api.get<Country[]>(this.baseEndpoint, {
+      isActive: true,
+      limit: 500,
+      sortBy: "name",
+      sortOrder: "asc",
+    });
   }
 }
 

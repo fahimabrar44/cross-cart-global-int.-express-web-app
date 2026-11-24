@@ -68,7 +68,7 @@ export const AdminData = {
       title: "Orders",
       url: "/dashboard/orders",
       icon: Boxes,
-      items: [],
+      items: [{ title: "Items", url: "/dashboard/items" }],
     },
     {
       title: "Parcel Tracking",
@@ -210,7 +210,7 @@ export const ModeratorData = {
       title: "Orders",
       url: "/dashboard/orders",
       icon: Boxes,
-      items: [],
+      items: [{ title: "Items", url: "/dashboard/items" }],
     },
     {
       title: "Parcel Tracking",

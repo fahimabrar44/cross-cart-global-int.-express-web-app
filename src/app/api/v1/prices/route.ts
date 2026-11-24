@@ -2,12 +2,17 @@ import connectDB from "@/config/db";
 import { AuthMiddleware } from "@/middleware/auth";
 import { createModeratorHandler } from "@/server/common/apiWrapper";
 import { errorResponse, successResponse } from "@/server/common/response";
+import { escapeRegex, exactMatchRegex } from "@/server/common/regex";
+import { sanitizeRates, validateRates } from "@/server/common/priceValidation";
 import { Country } from "@/server/models/Country.model";
 import { Price } from "@/server/models/Price.model";
 import { Zone } from "@/server/models/Zone.model";
 import { Types } from "mongoose";
 import { NextRequest } from "next/server";
-import { withTtlCache, invalidateReferenceData } from "@/server/services/referenceCache";
+import {
+  withTtlCache,
+  invalidateReferenceData,
+} from "@/server/services/referenceCache";
 
 const REF_TTL_MS = 5 * 60 * 1000;
 
@@ -17,6 +22,7 @@ type GetQuery = {
   fromName?: string;
   toName?: string;
   rateName?: string;
+  isActive?: string;
   page?: string;
   limit?: string;
   sortBy?: string;
@@ -24,67 +30,22 @@ type GetQuery = {
   search?: string;
 };
 
-// Helper: resolve country id from name
-
-async function resolveCountryId(name?: string): Promise<Types.ObjectId | null> {
-  if (!name) return null;
-  const country = await Country.findOne({
-    name: new RegExp(`^${name.trim()}$`, "i"),
-  })
-    .lean()
-    .exec();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const id = (country as any)?._id;
-  if (!id) return null;
-  return new Types.ObjectId(String(id));
+/** Resolve a country name or ISO code to its ObjectId(s). */
+async function resolveCountryIds(value: string): Promise<Types.ObjectId[]> {
+  const rx = exactMatchRegex(value);
+  const rows = await Country.find({ $or: [{ name: rx }, { code: rx }] })
+    .select("_id")
+    .lean();
+  return rows.map((row) => row._id as Types.ObjectId);
 }
 
-// Helper: resolve zone id from name (for destinations)
-
-async function resolveZoneId(name?: string): Promise<Types.ObjectId | null> {
-  if (!name) return null;
-  const zone = await Zone.findOne({ name: new RegExp(`^${name.trim()}$`, "i") })
-    .lean()
-    .exec();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const id = (zone as any)?._id;
-  if (!id) return null;
-  return new Types.ObjectId(String(id));
-}
-
-// Helper: validate rates
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function validateRates(rates: any[]): { valid: boolean; message: string } {
-  if (!Array.isArray(rates))
-    return { valid: false, message: "rate must be an array" };
-  for (let i = 0; i < rates.length; i++) {
-    const r = rates[i];
-
-    if (!r.name || typeof r.name !== "string")
-      return { valid: false, message: `rate[${i}].name is required` };
-    if (!r.fuel || isNaN(Number(r.fuel)))
-      return { valid: false, message: `rate[${i}].fuel is required` };
-    if (r.profitPercentage == null || isNaN(Number(r.profitPercentage)))
-      return {
-        valid: false,
-        message: `rate[${i}].profitPercentage must be a number`,
-      };
-    if (r.gift == null || isNaN(Number(r.gift)))
-      return { valid: false, message: `rate[${i}].gift must be a number` };
-    if (r.price && typeof r.price !== "object")
-      return { valid: false, message: `rate[${i}].price must be an object` };
-    if (
-      r.serviceDetails !== undefined &&
-      (!Array.isArray(r.serviceDetails) ||
-        !r.serviceDetails.every((s: unknown) => typeof s === "string"))
-    )
-      return {
-        valid: false,
-        message: `rate[${i}].serviceDetails must be an array of strings`,
-      };
-  }
-  return { valid: true, message: "Valid" };
+/** Resolve a zone name/code to its ObjectId(s). */
+async function resolveZoneIds(value: string): Promise<Types.ObjectId[]> {
+  const rx = exactMatchRegex(value);
+  const rows = await Zone.find({ $or: [{ name: rx }, { code: rx }] })
+    .select("_id")
+    .lean();
+  return rows.map((row) => row._id as Types.ObjectId);
 }
 
 export async function GET(req: NextRequest) {
@@ -115,106 +76,159 @@ export async function GET(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {};
 
-    if (q.from && Types.ObjectId.isValid(q.from))
+    if (q.from && Types.ObjectId.isValid(q.from)) {
       query.from = new Types.ObjectId(q.from);
-    if (q.to && Types.ObjectId.isValid(q.to))
+    }
+    if (q.to && Types.ObjectId.isValid(q.to)) {
       query.to = new Types.ObjectId(q.to);
+    }
 
     if (q.fromName) {
-      const countryId = await resolveCountryId(q.fromName);
-      if (!countryId) {
+      const countryIds = await resolveCountryIds(q.fromName);
+      if (countryIds.length === 0) {
         return successResponse({
           status: 200,
           message: "Prices fetched successfully",
           data: [],
-          meta: { page, limit, total: 0, totalPages: 0 },
+          meta: { page, limit, total: 0, totalPages: 0, activeTotal: 0 },
           req,
         });
       }
-      query.from = countryId;
+      query.from = { $in: countryIds };
     }
+
     if (q.toName) {
-      // Destination resolves to a Zone first, then falls back to a Country
-      const zoneId = await resolveZoneId(q.toName);
-      if (zoneId) {
-        query.to = zoneId;
+      // Destination resolves to a Zone first, then falls back to a Country.
+      const zoneIds = await resolveZoneIds(q.toName);
+      if (zoneIds.length > 0) {
+        query.to = { $in: zoneIds };
       } else {
-        const countryId = await resolveCountryId(q.toName);
-        if (!countryId) {
+        const countryIds = await resolveCountryIds(q.toName);
+        if (countryIds.length === 0) {
           return successResponse({
             status: 200,
             message: "Prices fetched successfully",
             data: [],
-            meta: { page, limit, total: 0, totalPages: 0 },
+            meta: { page, limit, total: 0, totalPages: 0, activeTotal: 0 },
             req,
           });
         }
-        query.to = countryId;
+        query.to = { $in: countryIds };
       }
     }
 
-    if (q.rateName) query["rate.name"] = { $regex: q.rateName, $options: "i" };
+    if (q.rateName) {
+      query["rate.name"] = {
+        $regex: escapeRegex(q.rateName.trim()),
+        $options: "i",
+      };
+    }
+
+    if (q.isActive === "true") query.isActive = true;
+    if (q.isActive === "false") query.isActive = false;
+
+    if (q.search && q.search.trim()) {
+      const searchRegex = new RegExp(escapeRegex(q.search.trim()), "i");
+      const [countryIds, zoneIds] = await Promise.all([
+        Country.find({
+          $or: [{ name: searchRegex }, { code: searchRegex }],
+        })
+          .select("_id")
+          .lean(),
+        Zone.find({
+          $or: [{ name: searchRegex }, { code: searchRegex }],
+        })
+          .select("_id")
+          .lean(),
+      ]);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const searchOr: any[] = [{ "rate.name": searchRegex }];
+      if (countryIds.length > 0) {
+        searchOr.push({ from: { $in: countryIds.map((c) => c._id) } });
+      }
+      if (zoneIds.length > 0) {
+        searchOr.push({ to: { $in: zoneIds.map((z) => z._id) } });
+      }
+      query.$or = searchOr;
+    }
 
     const allowedSortFields = new Set(["createdAt", "updatedAt", "from", "to"]);
     const sortBy = allowedSortFields.has(q.sortBy || "")
-      ? q.sortBy
+      ? (q.sortBy as string)
       : "createdAt";
     const sortOrder = (q.sortOrder || "desc").toLowerCase() === "asc" ? 1 : -1;
 
-    const cacheKey = `prices:list:${q.from ?? ""}|${q.to ?? ""}|${q.fromName ?? ""}|${q.toName ?? ""}|${q.rateName ?? ""}|${sortBy}|${sortOrder}|${page}|${limit}`;
+    const cacheKey = [
+      "prices:list",
+      q.from ?? "",
+      q.to ?? "",
+      q.fromName ?? "",
+      q.toName ?? "",
+      q.rateName ?? "",
+      q.isActive ?? "",
+      q.search ?? "",
+      sortBy,
+      sortOrder,
+      page,
+      limit,
+    ].join("|");
 
     // Internal users (admin/moderator) manage these rates, so they must always
     // see fresh data — skip the cache. Caching is only for public/API-key
     // consumers, where a brief staleness is acceptable and saves DB load.
-    // (The in-memory cache isn't shared across serverless instances, so relying
-    // on it for admins would otherwise show stale rates after an edit.)
     const loadPrices = async () => {
-      const total = await Price.countDocuments(query);
-      const prices = await Price.find(query)
-        .populate("from")
-        .populate("to")
-        .sort({ [sortBy as string]: sortOrder })
-        .skip(skip)
-        .limit(limit)
-        .lean();
+      const [total, activeTotal, prices] = await Promise.all([
+        Price.countDocuments(query),
+        Price.countDocuments({ ...query, isActive: true }),
+        Price.find(query)
+          .populate("from")
+          .populate("to")
+          .sort({ [sortBy]: sortOrder })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+      ]);
 
-      return { total, prices };
+      return { total, activeTotal, prices };
     };
 
     const result = isInternal
       ? await loadPrices()
-      : await withTtlCache<{ total: number; prices: unknown[] }>(
-          cacheKey,
-          REF_TTL_MS,
-          loadPrices
-        );
+      : await withTtlCache<{
+          total: number;
+          activeTotal: number;
+          prices: unknown[];
+        }>(cacheKey, REF_TTL_MS, loadPrices);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const prices = result.prices as any[];
-    const total = result.total;
- 
 
     // For public / API-key consumers apply profit % then fuel surcharge onto
     // every rate field so the returned values are the final chargeable prices.
     // Admins & moderators keep the base (actual) rates.
     if (!isInternal) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      prices.forEach((doc: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (doc.rate || []).forEach((r: any) => {
-          const profit = Number(r.profitPercentage) || 0;
-          const fuel = Number(r.fuel) || 0;
-          if (r.price && typeof r.price === "object") {
-            Object.keys(r.price).forEach((tier) => {
-              const base = Number(r.price[tier]) || 0;
-              // Match the /prices/calculate formula:
-              //   base * (1 + fuel/100) * (1 + profit%/100)
-              r.price[tier] = Number(
-                (base * (1 + fuel / 100) * (1 + profit / 100)).toFixed(3),
-              );
-            });
+      prices.forEach((doc) => {
+        (doc.rate || []).forEach(
+          (r: {
+            profitPercentage?: number;
+            fuel?: number;
+            price?: Record<string, number>;
+          }) => {
+            const profit = Number(r.profitPercentage) || 0;
+            const fuel = Number(r.fuel) || 0;
+            if (r.price && typeof r.price === "object") {
+              Object.keys(r.price).forEach((tier) => {
+                const base = Number(r.price?.[tier]) || 0;
+                // Match the /prices/calculate formula:
+                //   base * (1 + fuel/100) * (1 + profit%/100)
+                r.price![tier] = Number(
+                  (base * (1 + fuel / 100) * (1 + profit / 100)).toFixed(3)
+                );
+              });
+            }
           }
-        });
+        );
       });
     }
 
@@ -225,8 +239,9 @@ export async function GET(req: NextRequest) {
       meta: {
         page,
         limit,
-        total,
-        totalPages: Math.max(1, Math.ceil(total / limit)),
+        total: result.total,
+        activeTotal: result.activeTotal,
+        totalPages: Math.max(1, Math.ceil(result.total / limit)),
       },
       req,
     });
@@ -240,27 +255,71 @@ export async function GET(req: NextRequest) {
 export const POST = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const body = (await req.json()) as any;
 
-    if (!body.from || !Types.ObjectId.isValid(body.from))
-      return errorResponse({ status: 400, message: "from is required", req });
-    if (!body.to || !Types.ObjectId.isValid(body.to))
-      return errorResponse({ status: 400, message: "to is required", req });
+    const body = (await req.json().catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
 
-    if (!body.rate || !Array.isArray(body.rate))
+    if (!body) {
       return errorResponse({
         status: 400,
-        message: "rate array is required",
+        message: "A valid JSON body is required",
         req,
       });
+    }
+
+    const from = typeof body.from === "string" ? body.from : "";
+    const to = typeof body.to === "string" ? body.to : "";
+
+    if (!Types.ObjectId.isValid(from)) {
+      return errorResponse({ status: 400, message: "from is required", req });
+    }
+    if (!Types.ObjectId.isValid(to)) {
+      return errorResponse({ status: 400, message: "to is required", req });
+    }
 
     const validation = validateRates(body.rate);
-    if (!validation.valid)
+    if (!validation.valid) {
       return errorResponse({ status: 400, message: validation.message, req });
+    }
 
-    const price = new Price(body);
-    await price.save();
+    const [countryExists, zoneExists, existing] = await Promise.all([
+      Country.exists({ _id: from }),
+      Zone.exists({ _id: to }),
+      Price.findOne({ from, to }).select("_id").lean(),
+    ]);
+
+    if (!countryExists) {
+      return errorResponse({
+        status: 400,
+        message: "Origin country not found",
+        req,
+      });
+    }
+    if (!zoneExists) {
+      return errorResponse({
+        status: 400,
+        message: "Destination zone not found",
+        req,
+      });
+    }
+    if (existing) {
+      return errorResponse({
+        status: 409,
+        message:
+          "A price chart already exists for this route. Edit the existing chart instead.",
+        req,
+      });
+    }
+
+    const price = await Price.create({
+      from: new Types.ObjectId(from),
+      to: new Types.ObjectId(to),
+      rate: sanitizeRates(body.rate as unknown[]),
+      isActive: typeof body.isActive === "boolean" ? body.isActive : true,
+    });
+
     invalidateReferenceData("prices");
 
     return successResponse({

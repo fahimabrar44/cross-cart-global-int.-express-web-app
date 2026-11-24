@@ -2,9 +2,11 @@ import { api, withPagination, PaginationParams } from "@/lib/api";
 import { PriceChart, ApiResponse } from "@/types";
 
 export interface PriceFilters extends PaginationParams {
-  fromCountry?: string;
-  toCountry?: string;
-  serviceType?: "standard" | "express" | "overnight";
+  from?: string;
+  to?: string;
+  fromName?: string;
+  toName?: string;
+  rateName?: string;
   isActive?: boolean;
 }
 
@@ -24,6 +26,29 @@ export interface CreatePriceData {
 
 export type UpdatePriceData = Partial<CreatePriceData>;
 
+export interface CalculatedRate {
+  name: string;
+  profitPercentage: number;
+  gift: number;
+  fuel: number;
+  tier: string;
+  tierLabel: string;
+  basePrice: number;
+  finalPrice: number;
+  serviceDetails: string[];
+}
+
+export interface CalculatedPrice {
+  from: { _id: string; name?: string; code?: string };
+  to: { _id: string; name?: string; code?: string };
+  weight: number;
+  weightKg: number;
+  tier: string;
+  tierLabel: string;
+  perKg: boolean;
+  rates: CalculatedRate[];
+}
+
 class PriceService {
   private baseEndpoint = "/prices";
 
@@ -40,7 +65,10 @@ class PriceService {
     return api.post<PriceChart>(this.baseEndpoint, data);
   }
 
-  async updatePrice(priceId: string, data: UpdatePriceData): Promise<ApiResponse<PriceChart>> {
+  async updatePrice(
+    priceId: string,
+    data: UpdatePriceData
+  ): Promise<ApiResponse<PriceChart>> {
     return api.put<PriceChart>(`${this.baseEndpoint}/${priceId}`, data);
   }
 
@@ -49,27 +77,23 @@ class PriceService {
   }
 
   async calculatePrice(
-    fromCountry: string,
-    toCountry: string,
-    weight: number,
-    serviceType: "standard" | "express" | "overnight"
-  ): Promise<ApiResponse<{
-    basePrice: number;
-    weightCharge: number;
-    additionalCharges: number;
-    totalPrice: number;
-    estimatedDays: number;
-  }>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return api.post<any>(`${this.baseEndpoint}/calculate`, {
-      fromCountry,
-      toCountry,
-      weight,
-      serviceType,
+    fromCountryId: string,
+    toZoneId: string,
+    weightInGrams: number,
+    rateName?: string
+  ): Promise<ApiResponse<CalculatedPrice>> {
+    return api.post<CalculatedPrice>(`${this.baseEndpoint}/calculate`, {
+      fromCountryId,
+      toZoneId,
+      weight: weightInGrams,
+      ...(rateName ? { rateName } : {}),
     });
   }
 
-  async togglePriceStatus(priceId: string, isActive: boolean): Promise<ApiResponse<PriceChart>> {
+  async togglePriceStatus(
+    priceId: string,
+    isActive: boolean
+  ): Promise<ApiResponse<PriceChart>> {
     return api.patch<PriceChart>(`${this.baseEndpoint}/${priceId}`, { isActive });
   }
 }

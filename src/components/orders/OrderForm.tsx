@@ -11,6 +11,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,10 +27,13 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { CountryPhoneInput } from "@/components/ui/phone-input";
+import { useAuth } from "@/hooks/AuthContext";
 import { countryService } from "@/services/countryService";
+import { itemService } from "@/services/itemService";
 import { validatePhone } from "@/lib/phoneCountries";
-import { CreateOrderData, Order } from "@/types";
+import { CreateOrderData, Item, Order } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -97,8 +101,10 @@ export function OrderForm({
   onCancel,
   loading = false,
 }: OrderFormProps) {
+  const { user } = useAuth();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [countries, setCountries] = useState<any[]>([]);
+  const [catalogItems, setCatalogItems] = useState<Item[]>([]);
 
   const form = useForm<OrderFormData, unknown, OrderFormData>({
     resolver: zodResolver(orderFormSchema),
@@ -133,7 +139,7 @@ export function OrderForm({
             packagingType: "",
             boxCount: 0,
             dimensions: { length: 0, width: 0, height: 0 },
-            orderType: "standard",
+            orderType: "parcel",
             priority: "normal",
             customerNote: "",
             sender: {
@@ -180,6 +186,55 @@ export function OrderForm({
     loadCountries();
   }, []);
 
+  useEffect(() => {
+    const loadCatalogItems = async () => {
+      try {
+        const response = await itemService.getActiveItems();
+        if (response.status == 200 && Array.isArray(response.data)) {
+          setCatalogItems(response.data);
+        }
+      } catch (error) {
+        // The catalog is only a convenience; manual entry must still work.
+        console.error("Failed to load item catalog:", error);
+      }
+    };
+    loadCatalogItems();
+  }, []);
+
+  const canManageItems =
+    user?.role === "admin" || user?.role === "moderator";
+
+  /**
+   * When a typed name matches a saved item, copy its default price into the
+   * row. Names that do not match stay exactly as typed (manual entry).
+   */
+  const applyCatalogItem = (
+    index: number,
+    name: string,
+    onChange: (value: string) => void
+  ) => {
+    onChange(name);
+
+    const match = catalogItems.find(
+      (catalogItem) =>
+        catalogItem.name.trim().toLowerCase() === name.trim().toLowerCase()
+    );
+    if (!match) return;
+
+    const quantity = form.getValues(`parcel.item.${index}.quantity`) || 1;
+    const unitPrice = Number(match.defaultPrice) || 0;
+
+    form.setValue(`parcel.item.${index}.unitPrice`, unitPrice, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    form.setValue(
+      `parcel.item.${index}.totalPrice`,
+      Number((quantity * unitPrice).toFixed(2)),
+      { shouldValidate: true, shouldDirty: true }
+    );
+  };
+
   const handleSubmit = (data: OrderFormData) => {
     // Calculate total prices for items
     if (data.parcel.item) {
@@ -188,7 +243,6 @@ export function OrderForm({
       });
     }
 
-    // @ts-expect-error - OrderFormData item shape differs from CreateOrderData
     onSubmit(data);
   };
 
@@ -486,19 +540,33 @@ export function OrderForm({
           </div>
         </div>
 
-        <FormLabel className="text-base font-semibold">Parcel Items</FormLabel>
-        <button
-          type="button"
-          onClick={() =>
-            form.setValue("parcel.item", [
-              ...(form.getValues("parcel.item") || []),
-              { name: "", quantity: 1, unitPrice: 0, totalPrice: 0 },
-            ])
-          }
-          className="text-sm text-blue-600 hover:underline"
-        >
-          + Add Item
-        </button>
+        <div className="flex flex-col items-end gap-2">
+          <FormLabel className="text-base font-semibold">
+            Parcel Items
+          </FormLabel>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                form.setValue("parcel.item", [
+                  ...(form.getValues("parcel.item") || []),
+                  { name: "", quantity: 1, unitPrice: 0, totalPrice: 0 },
+                ])
+              }
+              className="text-sm text-blue-600 hover:underline"
+            >
+              + Add Item
+            </button>
+            {canManageItems && (
+              <Link
+                href="/dashboard/items"
+                className="text-sm text-muted-foreground hover:underline"
+              >
+                Manage items
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -514,8 +582,28 @@ export function OrderForm({
                 <FormItem>
                   <FormLabel>Item Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. T-shirt" {...field} />
+                    <Input
+                      list={`item-catalog-${index}`}
+                      placeholder="Search saved items or type a new name"
+                      {...field}
+                      onChange={(e) =>
+                        applyCatalogItem(index, e.target.value, field.onChange)
+                      }
+                    />
                   </FormControl>
+                  <datalist id={`item-catalog-${index}`}>
+                    {catalogItems.map((catalogItem) => (
+                      <option key={catalogItem._id} value={catalogItem.name}>
+                        {`$${Number(catalogItem.defaultPrice || 0).toFixed(2)} / ${
+                          catalogItem.unit || "pcs"
+                        }`}
+                      </option>
+                    ))}
+                  </datalist>
+                  <FormDescription>
+                    Select a saved item or type a new name manually.
+                  </FormDescription>
+                  <FormMessage />
                 </FormItem>
               )}
             />

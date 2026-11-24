@@ -31,7 +31,7 @@ import {
 import { useAuth } from "@/hooks/AuthContext";
 import { CountryFilters, countryService } from "@/services/countryService";
 import { Country } from "@/types";
-import { DollarSign, Globe, Loader2, MapPin, TrendingUp } from "lucide-react";
+import { Globe, Loader2, MapPin, Phone, TrendingUp } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -39,8 +39,9 @@ interface CountryStats {
   total: number;
   active: number;
   inactive: number;
-  regions: { [key: string]: number };
-  currencies: { [key: string]: number };
+  zones: { [key: string]: number };
+  regions?: { [key: string]: number };
+  phoneCodes: { [key: string]: number };
 }
 
 export default function CountriesPage() {
@@ -128,10 +129,13 @@ export default function CountriesPage() {
         toast.success("Country created successfully");
         setIsCreateModalOpen(false);
         loadCountries();
+        loadStats();
       }
     } catch (error) {
       console.error("Failed to create country:", error);
-      toast.error("Failed to create country");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create country"
+      );
     } finally {
       setActionLoading(false);
     }
@@ -152,10 +156,13 @@ export default function CountriesPage() {
         setIsEditModalOpen(false);
         setSelectedCountry(null);
         loadCountries();
+        loadStats();
       }
     } catch (error) {
       console.error("Failed to update country:", error);
-      toast.error("Failed to update country");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update country"
+      );
     } finally {
       setActionLoading(false);
     }
@@ -173,10 +180,13 @@ export default function CountriesPage() {
         setIsDeleteModalOpen(false);
         setSelectedCountry(null);
         loadCountries();
+        loadStats();
       }
     } catch (error) {
       console.error("Failed to delete country:", error);
-      toast.error("Failed to delete country");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete country"
+      );
     } finally {
       setActionLoading(false);
     }
@@ -196,10 +206,13 @@ export default function CountriesPage() {
           } successfully`
         );
         loadCountries();
+        loadStats();
       }
     } catch (error) {
       console.error("Failed to toggle country status:", error);
-      toast.error("Failed to toggle country status");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to toggle country status"
+      );
     }
   };
 
@@ -305,12 +318,12 @@ export default function CountriesPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Regions</CardTitle>
+              <CardTitle className="text-sm font-medium">Zones</CardTitle>
               <Globe className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="total-regions">
-                {Object.keys(stats.regions).length}
+                {Object.keys(stats.zones ?? {}).length}
               </div>
               <p className="text-xs text-muted-foreground">
                 Geographic coverage
@@ -320,18 +333,20 @@ export default function CountriesPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Currencies</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">
+                Dialing Codes
+              </CardTitle>
+              <Phone className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div
                 className="text-2xl font-bold"
                 data-testid="total-currencies"
               >
-                {Object.keys(stats.currencies).length}
+                {Object.keys(stats.phoneCodes ?? {}).length}
               </div>
               <p className="text-xs text-muted-foreground">
-                Supported currencies
+                Distinct phone codes
               </p>
             </CardContent>
           </Card>
@@ -351,7 +366,7 @@ export default function CountriesPage() {
             columns={columns}
             data={countries}
             loading={loading}
-            searchPlaceholder="Search countries by name, code, or region..."
+            searchPlaceholder="Search countries by name, code, zone, or phone code..."
             onSearch={handleSearch}
             onRefresh={handleRefresh}
             onCreateNew={
@@ -447,16 +462,20 @@ export default function CountriesPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-semibold">Region</h4>
+                  <h4 className="font-semibold">Region / Zone</h4>
                   <p data-testid="view-country-region">
-                    {selectedCountry.region}
+                    {selectedCountry.zone || "—"}
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-semibold">Currency</h4>
+                  <h4 className="font-semibold">Phone Code</h4>
                   <p data-testid="view-country-currency">
-                    {selectedCountry?.currency}
+                    {selectedCountry.phoneCode || "—"}
                   </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold">Timezone</h4>
+                  <p>{selectedCountry.timezone || "—"}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold">Status</h4>
@@ -467,6 +486,18 @@ export default function CountriesPage() {
                   </Badge>
                 </div>
               </div>
+
+              {selectedCountry.flagUrl && (
+                <div>
+                  <h4 className="font-semibold mb-2">Flag</h4>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- admin-supplied flag URLs can be any host */}
+                  <img
+                    src={selectedCountry.flagUrl}
+                    alt={`${selectedCountry.name} flag`}
+                    className="h-12 w-auto rounded border object-contain"
+                  />
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

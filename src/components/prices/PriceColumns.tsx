@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PriceChart, Role } from "@/types";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Power, PowerOff } from "lucide-react";
 
 interface PriceColumnsProps {
   userRole: Role;
@@ -18,7 +19,6 @@ interface PriceColumnsProps {
   onEdit: (price: PriceChart) => void;
   onDelete: (price: PriceChart) => void;
   onToggleStatus?: (price: PriceChart) => void;
-  onCalculate?: (price: PriceChart) => void;
 }
 
 export const createPriceColumns = ({
@@ -26,13 +26,20 @@ export const createPriceColumns = ({
   onView,
   onEdit,
   onDelete,
+  onToggleStatus,
 }: PriceColumnsProps): ColumnDef<PriceChart>[] => [
   {
     accessorKey: "route",
     header: "Route",
     accessorFn: (row) => {
-      const fromName = typeof row.from === "object" ? (row.from as unknown as { name?: string })?.name ?? "N/A" : row.from ?? "N/A";
-      const toName = typeof row.to === "object" ? (row.to as unknown as { name?: string })?.name ?? "N/A" : row.to ?? "N/A";
+      const fromName =
+        typeof row.from === "object"
+          ? (row.from as unknown as { name?: string })?.name ?? "N/A"
+          : row.from ?? "N/A";
+      const toName =
+        typeof row.to === "object"
+          ? (row.to as unknown as { name?: string })?.name ?? "N/A"
+          : row.to ?? "N/A";
       return `${fromName} → ${toName}`;
     },
     cell: (info) => info.getValue(),
@@ -42,7 +49,8 @@ export const createPriceColumns = ({
     header: "Couriers / Price Summary",
     cell: ({ row }) => {
       const price = row.original;
-      const courierCount = price.rate.length;
+      const rates = Array.isArray(price.rate) ? price.rate : [];
+      const courierCount = rates.length;
 
       if (courierCount === 0) {
         return <div>No couriers</div>;
@@ -52,11 +60,19 @@ export const createPriceColumns = ({
       let minPrice = Infinity;
       let maxPrice = 0;
 
-      price.rate.forEach((c) => {
-        const rawValues = Object.values(c.price).filter((v) => typeof v === "number") as number[];
+      rates.forEach((c) => {
+        const rawValues = Object.values(c.price || {}).filter(
+          (v) => typeof v === "number"
+        ) as number[];
         if (rawValues.length > 0) {
           const values = isAdmin
-            ? rawValues.map((v) => Number(v * (1 + (c.fuel || 0) / 100) * (1 + (c.profitPercentage || 0) / 100)))
+            ? rawValues.map((v) =>
+                Number(
+                  v *
+                    (1 + (c.fuel || 0) / 100) *
+                    (1 + (c.profitPercentage || 0) / 100)
+                )
+              )
             : rawValues;
           const localMin = Math.min(...values);
           const localMax = Math.max(...values);
@@ -80,9 +96,19 @@ export const createPriceColumns = ({
     },
   },
   {
+    accessorKey: "isActive",
+    header: "Status",
+    cell: ({ row }) => (
+      <Badge variant={row.original.isActive === false ? "secondary" : "default"}>
+        {row.original.isActive === false ? "Inactive" : "Active"}
+      </Badge>
+    ),
+  },
+  {
     id: "actions",
     cell: ({ row }) => {
       const price = row.original;
+      const canManage = userRole === "admin" || userRole === "moderator";
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -96,9 +122,24 @@ export const createPriceColumns = ({
             <DropdownMenuItem onClick={() => onView(price)}>
               View
             </DropdownMenuItem>
-            {(userRole === "admin" || userRole === "moderator") && (
+            {canManage && (
               <DropdownMenuItem onClick={() => onEdit(price)}>
                 Edit
+              </DropdownMenuItem>
+            )}
+            {canManage && onToggleStatus && (
+              <DropdownMenuItem onClick={() => onToggleStatus(price)}>
+                {price.isActive === false ? (
+                  <>
+                    <Power className="mr-2 h-4 w-4" />
+                    Activate
+                  </>
+                ) : (
+                  <>
+                    <PowerOff className="mr-2 h-4 w-4" />
+                    Deactivate
+                  </>
+                )}
               </DropdownMenuItem>
             )}
             {userRole === "admin" && (

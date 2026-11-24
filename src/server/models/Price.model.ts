@@ -74,7 +74,7 @@ const rateSchema = new Schema<IRate>(
     profitPercentage: { type: Number, required: true, default: 15 },
     gift: { type: Number, required: true, default: 15 },
     price: { type: priceCategorySchema, default: {} },
-    fuel: { type: Number, require: true },
+    fuel: { type: Number, required: true, default: 0 },
     serviceDetails: { type: [String], default: [] },
   },
   { _id: false }

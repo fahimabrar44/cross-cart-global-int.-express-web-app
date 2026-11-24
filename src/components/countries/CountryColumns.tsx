@@ -19,6 +19,8 @@ import {
   Globe,
   MoreHorizontal,
   Phone,
+  Power,
+  PowerOff,
   Trash2,
 } from "lucide-react";
 
@@ -105,8 +107,17 @@ export const createCountryColumns = ({
         data-testid={`country-phonecode-${row.original._id}`}
       >
         <Phone className="h-3 w-3 text-muted-foreground" />
-        {row.getValue("phoneCode")}
+        {(row.getValue("phoneCode") as string | null) || "—"}
       </div>
+    ),
+  },
+  {
+    accessorKey: "zone",
+    header: "Zone",
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {row.original.zone || "—"}
+      </span>
     ),
   },
   {
@@ -171,12 +182,12 @@ export const createCountryColumns = ({
               >
                 {country.isActive ? (
                   <>
-                    <Eye className="mr-2 h-4 w-4" />
+                    <PowerOff className="mr-2 h-4 w-4" />
                     Deactivate
                   </>
                 ) : (
                   <>
-                    <Eye className="mr-2 h-4 w-4" />
+                    <Power className="mr-2 h-4 w-4" />
                     Activate
                   </>
                 )}

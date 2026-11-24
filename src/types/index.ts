@@ -46,17 +46,37 @@ export interface UpdateUserData {
 export interface CreateCountryData {
   name: string;
   code: string;
-  phoneCode: string;
+  phoneCode?: string;
+  flagUrl?: string;
+  timezone?: string;
+  zone?: string;
   isActive: boolean;
 }
 
-export interface UpdateCountryData {
+export type UpdateCountryData = Partial<CreateCountryData>;
+
+// Reusable item / product catalog
+export interface Item {
   _id: string;
-  name?: string;
-  code?: string;
-  phoneCode?: string;
+  name: string;
+  defaultPrice: number;
+  unit: string;
+  description?: string | null;
+  isActive: boolean;
+  deactivatedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateItemData {
+  name: string;
+  defaultPrice?: number;
+  unit?: string;
+  description?: string;
   isActive?: boolean;
 }
+
+export type UpdateItemData = Partial<CreateItemData>;
 
 export interface ContactPerson {
   name: string;
@@ -119,6 +139,13 @@ export interface CreateOrderData {
     from: string; // Country ID
     to: string; // Country ID
     weight: number;
+    dimensions?: {
+      length?: number;
+      width?: number;
+      height?: number;
+    };
+    packagingType?: string;
+    boxCount?: number;
     orderType: "document" | "parcel" | "e-commerce";
     priority: "normal" | "express" | "super-express" | "tax-paid";
     customerNote?: string;
@@ -147,12 +174,7 @@ export interface CreateOrderData {
       };
     };
 
-    item: {
-      description: string;
-      quantity: number;
-      weight: number;
-      value: number;
-    }[];
+    item?: ParcelItem[];
   };
 }
 
@@ -342,15 +364,12 @@ export interface Country {
   _id: string;
   name: string;
   code: string; // ISO country code
-  phoneCode?:string;
-  region: string;
-  currency: string;
+  phoneCode?: string | null;
+  flagUrl?: string | null;
+  timezone?: string | null;
+  zone?: string | null; // Optional region label, e.g. "South Asia"
   isActive: boolean;
-  deliveryDays: {
-    standard: number;
-    express: number;
-    overnight: number;
-  };
+  deactivatedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -359,7 +378,8 @@ export interface Zone {
   _id: string;
   name: string;
   code?: string;
-  countryIds: string[];
+  // The list endpoint populates this field, so entries can be documents.
+  countryIds: Array<string | Country>;
   countries?: Country[];
   description?: string;
   isActive: boolean;
@@ -447,6 +467,7 @@ export interface ApiResponse<T> {
     page?: number;
     limit?: number;
     total?: number;
+    activeTotal?: number;
     totalPages?: number;
     userRole?: string;
     filteredByRole?: boolean;

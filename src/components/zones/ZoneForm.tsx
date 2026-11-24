@@ -57,7 +57,9 @@ export function ZoneForm({ zone, onSubmit, onCancel, loading = false }: ZoneForm
           name: zone.name,
           code: zone.code || "",
           description: zone.description || "",
-          countryIds: Array.isArray(zone.countryIds) ? zone.countryIds : [],
+          countryIds: Array.isArray(zone.countryIds)
+            ? zone.countryIds.map((c) => (typeof c === "string" ? c : c._id))
+            : [],
           isActive: zone.isActive,
         }
       : {

@@ -5,25 +5,33 @@ import { errorResponse, successResponse } from "@/server/common/response";
 
 /**
  * GET /api/v1/countrys/stats
- * Aggregated country statistics.
+ * Aggregated country statistics used by the dashboard cards.
  */
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
-    const [total, active, inactive, zoneGroups] = await Promise.all([
-      Country.countDocuments(),
-      Country.countDocuments({ isActive: true }),
-      Country.countDocuments({ isActive: false }),
-      Country.aggregate([
-        { $group: { _id: "$zone", count: { $sum: 1 } } },
-      ]),
-    ]);
+    const [total, active, inactive, zoneGroups, phoneGroups] =
+      await Promise.all([
+        Country.countDocuments(),
+        Country.countDocuments({ isActive: true }),
+        Country.countDocuments({ isActive: false }),
+        Country.aggregate([{ $group: { _id: "$zone", count: { $sum: 1 } } }]),
+        Country.aggregate([
+          { $group: { _id: "$phoneCode", count: { $sum: 1 } } },
+        ]),
+      ]);
 
-    const regions: { [key: string]: number } = {};
+    const zones: Record<string, number> = {};
     for (const group of zoneGroups) {
-      const key = group._id || "Unknown";
-      regions[key] = (regions[key] || 0) + group.count;
+      const key = group._id || "Unassigned";
+      zones[key] = (zones[key] || 0) + group.count;
+    }
+
+    const phoneCodes: Record<string, number> = {};
+    for (const group of phoneGroups) {
+      if (!group._id) continue;
+      phoneCodes[group._id] = (phoneCodes[group._id] || 0) + group.count;
     }
 
     return successResponse({
@@ -33,13 +41,18 @@ export async function GET(req: NextRequest) {
         total,
         active,
         inactive,
-        regions,
-        currencies: {},
+        zones,
+        // Kept for older dashboard builds that read `regions`.
+        regions: zones,
+        phoneCodes,
       },
       req,
     });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Failed to fetch country statistics";
+    const msg =
+      error instanceof Error
+        ? error.message
+        : "Failed to fetch country statistics";
     return errorResponse({ status: 500, message: msg, error, req });
   }
 }

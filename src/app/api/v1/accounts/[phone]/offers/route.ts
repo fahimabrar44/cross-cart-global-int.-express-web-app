@@ -105,10 +105,10 @@ export async function POST(
   }
 }
 
-// PUT - update an existing offer
+// PUT - update an existing offer (?id=<offerId>)
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ phone: string, id: string }> }
+  { params }: { params: Promise<{ phone: string }> }
 ): Promise<NextResponse> {
   try {
     const authResult = await verifyAuth(req);
@@ -118,7 +118,7 @@ export async function PUT(
 
     await connectDB();
 
-    const { phone, id } = await params;
+    const { phone } = await params;
     if (!phone) {
       return errorResponse({ status: 400, message: "Phone parameter is required", req });
     }
@@ -136,11 +136,29 @@ export async function PUT(
     const user = await User.findOne({ phone });
     if (!user) return errorResponse({ status: 404, message: "User not found", req });
 
-    const body: Partial<IOffer> = await req.json();
+    const body: Partial<IOffer> & { id?: string; _id?: string } = await req.json();
+    const id = new URL(req.url).searchParams.get("id") || body.id || body._id;
+    if (!id) {
+      return errorResponse({ status: 400, message: "Offer id is required", req });
+    }
+
+    const allowedFields = [
+      "name",
+      "description",
+      "offerDetails",
+      "isActive",
+      "validFrom",
+      "validUntil",
+      "targetUsers",
+    ] as const;
+    const update: Record<string, unknown> = {};
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) update[field] = body[field];
+    }
 
     const updatedOffer = await Offer.findOneAndUpdate(
       { _id: id },
-      { $set: body },
+      { $set: update },
       { new: true }
     );
 
@@ -165,10 +183,10 @@ export async function PUT(
   }
 }
 
-// DELETE - soft delete an offer (mark inactive)
+// DELETE - soft delete an offer (mark inactive) (?id=<offerId>)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ phone: string, id: string }> }
+  { params }: { params: Promise<{ phone: string }> }
 ): Promise<NextResponse> {
   try {
     const authResult = await verifyAuth(req);
@@ -178,7 +196,7 @@ export async function DELETE(
 
     await connectDB();
 
-    const { phone, id } = await params;
+    const { phone } = await params;
     if (!phone) {
       return errorResponse({ status: 400, message: "Phone parameter is required", req });
     }
@@ -195,6 +213,11 @@ export async function DELETE(
 
     const user = await User.findOne({ phone });
     if (!user) return errorResponse({ status: 404, message: "User not found", req });
+
+    const id = new URL(req.url).searchParams.get("id");
+    if (!id) {
+      return errorResponse({ status: 400, message: "Offer id is required", req });
+    }
 
     const deletedOffer = await Offer.findOneAndUpdate(
       { _id: id },

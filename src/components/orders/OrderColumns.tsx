@@ -14,7 +14,7 @@ import {
 import { MoreHorizontal, Eye, Edit, Trash2, PackageSearch } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowUpDown } from "lucide-react";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/formatDate";
 
 interface OrderColumnsProps {
   userRole: Role;
@@ -158,7 +158,7 @@ export const createOrderColumns = ({
     },
     cell: ({ row }) => {
       const date = new Date(row.getValue("orderDate"));
-      return <div className="text-sm">{format(date, "MMM dd, yyyy")}</div>;
+      return <div className="text-sm">{formatDate(date)}</div>;
     },
   },
   {
