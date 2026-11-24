@@ -430,11 +430,15 @@ export const POST = createPublicHandler(async ({ req, user }) => {
       });
     }
 
-    const weight = toText(parcelInput.weight, 50);
-    if (!weight) {
+    const weight =
+      typeof parcelInput.weight === "number" &&
+      Number.isFinite(parcelInput.weight)
+        ? String(parcelInput.weight)
+        : toText(parcelInput.weight, 50);
+    if (!weight || !Number.isFinite(Number(weight)) || Number(weight) <= 0) {
       return errorResponse({
         status: 400,
-        message: "Package weight (parcel.weight) is required",
+        message: "A valid package weight (parcel.weight) is required",
         req,
       });
     }
