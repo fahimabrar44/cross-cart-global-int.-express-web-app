@@ -95,6 +95,27 @@ interface OrderFormProps {
   loading?: boolean;
 }
 
+/**
+ * Country values can arrive either as an id string or as a populated document
+ * when an existing order is edited. Always submit the id.
+ */
+function toCountryId(value: unknown): string {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+
+  if (typeof value === "object") {
+    const raw = value as { _id?: unknown; id?: unknown };
+    const id = raw._id ?? raw.id;
+    if (typeof id === "string") return id;
+    if (id && typeof (id as { toString?: unknown }).toString === "function") {
+      const str = String(id);
+      return str === "[object Object]" ? "" : str;
+    }
+  }
+
+  return "";
+}
+
 export function OrderForm({
   order,
   onSubmit,
@@ -112,8 +133,8 @@ export function OrderForm({
     defaultValues: order
       ? {
           parcel: {
-            from: order.parcel.from,
-            to: order.parcel.to,
+            from: toCountryId(order.parcel.from),
+            to: toCountryId(order.parcel.to),
             weight: order.parcel.weight,
             dimensions: order.parcel.dimensions || {
               length: 0,
@@ -126,8 +147,20 @@ export function OrderForm({
             priority: order.parcel.priority,
             
             customerNote: order.parcel.customerNote || "",
-            sender: order.parcel.sender,
-            receiver: order.parcel.receiver,
+            sender: {
+              ...order.parcel.sender,
+              address: {
+                ...order.parcel.sender.address,
+                country: toCountryId(order.parcel.sender.address.country),
+              },
+            },
+            receiver: {
+              ...order.parcel.receiver,
+              address: {
+                ...order.parcel.receiver.address,
+                country: toCountryId(order.parcel.receiver.address.country),
+              },
+            },
             item: order.parcel.item || [],
           },
         }
@@ -236,14 +269,38 @@ export function OrderForm({
   };
 
   const handleSubmit = (data: OrderFormData) => {
+    // Normalize country values to ids so a populated document can never be
+    // stringified into "[object Object]" by the API.
+    const normalized: OrderFormData = {
+      parcel: {
+        ...data.parcel,
+        from: toCountryId(data.parcel.from),
+        to: toCountryId(data.parcel.to),
+        sender: {
+          ...data.parcel.sender,
+          address: {
+            ...data.parcel.sender.address,
+            country: toCountryId(data.parcel.sender.address.country),
+          },
+        },
+        receiver: {
+          ...data.parcel.receiver,
+          address: {
+            ...data.parcel.receiver.address,
+            country: toCountryId(data.parcel.receiver.address.country),
+          },
+        },
+      },
+    };
+
     // Calculate total prices for items
-    if (data.parcel.item) {
-      data.parcel.item.forEach((item) => {
+    if (normalized.parcel.item) {
+      normalized.parcel.item.forEach((item) => {
         item.totalPrice = item.quantity * item.unitPrice;
       });
     }
 
-    onSubmit(data);
+    onSubmit(normalized);
   };
 
   return (
@@ -267,7 +324,7 @@ export function OrderForm({
                     <FormLabel>Origin Country</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || undefined}
                     >
                       <FormControl>
                         <SelectTrigger data-testid="from-country-select">
@@ -295,7 +352,7 @@ export function OrderForm({
                     <FormLabel>Destination Country</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || undefined}
                     >
                       <FormControl>
                         <SelectTrigger data-testid="to-country-select">
@@ -348,7 +405,7 @@ export function OrderForm({
                     <FormLabel>Service Type</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || undefined}
                     >
                       <FormControl>
                         <SelectTrigger data-testid="order-type-select">
@@ -374,7 +431,7 @@ export function OrderForm({
                     <FormLabel>Priority</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || undefined}
                     >
                       <FormControl>
                         <SelectTrigger data-testid="priority-select">
@@ -428,7 +485,7 @@ export function OrderForm({
                   <FormLabel>Packaging Type</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value || undefined}
                   >
                     <FormControl>
                       <SelectTrigger data-testid="packaging-type-select">
@@ -681,6 +738,7 @@ export function OrderForm({
             />
 
             <Button
+              type="button"
               variant={"default"}
               onClick={() => {
                 const items = form.getValues("parcel.item") || [];
@@ -831,7 +889,7 @@ export function OrderForm({
                         <FormLabel>Origin Country</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value || undefined}
                         >
                           <FormControl>
                             <SelectTrigger data-testid="sender-country-select">
@@ -987,7 +1045,7 @@ export function OrderForm({
                         <FormLabel>Destination Country</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value || undefined}
                         >
                           <FormControl>
                             <SelectTrigger data-testid="receiver-country-select">

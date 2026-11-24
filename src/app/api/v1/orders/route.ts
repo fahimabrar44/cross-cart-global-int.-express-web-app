@@ -269,7 +269,9 @@ export const GET = createAuthHandler(async ({ req, user }) => {
     if (q.trackId) {
       const t = q.trackId.trim();
       if (t.includes("*") || t.includes("%")) {
-        const pattern = t.replace(/\*/g, ".*").replace(/%/g, ".*");
+        const pattern = escapeRegex(t)
+          .replace(/\\\*/g, ".*")
+          .replace(/%/g, ".*");
         query.trackId = { $regex: pattern, $options: "i" };
       } else {
         query.trackId = t;
@@ -278,6 +280,12 @@ export const GET = createAuthHandler(async ({ req, user }) => {
 
     if (q.priority) query["parcel.priority"] = q.priority;
     if (q.orderType) query["parcel.orderType"] = q.orderType;
+    if (q.from && Types.ObjectId.isValid(q.from)) {
+      query["parcel.from"] = new Types.ObjectId(q.from);
+    }
+    if (q.to && Types.ObjectId.isValid(q.to)) {
+      query["parcel.to"] = new Types.ObjectId(q.to);
+    }
 
     if (q.createdFrom || q.createdTo) {
       query.createdAt = {};
@@ -324,16 +332,32 @@ export const GET = createAuthHandler(async ({ req, user }) => {
     sortObj[sortBy] = sortOrder;
 
     const total = await Order.countDocuments(query);
-    const orders = await Order.find(query).populate([
-    { path: 'parcel.from' },
-    { path: 'parcel.to' },
-    { path: 'parcel.sender.address.country' },
-    { path: 'parcel.receiver.address.country' },
-  ])
-      .sort(sortObj)
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const orders = await (async () => {
+      try {
+        return await Order.find(query)
+          .populate([
+            { path: "parcel.from", model: Country },
+            { path: "parcel.to", model: Country },
+            { path: "parcel.sender.address.country", model: Country },
+            { path: "parcel.receiver.address.country", model: Country },
+          ])
+          .sort(sortObj)
+          .skip(skip)
+          .limit(limit)
+          .lean();
+      } catch (populateError) {
+        // A bad/removed country reference must not take down the whole list.
+        console.error(
+          "Failed to populate order countries; returning raw references:",
+          populateError
+        );
+        return await Order.find(query)
+          .sort(sortObj)
+          .skip(skip)
+          .limit(limit)
+          .lean();
+      }
+    })();
 
     return successResponse({
       status: 200,

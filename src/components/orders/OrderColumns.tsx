@@ -78,15 +78,27 @@ export const createOrderColumns = ({
     header: "Route",
     cell: ({ row }) => {
       const parcel = row.original.parcel;
+      const from = parcel.from as unknown as
+        | { name?: string }
+        | string
+        | null
+        | undefined;
+      const to = parcel.to as unknown as
+        | { name?: string }
+        | string
+        | null
+        | undefined;
+      const fromName =
+        typeof from === "string" ? from : from?.name || "—";
+      const toName = typeof to === "string" ? to : to?.name || "—";
+
       return (
         <div className="flex flex-col space-y-1">
           <div className="text-sm font-medium">
-            {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                    {/* @ts-expect-error */}
-            {parcel.from.name} → {parcel.to.name}
+            {fromName} → {toName}
           </div>
           <div className="text-xs text-muted-foreground">
-            {parcel.sender.name} → {parcel.receiver.name}
+            {parcel.sender?.name || "—"} → {parcel.receiver?.name || "—"}
           </div>
         </div>
       );

@@ -5,6 +5,21 @@ import { Order } from "@/server/models/Order.model";
 import { syncOrderToTrack } from "@/server/services/trackingService";
 import { Types } from "mongoose";
 
+function toObjectIdOrNull(value: unknown): Types.ObjectId | null {
+  if (value instanceof Types.ObjectId) return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return Types.ObjectId.isValid(trimmed)
+      ? new Types.ObjectId(trimmed)
+      : null;
+  }
+  if (value && typeof value === "object") {
+    const raw = value as { _id?: unknown; id?: unknown };
+    return toObjectIdOrNull(raw._id ?? raw.id);
+  }
+  return null;
+}
+
 // GET: Users can view their own orders, Admin/Moderator can view all
 export const GET = createAuthHandler(async ({ req, user }) => {
   try {
@@ -72,7 +87,45 @@ export const PUT = createAuthHandler(async ({ req, user }) => {
       });
     }
 
-    const body = await req.json();
+    const body = (await req.json().catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
+    if (!body) {
+      return errorResponse({
+        status: 400,
+        message: "A valid JSON body is required",
+        req,
+      });
+    }
+
+    // Edit forms may send populated country documents. Normalize them to ids
+    // before they reach Mongoose, otherwise the cast fails with
+    // "Cast to ObjectId failed for value \"[object Object]\"".
+    const parcelBody = body.parcel;
+    if (parcelBody && typeof parcelBody === "object") {
+      const parcel = parcelBody as Record<string, unknown>;
+
+      for (const key of ["from", "to"] as const) {
+        if (parcel[key] !== undefined) {
+          parcel[key] = toObjectIdOrNull(parcel[key]);
+        }
+      }
+
+      for (const key of ["sender", "receiver"] as const) {
+        const person = parcel[key];
+        if (person && typeof person === "object") {
+          const personObj = person as Record<string, unknown>;
+          const address = personObj.address;
+          if (address && typeof address === "object") {
+            const addressObj = address as Record<string, unknown>;
+            if (addressObj.country !== undefined) {
+              addressObj.country = toObjectIdOrNull(addressObj.country);
+            }
+          }
+        }
+      }
+    }
 
     // Build query based on user role
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
