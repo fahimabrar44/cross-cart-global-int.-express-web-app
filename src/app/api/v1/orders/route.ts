@@ -476,7 +476,11 @@ export const POST = createPublicHandler(async ({ req, user }) => {
     const receiver = sanitizePerson(receiverInput, {});
 
     // Authenticated customers always ship under their own account identity.
-    if (user) {
+    // Staff may create orders on behalf of a customer, so keep the entered
+    // sender details for admin/moderator accounts.
+    const isStaffUser =
+      user?.role === "admin" || user?.role === "moderator";
+    if (user && !isStaffUser) {
       sender.phone = user.phone;
       sender.email = user.email;
     }
@@ -555,8 +559,7 @@ export const POST = createPublicHandler(async ({ req, user }) => {
         : {};
 
     // Only staff can set financial amounts when creating an order.
-    const isStaff = user?.role === "admin" || user?.role === "moderator";
-    const payment = sanitizePayment(body.payment, isStaff);
+    const payment = sanitizePayment(body.payment, isStaffUser);
 
     // ---- Coupon (server-computed discount + atomic consumption) ----
     let couponCode = "";

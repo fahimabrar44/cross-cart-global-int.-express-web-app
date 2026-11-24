@@ -65,13 +65,16 @@ function phonesMatch(a?: string, b?: string): boolean {
   return da.length >= 10 && db.length >= 10 && da.slice(-10) === db.slice(-10);
 }
 
-async function findUserByPhone(phone: string) {
+async function findUserByPhone(phone: string): Promise<Types.ObjectId | null> {
   const variants = buildPhoneVariants(phone);
   if (variants.length === 0) return null;
 
-  return User.findOne({ phone: { $in: variants } })
-    .select("_id phone")
-    .lean();
+  const user = await User.findOne({ phone: { $in: variants } })
+    .select("_id")
+    .lean<{ _id: unknown } | null>();
+
+  if (!user) return null;
+  return new Types.ObjectId(String(user._id));
 }
 
 function isStaff(role?: string): boolean {
@@ -109,14 +112,14 @@ async function resolveTargetUser(
 
   await connectDB();
 
-  const user = await findUserByPhone(phone);
-  if (!user) {
+  const userId = await findUserByPhone(phone);
+  if (!userId) {
     return {
       error: errorResponse({ status: 404, message: "User not found", req }),
     };
   }
 
-  return { userId: new Types.ObjectId(String(user._id)) };
+  return { userId };
 }
 
 function parsePagination(query: NotificationQuery) {

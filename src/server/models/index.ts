@@ -9,6 +9,7 @@ import "./Coupon.model";
 import "./ApiConfig.model";
 import "./Settings.model";
 import "./Order.model";
+import "./Item.model";
 import "./Referral.model";
 import "./FAQ.model";
 import "./Review.model";

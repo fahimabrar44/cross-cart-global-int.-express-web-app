@@ -152,30 +152,52 @@ export const PUT = createAuthHandler(async ({ req, user }) => {
 
     // Restrict what users can update vs admin/moderator
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let allowedUpdates: any = {};
+    const allowedUpdates: Record<string, any> = {};
+
+    const parcelUpdates =
+      body.parcel && typeof body.parcel === "object"
+        ? (body.parcel as Record<string, unknown>)
+        : undefined;
 
     if (user?.role === "user") {
-      // Users can only update limited fields
-      const userAllowedFields = [
-        "parcel.receiver",
-        "parcel.description", 
-        "parcel.notes",
-        "parcel.item"
-      ];
-      
-      for (const field of userAllowedFields) {
-        if (body[field] !== undefined) {
-          allowedUpdates[field] = body[field];
-        }
+      // Users can only update the receiver and the item list.
+      if (parcelUpdates?.receiver !== undefined) {
+        allowedUpdates["parcel.receiver"] = parcelUpdates.receiver;
+      }
+      if (parcelUpdates?.item !== undefined) {
+        allowedUpdates["parcel.item"] = parcelUpdates.item;
       }
     } else {
-      // Admin/Moderator can update most fields except system-generated ones
-      const restrictedFields = ["_id", "trackId", "createdAt"];
-      allowedUpdates = { ...body };
-      
-      for (const field of restrictedFields) {
-        delete allowedUpdates[field];
+      // Admin/Moderator: merge parcel fields instead of replacing the whole
+      // subdocument, so fields the edit form doesn't show (insurance, coupon,
+      // box) are preserved.
+      if (parcelUpdates) {
+        for (const [key, value] of Object.entries(parcelUpdates)) {
+          if (value !== undefined) {
+            allowedUpdates[`parcel.${key}`] = value;
+          }
+        }
       }
+
+      const restrictedFields = new Set([
+        "_id",
+        "trackId",
+        "createdAt",
+        "parcel",
+      ]);
+      for (const [key, value] of Object.entries(body)) {
+        if (!restrictedFields.has(key) && value !== undefined) {
+          allowedUpdates[key] = value;
+        }
+      }
+    }
+
+    if (Object.keys(allowedUpdates).length === 0) {
+      return errorResponse({
+        status: 400,
+        message: "No update fields provided",
+        req,
+      });
     }
 
     // Update the order
