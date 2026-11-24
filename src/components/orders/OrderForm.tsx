@@ -59,6 +59,7 @@ const contactSchema = z.object({
 
 const parcelItemSchema = z.object({
   name: z.string().min(1, "Item name is required"),
+  hsCode: z.string().max(20, "HS code is too long").optional(),
   quantity: z.number().min(1, "Quantity must be at least 1"),
   unitPrice: z.number().min(0, "Unit price cannot be negative"),
   totalPrice: z.number().min(0, "Total price cannot be negative"),
@@ -161,7 +162,10 @@ export function OrderForm({
                 country: toCountryId(order.parcel.receiver.address.country),
               },
             },
-            item: order.parcel.item || [],
+            item: (order.parcel.item || []).map((it) => ({
+              ...it,
+              hsCode: it.hsCode || "",
+            })),
           },
         }
       : {
@@ -258,6 +262,10 @@ export function OrderForm({
     const unitPrice = Number(match.defaultPrice) || 0;
 
     form.setValue(`parcel.item.${index}.unitPrice`, unitPrice, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    form.setValue(`parcel.item.${index}.hsCode`, match.hsCode || "", {
       shouldValidate: true,
       shouldDirty: true,
     });
@@ -607,7 +615,7 @@ export function OrderForm({
               onClick={() =>
                 form.setValue("parcel.item", [
                   ...(form.getValues("parcel.item") || []),
-                  { name: "", quantity: 1, unitPrice: 0, totalPrice: 0 },
+                  { name: "", hsCode: "", quantity: 1, unitPrice: 0, totalPrice: 0 },
                 ])
               }
               className="text-sm text-blue-600 hover:underline"
@@ -630,7 +638,7 @@ export function OrderForm({
         {(form.watch("parcel.item") || []).map((item, index) => (
           <div
             key={index}
-            className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end border p-3 rounded-lg"
+            className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end border p-3 rounded-lg"
           >
             <FormField
               control={form.control}
@@ -653,13 +661,32 @@ export function OrderForm({
                       <option key={catalogItem._id} value={catalogItem.name}>
                         {`$${Number(catalogItem.defaultPrice || 0).toFixed(2)} / ${
                           catalogItem.unit || "pcs"
-                        }`}
+                        }${catalogItem.hsCode ? ` · HS ${catalogItem.hsCode}` : ""}`}
                       </option>
                     ))}
                   </datalist>
                   <FormDescription>
                     Select a saved item or type a new name manually.
                   </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name={`parcel.item.${index}.hsCode`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>HS Code</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g. 6109.10.00"
+                      {...field}
+                      value={field.value ?? ""}
+                      data-testid={`order-item-hs-code-${index}`}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

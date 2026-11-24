@@ -88,6 +88,7 @@ export async function GET(
         (
           it: {
             name?: string;
+            hsCode?: string;
             quantity?: number;
             unitPrice?: number;
             totalPrice?: number;
@@ -97,6 +98,7 @@ export async function GET(
           <tr>
           <td  style="padding:8px;border:1px solid #ddd;text-align:center;">${index + 1}</td>
             <td style="padding:8px;border:1px solid #ddd;">${it.name || "-"}</td>
+            <td style="padding:8px;border:1px solid #ddd;text-align:center;">${it.hsCode || "-"}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:right;">${money(it.unitPrice)}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:center;">${Number(it.quantity) || 0}</td>
             <td style="padding:8px;border:1px solid #ddd;text-align:right;">${money(it.totalPrice)}</td>
@@ -188,23 +190,21 @@ export async function GET(
       
       <th style="">Item</th>
       
+      <th  style="text-align:center;">HS Code</th>
+      
       <th  style="text-align:right;">Unit Price</th>
       <th  style="text-align:center;">Qty</th>
       <th  style="text-align:right;">Total</th></tr>
     </thead>
     <tbody>
-      ${rowLoop || `<tr><td colspan="4" style="text-align:center;">No line items</td></tr>`}
+      ${rowLoop || `<tr><td colspan="6" style="text-align:center;">No line items</td></tr>`}
       
   <tr style="background:#f1f5f9;font-weight:700;">
-  <td style="padding:10px;border:1px solid #ddd;text-align:right;">
-      
-    </td>
-    <td style="padding:10px;border:1px solid #ddd;text-align:right;">
-      
-    </td>
-    
-    <td style="padding:10px;border:1px solid #ddd;text-align:right;">
+  <td colspan="3" style="padding:10px;border:1px solid #ddd;text-align:right;">
     TOTAL
+    </td>
+    <td style="padding:10px;border:1px solid #ddd;text-align:right;">
+      
     </td>
     <td style="padding:10px;border:1px solid #ddd;text-align:center;">
       ${totalQuantity}
@@ -212,6 +212,7 @@ export async function GET(
     <td style="padding:10px;border:1px solid #ddd;text-align:right;">
       $${money(itemsTotal)}
     </td>
+  </tr>
     </tbody>
   </table>
 

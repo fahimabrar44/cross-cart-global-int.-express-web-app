@@ -31,6 +31,7 @@ const itemFormSchema = z.object({
     .trim()
     .min(1, "Item name is required")
     .max(120, "Item name is too long"),
+  hsCode: z.string().trim().max(20, "HS code is too long"),
   defaultPrice: z
     .number()
     .min(0, "Default price cannot be negative"),
@@ -61,6 +62,7 @@ export function ItemForm({
     defaultValues: item
       ? {
           name: item.name,
+          hsCode: item.hsCode ?? "",
           defaultPrice: item.defaultPrice ?? 0,
           unit: item.unit || "pcs",
           description: item.description ?? "",
@@ -68,6 +70,7 @@ export function ItemForm({
         }
       : {
           name: "",
+          hsCode: "",
           defaultPrice: 0,
           unit: "pcs",
           description: "",
@@ -78,6 +81,7 @@ export function ItemForm({
   const handleSubmit = (data: ItemFormData) => {
     onSubmit({
       name: data.name.trim(),
+      hsCode: data.hsCode.trim() || undefined,
       defaultPrice: Number(data.defaultPrice) || 0,
       unit: data.unit.trim() || "pcs",
       description: data.description.trim() || undefined,
@@ -114,7 +118,7 @@ export function ItemForm({
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="defaultPrice"
@@ -161,6 +165,27 @@ export function ItemForm({
                       />
                     </FormControl>
                     <FormDescription>e.g. pcs, kg, box</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="hsCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>HS Code</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g. 6109.10.00"
+                        {...field}
+                        data-testid="item-hs-code-input"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Customs classification code for this item.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

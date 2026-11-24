@@ -1,6 +1,7 @@
 export interface ItemWriteData {
   name?: string;
   nameKey?: string;
+  hsCode?: string | null;
   defaultPrice?: number;
   unit?: string;
   description?: string | null;
@@ -34,6 +35,10 @@ export function buildItemPayload(
     }
     data.name = name;
     data.nameKey = name.toLowerCase();
+  }
+
+  if (body.hsCode !== undefined) {
+    data.hsCode = toText(body.hsCode, 20) || null;
   }
 
   if (body.defaultPrice !== undefined) {

@@ -11,6 +11,8 @@ export interface IItem extends Document {
   name: string;
   /** Lower-cased, trimmed name used for case-insensitive uniqueness. */
   nameKey: string;
+  /** Customs HS (Harmonized System) classification code. */
+  hsCode?: string | null;
   defaultPrice: number;
   unit: string;
   description?: string | null;
@@ -34,6 +36,12 @@ const itemSchema = new Schema<IItem>(
       unique: true,
       lowercase: true,
       trim: true,
+    },
+    hsCode: {
+      type: String,
+      default: null,
+      trim: true,
+      maxlength: 20,
     },
     defaultPrice: {
       type: Number,

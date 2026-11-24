@@ -59,6 +59,8 @@ export type UpdateCountryData = Partial<CreateCountryData>;
 export interface Item {
   _id: string;
   name: string;
+  /** Customs HS (Harmonized System) classification code. */
+  hsCode?: string | null;
   defaultPrice: number;
   unit: string;
   description?: string | null;
@@ -70,6 +72,7 @@ export interface Item {
 
 export interface CreateItemData {
   name: string;
+  hsCode?: string;
   defaultPrice?: number;
   unit?: string;
   description?: string;
@@ -116,6 +119,8 @@ export interface ContactInfo {
 
 export interface ParcelItem {
   name: string;
+  /** Customs HS (Harmonized System) classification code. */
+  hsCode?: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;

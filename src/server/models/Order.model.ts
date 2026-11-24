@@ -26,6 +26,7 @@ const userInfoSchema = new Schema({
 // Product Sub-schema (single product)
 const listSchema = new Schema({
   name: { type: String, required: true, default: "" },
+  hsCode: { type: String, default: "", trim: true, maxlength: 20 },
   quantity: { type: Number, required: true, default: 1 },
   unitPrice: { type: Number, required: true, default: 0 },
   totalPrice: { type: Number, required: true, default: 0 },

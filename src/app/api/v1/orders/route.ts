@@ -156,6 +156,7 @@ function sanitizeItems(value: unknown) {
 
     return {
       name: toText(raw.name, 200),
+      hsCode: toText(raw.hsCode, 20),
       quantity,
       unitPrice,
       totalPrice: Math.round(quantity * unitPrice * 100) / 100,

@@ -1064,6 +1064,9 @@ export default function OrdersPage() {
                             </TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead className="text-center">
+                              HS Code
+                            </TableHead>
+                            <TableHead className="text-center">
                               Quantity
                             </TableHead>
                             <TableHead className="text-center">
@@ -1081,6 +1084,9 @@ export default function OrdersPage() {
                                 {index + 1}
                               </TableCell>
                               <TableCell>{item.name || "—"}</TableCell>
+                              <TableCell className="text-center font-mono text-sm">
+                                {item.hsCode || "—"}
+                              </TableCell>
                               <TableCell className="text-center">
                                 {item.quantity || "—"}
                               </TableCell>
@@ -1100,7 +1106,7 @@ export default function OrdersPage() {
                           ))}
 
                           <TableRow className="bg-muted/40 font-semibold">
-                            <TableCell colSpan={2}>Total</TableCell>
+                            <TableCell colSpan={3}>Total</TableCell>
                             <TableCell className="text-center">
                               {
                                 calculateTotals(selectedOrder.parcel.item)

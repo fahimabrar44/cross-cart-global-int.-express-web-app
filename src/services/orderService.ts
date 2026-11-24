@@ -53,6 +53,7 @@ export interface CreateOrderData {
     };
     item?: {
       name: string;
+      hsCode?: string;
       quantity: number;
       unitPrice: number;
       totalPrice: number;

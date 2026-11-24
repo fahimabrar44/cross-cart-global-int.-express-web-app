@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/config/db";
 import { User } from "@/server/models/User.model";
 import { Notification } from "@/server/models/Notification.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { verifyAuth } from "@/middleware/auth";
+import { buildPhoneVariants, phonesMatch } from "@/server/common/phone";
+import { Types } from "mongoose";
 
 // GET - fetch a single notification by ID
 export async function GET(
@@ -23,21 +24,26 @@ export async function GET(
     if (!phone) {
       return errorResponse({ status: 400, message: "Phone parameter is required", req });
     }
+    if (!Types.ObjectId.isValid(id)) {
+      return errorResponse({ status: 400, message: "Invalid notification ID", req });
+    }
 
     // Access control: users can only access their own account; admins and moderators can access any
     if (
       authResult.user &&
       authResult.user.role !== "admin" &&
       authResult.user.role !== "moderator" &&
-      authResult.user.phone !== phone
+      !phonesMatch(authResult.user.phone, phone)
     ) {
       return errorResponse({ status: 403, message: "Access denied - You can only access your own account data", req });
     }
 
-    const user = await User.findOne({ phone });
+    const user = await User.findOne({ phone: { $in: buildPhoneVariants(phone) } });
     if (!user) return errorResponse({ status: 404, message: "User not found", req });
 
-    const notification = await Notification.findOne({ _id: id, userId: user._id }).populate("userId").lean();
+    const notification = await Notification.findOne({ _id: id, userId: user._id })
+      .populate("userId", "name email phone")
+      .lean();
     if (!notification) return errorResponse({ status: 404, message: "Notification not found", req });
 
     return successResponse({ status: 200, message: "Notification fetched", data: notification, req });
@@ -64,26 +70,43 @@ export async function PUT(
     if (!phone) {
       return errorResponse({ status: 400, message: "Phone parameter is required", req });
     }
+    if (!Types.ObjectId.isValid(id)) {
+      return errorResponse({ status: 400, message: "Invalid notification ID", req });
+    }
 
     // Access control: users can only access their own account; admins and moderators can access any
     if (
       authResult.user &&
       authResult.user.role !== "admin" &&
       authResult.user.role !== "moderator" &&
-      authResult.user.phone !== phone
+      !phonesMatch(authResult.user.phone, phone)
     ) {
       return errorResponse({ status: 403, message: "Access denied - You can only access your own account data", req });
     }
 
 
-    const user = await User.findOne({ phone });
+    const user = await User.findOne({ phone: { $in: buildPhoneVariants(phone) } });
     if (!user) return errorResponse({ status: 404, message: "User not found", req });
 
-    const body: { read?: boolean; title?: string; message?: string } = await req.json();
-    const updateData: any = {};
-    if (body.read !== undefined) updateData.isRead = body.read;
-    if (body.title) updateData.title = body.title;
-    if (body.message) updateData.message = body.message;
+    const body: {
+      read?: boolean;
+      isRead?: boolean;
+      title?: string;
+      message?: string;
+    } = await req.json();
+    const updateData: Record<string, unknown> = {};
+    const readValue =
+      typeof body.isRead === "boolean" ? body.isRead : body.read;
+    if (typeof readValue === "boolean") updateData.isRead = readValue;
+    if (typeof body.title === "string" && body.title.trim()) {
+      updateData.title = body.title.trim().slice(0, 200);
+    }
+    if (typeof body.message === "string" && body.message.trim()) {
+      updateData.message = body.message.trim().slice(0, 2_000);
+    }
+    if (Object.keys(updateData).length === 0) {
+      return errorResponse({ status: 400, message: "No update fields provided", req });
+    }
 
     const updatedNotification = await Notification.findOneAndUpdate(
       { _id: id, userId: user._id },
@@ -116,26 +139,43 @@ export async function PATCH(
     if (!phone) {
       return errorResponse({ status: 400, message: "Phone parameter is required", req });
     }
+    if (!Types.ObjectId.isValid(id)) {
+      return errorResponse({ status: 400, message: "Invalid notification ID", req });
+    }
 
     // Access control: users can only access their own account; admins and moderators can access any
     if (
       authResult.user &&
       authResult.user.role !== "admin" &&
       authResult.user.role !== "moderator" &&
-      authResult.user.phone !== phone
+      !phonesMatch(authResult.user.phone, phone)
     ) {
       return errorResponse({ status: 403, message: "Access denied - You can only access your own account data", req });
     }
 
 
-    const user = await User.findOne({ phone });
+    const user = await User.findOne({ phone: { $in: buildPhoneVariants(phone) } });
     if (!user) return errorResponse({ status: 404, message: "User not found", req });
 
-    const body: { read?: boolean; title?: string; message?: string } = await req.json();
-    const updateData: any = {};
-    if (body.read !== undefined) updateData.isRead = body.read;
-    if (body.title) updateData.title = body.title;
-    if (body.message) updateData.message = body.message;
+    const body: {
+      read?: boolean;
+      isRead?: boolean;
+      title?: string;
+      message?: string;
+    } = await req.json();
+    const updateData: Record<string, unknown> = {};
+    const readValue =
+      typeof body.isRead === "boolean" ? body.isRead : body.read;
+    if (typeof readValue === "boolean") updateData.isRead = readValue;
+    if (typeof body.title === "string" && body.title.trim()) {
+      updateData.title = body.title.trim().slice(0, 200);
+    }
+    if (typeof body.message === "string" && body.message.trim()) {
+      updateData.message = body.message.trim().slice(0, 2_000);
+    }
+    if (Object.keys(updateData).length === 0) {
+      return errorResponse({ status: 400, message: "No update fields provided", req });
+    }
 
     const updatedNotification = await Notification.findOneAndUpdate(
       { _id: id, userId: user._id },
@@ -169,18 +209,21 @@ export async function DELETE(
     if (!phone) {
       return errorResponse({ status: 400, message: "Phone parameter is required", req });
     }
+    if (!Types.ObjectId.isValid(id)) {
+      return errorResponse({ status: 400, message: "Invalid notification ID", req });
+    }
 
     // Access control: users can only access their own account; admins and moderators can access any
     if (
       authResult.user &&
       authResult.user.role !== "admin" &&
       authResult.user.role !== "moderator" &&
-      authResult.user.phone !== phone
+      !phonesMatch(authResult.user.phone, phone)
     ) {
       return errorResponse({ status: 403, message: "Access denied - You can only access your own account data", req });
     }
 
-    const user = await User.findOne({ phone });
+    const user = await User.findOne({ phone: { $in: buildPhoneVariants(phone) } });
     if (!user) return errorResponse({ status: 404, message: "User not found", req });
 
     const deletedNotification = await Notification.findOneAndDelete({ _id: id, userId: user._id });

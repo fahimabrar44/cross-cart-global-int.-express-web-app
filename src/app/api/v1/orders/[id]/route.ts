@@ -20,6 +20,44 @@ function toObjectIdOrNull(value: unknown): Types.ObjectId | null {
   return null;
 }
 
+function toText(value: unknown, maxLength: number): string {
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+function toWholeNumber(value: unknown, max: number): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed) || parsed < 1) return 1;
+  return Math.min(Math.floor(parsed), max);
+}
+
+function toAmount(value: unknown): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  return Math.round(parsed * 100) / 100;
+}
+
+/** Whitelist line items so arbitrary client fields never reach Mongoose. */
+function sanitizeItems(value: unknown) {
+  if (!Array.isArray(value)) return [];
+
+  return value.slice(0, 50).map((entry) => {
+    const raw =
+      entry && typeof entry === "object"
+        ? (entry as Record<string, unknown>)
+        : {};
+    const quantity = toWholeNumber(raw.quantity, 10_000);
+    const unitPrice = toAmount(raw.unitPrice);
+
+    return {
+      name: toText(raw.name, 200),
+      hsCode: toText(raw.hsCode, 20),
+      quantity,
+      unitPrice,
+      totalPrice: Math.round(quantity * unitPrice * 100) / 100,
+    };
+  });
+}
+
 // GET: Users can view their own orders, Admin/Moderator can view all
 export const GET = createAuthHandler(async ({ req, user }) => {
   try {
@@ -165,7 +203,7 @@ export const PUT = createAuthHandler(async ({ req, user }) => {
         allowedUpdates["parcel.receiver"] = parcelUpdates.receiver;
       }
       if (parcelUpdates?.item !== undefined) {
-        allowedUpdates["parcel.item"] = parcelUpdates.item;
+        allowedUpdates["parcel.item"] = sanitizeItems(parcelUpdates.item);
       }
     } else {
       // Admin/Moderator: merge parcel fields instead of replacing the whole
@@ -174,7 +212,8 @@ export const PUT = createAuthHandler(async ({ req, user }) => {
       if (parcelUpdates) {
         for (const [key, value] of Object.entries(parcelUpdates)) {
           if (value !== undefined) {
-            allowedUpdates[`parcel.${key}`] = value;
+            allowedUpdates[`parcel.${key}`] =
+              key === "item" ? sanitizeItems(value) : value;
           }
         }
       }

@@ -44,6 +44,15 @@ export const createItemColumns = ({
       ),
     },
     {
+      accessorKey: "hsCode",
+      header: "HS Code",
+      cell: ({ row }) => (
+        <span className="text-sm font-mono text-muted-foreground">
+          {row.original.hsCode || "—"}
+        </span>
+      ),
+    },
+    {
       accessorKey: "defaultPrice",
       header: "Default Price",
       cell: ({ row }) => (

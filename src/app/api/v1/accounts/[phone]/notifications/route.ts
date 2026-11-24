@@ -6,6 +6,7 @@ import { Notification } from "@/server/models/Notification.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { verifyAuth } from "@/middleware/auth";
 import { escapeRegex } from "@/server/common/regex";
+import { buildPhoneVariants, phonesMatch } from "@/server/common/phone";
 import { Types } from "mongoose";
 
 type NotificationQuery = {
@@ -28,42 +29,6 @@ type NotificationUpdateBody = {
   title?: string;
   message?: string;
 };
-
-function digitsOnly(value: string): string {
-  return value.replace(/\D/g, "");
-}
-
-/**
- * Phone numbers are stored in several formats across the app (E.164 with a
- * leading "+", digits only, or the last 10 digits). Try all of them so a
- * request for "+880..." still finds a user saved as "880..." or "018...".
- */
-function buildPhoneVariants(phone: string): string[] {
-  const variants = new Set<string>();
-  if (!phone) return [];
-
-  variants.add(phone);
-  const digits = digitsOnly(phone);
-  if (digits) {
-    variants.add(digits);
-    variants.add(`+${digits}`);
-    if (digits.length >= 10) variants.add(digits.slice(-10));
-  }
-
-  return Array.from(variants);
-}
-
-function phonesMatch(a?: string, b?: string): boolean {
-  if (!a || !b) return false;
-  if (a === b) return true;
-
-  const da = digitsOnly(a);
-  const db = digitsOnly(b);
-  if (!da || !db) return false;
-  if (da === db) return true;
-
-  return da.length >= 10 && db.length >= 10 && da.slice(-10) === db.slice(-10);
-}
 
 async function findUserByPhone(phone: string): Promise<Types.ObjectId | null> {
   const variants = buildPhoneVariants(phone);
