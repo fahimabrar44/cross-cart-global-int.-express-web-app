@@ -4,6 +4,8 @@ import { errorResponse, successResponse } from "@/server/common/response";
 import { Order } from "@/server/models/Order.model";
 import { Track } from "@/server/models/Track.model";
 import { Coupon } from "@/server/models/Coupon.model";
+import { Country } from "@/server/models/Country.model";
+import { escapeRegex } from "@/server/common/regex";
 import { notificationService } from "@/services/notificationService";
 import { Types } from "mongoose";
 
@@ -91,9 +93,21 @@ function toWholeNumber(value: unknown, max = 100_000): number {
 
 function toObjectIdOrNull(value: unknown): Types.ObjectId | null {
   if (value instanceof Types.ObjectId) return value;
-  if (typeof value === "string" && Types.ObjectId.isValid(value)) {
-    return new Types.ObjectId(value);
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return Types.ObjectId.isValid(trimmed)
+      ? new Types.ObjectId(trimmed)
+      : null;
   }
+
+  // Edit forms may send a populated document (e.g. the whole Country object)
+  // instead of its id. Accept both shapes rather than failing the request.
+  if (value && typeof value === "object") {
+    const raw = value as { _id?: unknown; id?: unknown };
+    return toObjectIdOrNull(raw._id ?? raw.id);
+  }
+
   return null;
 }
 
@@ -208,8 +222,12 @@ export const GET = createAuthHandler(async ({ req, user }) => {
     const url = new URL(req.url);
     const q: GetQuery = Object.fromEntries(url.searchParams.entries());
 
-    const page = Math.max(1, parseInt(q.page || "1", 10));
-    const limit = Math.max(1, Math.min(200, parseInt(q.limit || "10", 10)));
+    const parsedPage = parseInt(q.page || "1", 10);
+    const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+    const parsedLimit = parseInt(q.limit || "10", 10);
+    const limit = Number.isFinite(parsedLimit)
+      ? Math.min(200, Math.max(1, parsedLimit))
+      : 10;
     const skip = (page - 1) * limit;
 
     // Build query - users can only see their own orders unless admin/moderator
@@ -238,7 +256,13 @@ export const GET = createAuthHandler(async ({ req, user }) => {
         or.push({ "parcel.sender.email": user.email });
         or.push({ "parcel.receiver.email": user.email });
       }
-      query.$or = or;
+      // MongoDB rejects an empty `$or`, and a user with no phone/email must
+      // never fall through to seeing every order.
+      if (or.length > 0) {
+        query.$or = or;
+      } else {
+        query._id = { $in: [] };
+      }
     }
     // Admin and moderator can see all orders (no additional filter needed)
 
@@ -269,13 +293,13 @@ export const GET = createAuthHandler(async ({ req, user }) => {
     }
 
     if (q.search) {
-      const s = q.search.trim();
+      const s = escapeRegex(q.search.trim());
       const searchOr = [
         { trackId: { $regex: s, $options: "i" } },
         { "parcel.sender.name": { $regex: s, $options: "i" } },
         { "parcel.receiver.name": { $regex: s, $options: "i" } },
       ];
-      if (user?.role === "user") {
+      if (user?.role === "user" && query.$or) {
         // Keep the user's own-orders restriction even while searching
         query.$and = [{ $or: query.$or }, { $or: searchOr }];
         delete query.$or;

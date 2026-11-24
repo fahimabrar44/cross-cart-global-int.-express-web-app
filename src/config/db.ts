@@ -8,13 +8,7 @@ declare global {
   };
 }
 
-const MONGODB_URI: string = process.env.MONGODB_URI as string;
-
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  );
-}
+const MONGODB_URI: string | undefined = process.env.MONGODB_URI;
 
 let cached = global.mongoose;
 
@@ -23,6 +17,15 @@ if (!cached) {
 }
 
 async function connectDB(): Promise<mongoose.Mongoose> {
+  // Read the URI lazily so importing this module during `next build` does not
+  // fail when runtime secrets are not present in the build environment.
+  const uri = process.env.MONGODB_URI || MONGODB_URI;
+  if (!uri) {
+    throw new Error(
+      'Please define the MONGODB_URI environment variable inside .env.local'
+    );
+  }
+
   // Only reuse the cached connection if it is actually connected.
   // On serverless platforms a cached connection can die between invocations;
   // returning a dead socket makes writes (and eventually reads) fail.
@@ -35,7 +38,7 @@ async function connectDB(): Promise<mongoose.Mongoose> {
       bufferCommands: false, // Disable mongoose buffering
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(uri, opts).then((mongoose) => {
       console.log('MongoDB connected successfully');
       return mongoose;
     }).catch((err) => {
