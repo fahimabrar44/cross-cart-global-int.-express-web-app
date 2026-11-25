@@ -50,6 +50,13 @@ export default function UsersPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [relatedUserData, setRelatedUserData] = useState<{
+    addresses: unknown[];
+    orders: unknown[];
+    notifications: unknown[];
+    signin: unknown[];
+  } | null>(null);
+  const [relatedUserLoading, setRelatedUserLoading] = useState(false);
   
   // Filter and pagination
   const [filters, setFilters] = useState<UserFilters>({
@@ -237,9 +244,39 @@ export default function UsersPage() {
   };
 
   // Event handlers
-  const handleViewUser = (user: User) => {
+  const handleViewUser = async (user: User) => {
     setSelectedUser(user);
     setIsViewModalOpen(true);
+    setRelatedUserData(null);
+    setRelatedUserLoading(true);
+    try {
+      const [addresses, orders, notifications, signin] = await Promise.allSettled([
+        userService.getUserAddresses(user.phone),
+        userService.getUserOrders(user.phone),
+        userService.getUserNotifications(user.phone),
+        userService.getUserSigninHistory(user.phone),
+      ]);
+      setRelatedUserData({
+        addresses:
+          addresses.status === "fulfilled" && addresses.value?.success
+            ? (addresses.value.data as unknown[]) || []
+            : [],
+        orders:
+          orders.status === "fulfilled" && orders.value?.success
+            ? (orders.value.data as unknown[]) || []
+            : [],
+        notifications:
+          notifications.status === "fulfilled" && notifications.value?.success
+            ? (notifications.value.data as unknown[]) || []
+            : [],
+        signin:
+          signin.status === "fulfilled" && signin.value?.success
+            ? (signin.value.data as unknown[]) || []
+            : [],
+      });
+    } finally {
+      setRelatedUserLoading(false);
+    }
   };
 
   const handleEditClick = (user: User) => {
@@ -508,10 +545,14 @@ export default function UsersPage() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-semibold">Phone</h4>
                   <p data-testid="view-user-phone">{selectedUser.phone}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold">Email</h4>
+                  <p data-testid="view-user-email">{selectedUser.email}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold">Role</h4>
@@ -534,6 +575,92 @@ export default function UsersPage() {
                     {selectedUser.lastLogin ? new Date(selectedUser.lastLogin).toLocaleString() : "Never"}
                   </p>
                 </div>
+                <div>
+                  <h4 className="font-semibold">Created</h4>
+                  <p data-testid="view-user-created-at">
+                    {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleString() : "—"}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold">Updated</h4>
+                  <p data-testid="view-user-updated-at">
+                    {selectedUser.updatedAt ? new Date(selectedUser.updatedAt).toLocaleString() : "—"}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold">Avatar</h4>
+                  <p data-testid="view-user-avatar" className="break-all text-sm">
+                    {selectedUser.avatar || "—"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Preferences */}
+              <div className="space-y-2">
+                <h4 className="font-semibold">Preferences</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                  <div>Profile: {selectedUser.preferences?.privacy?.profileVisibility || "public"}</div>
+                  <div>Data sharing: {selectedUser.preferences?.privacy?.dataSharing ? "Yes" : "No"}</div>
+                  <div>Email notif: {selectedUser.preferences?.notifications?.email ? "On" : "Off"}</div>
+                  <div>SMS notif: {selectedUser.preferences?.notifications?.sms ? "On" : "Off"}</div>
+                  <div>Push notif: {selectedUser.preferences?.notifications?.push ? "On" : "Off"}</div>
+                </div>
+              </div>
+
+              {/* Referral */}
+              <div className="space-y-2">
+                <h4 className="font-semibold">Referral</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                  <div>Code: {selectedUser.referralCode || "—"}</div>
+                  <div>Referred by: {selectedUser.referredBy || "—"}</div>
+                  <div>Rewards: {selectedUser.referralRewards ?? 0}</div>
+                </div>
+              </div>
+
+              {/* Profile completion */}
+              <div className="space-y-2">
+                <h4 className="font-semibold">Profile Completion</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                  <div>Basic: {selectedUser.profileCompletion?.basicInfo ? "Yes" : "No"}</div>
+                  <div>Contact verified: {selectedUser.profileCompletion?.contactVerified ? "Yes" : "No"}</div>
+                  <div>Identity verified: {selectedUser.profileCompletion?.identityVerified ? "Yes" : "No"}</div>
+                  <div>Percentage: {selectedUser.profileCompletion?.percentage ?? 0}%</div>
+                </div>
+              </div>
+
+              {/* Security */}
+              <div className="space-y-2">
+                <h4 className="font-semibold">Security</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                  <div>Login attempts: {selectedUser.loginAttempts ?? 0}</div>
+                  <div>Lock until: {selectedUser.lockUntil ? new Date(selectedUser.lockUntil).toLocaleString() : "—"}</div>
+                  <div>Registration IP: {selectedUser.registrationIP || "—"}</div>
+                  <div>Email verify attempts: {selectedUser.emailVerification?.attempts ?? 0}</div>
+                  <div>Password reset attempts: {selectedUser.passwordReset?.attempts ?? 0}</div>
+                </div>
+              </div>
+
+              {/* Related records */}
+              <div className="space-y-2">
+                <h4 className="font-semibold">Related Records</h4>
+                {relatedUserLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading…</p>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                    <div data-testid="view-user-addresses-count">
+                      Addresses: {relatedUserData?.addresses?.length ?? 0}
+                    </div>
+                    <div data-testid="view-user-orders-count">
+                      Orders: {relatedUserData?.orders?.length ?? 0}
+                    </div>
+                    <div data-testid="view-user-notifications-count">
+                      Notifications: {relatedUserData?.notifications?.length ?? 0}
+                    </div>
+                    <div data-testid="view-user-signin-count">
+                      Sign-ins: {relatedUserData?.signin?.length ?? 0}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {(selectedUser.nid?.front || selectedUser.nid?.back) && (

@@ -9,6 +9,7 @@ export interface IApiAccessLog extends Document {
   status: number; // HTTP response status code
   success: boolean; // Quick success/failure flag
   ip: string; // Request IP address
+  userAgent?: string; // Request user agent
   requestHeaders?: Record<string, string>; // Optional headers info
   responseTime?: number; // Response time in ms
   timestamp: Date; // Time of access
@@ -19,7 +20,7 @@ export interface IApiAccessLog extends Document {
 // Schema definition
 const apiAccessLogSchema = new Schema<IApiAccessLog>(
   {
-    apiKey: { type: Schema.Types.ObjectId, ref: "ApiConfig", required: true },
+    apiKey: { type: Schema.Types.ObjectId, ref: "ApiConfig", required: false, default: null },
     user: { type: Schema.Types.ObjectId, ref: "User", default: null },
     endpoint: { type: String, required: true },
     method: {
@@ -30,6 +31,7 @@ const apiAccessLogSchema = new Schema<IApiAccessLog>(
     status: { type: Number, required: true },
     success: { type: Boolean, required: true, default: true },
     ip: { type: String, required: true },
+  userAgent: { type: String, default: "unknown" },
     requestHeaders: { type: Schema.Types.Mixed, default: {} },
     responseTime: { type: Number, default: 0 },
     timestamp: { type: Date, default: Date.now },

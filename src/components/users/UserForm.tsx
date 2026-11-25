@@ -35,13 +35,35 @@ const userFormSchema = z.object({
   phone: z.string().min(1, "Phone number is required").refine((v) => validatePhone(v).valid, "Enter a valid phone number"),
   
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
   role: z.enum(["admin", "moderator", "user"], {
-    required_error: "Please select a role",
+    message: "Please select a role",
   }),
   password: z.string().optional(),
   isActive: z.boolean().default(true),
   isVerified: z.boolean().default(false),
+  avatar: z.string().optional(),
+  preferences: z.object({
+    notifications: z.object({
+      email: z.boolean().default(true),
+      sms: z.boolean().default(true),
+      push: z.boolean().default(true),
+    }),
+    privacy: z.object({
+      profileVisibility: z.enum(["public", "private"]).default("public"),
+      dataSharing: z.boolean().default(false),
+    }),
+  }),
+  nid: z.object({
+    front: z.string().optional(),
+    back: z.string().optional(),
+    verified: z.boolean().default(false),
+  }),
+  referralCode: z.string().optional(),
+  referredBy: z.string().optional(),
+  referralRewards: z.coerce.number().default(0),
+  loginAttempts: z.coerce.number().default(0),
+  lockUntil: z.string().optional(),
+  profileCompletionPercentage: z.coerce.number().min(0).max(100).default(0),
 });
 
 // For create mode, password is required
@@ -58,8 +80,6 @@ const editUserSchema = userFormSchema.extend({
     return true;
   }, "Password must be at least 8 characters if provided"),
 });
-
-type UserFormData = z.infer<typeof userFormSchema>;
 
 interface UserFormProps {
   user?: User;
@@ -79,9 +99,8 @@ export function UserForm({
   const [showPassword, setShowPassword] = useState(false);
   const isEdit = !!user;
 
-  const form = useForm<UserFormData>({
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const form = useForm<any>({
     resolver: zodResolver(isEdit ? editUserSchema : createUserSchema),
     defaultValues: user ? {
       name: user.name,
@@ -91,6 +110,29 @@ export function UserForm({
       password: "",
       isActive: user.isActive,
       isVerified: user.isVerified,
+      avatar: user.avatar || "",
+      preferences: {
+        notifications: {
+          email: user.preferences?.notifications?.email ?? true,
+          sms: user.preferences?.notifications?.sms ?? true,
+          push: user.preferences?.notifications?.push ?? true,
+        },
+        privacy: {
+          profileVisibility: user.preferences?.privacy?.profileVisibility ?? "public",
+          dataSharing: user.preferences?.privacy?.dataSharing ?? false,
+        },
+      },
+      nid: {
+        front: user.nid?.front || "",
+        back: user.nid?.back || "",
+        verified: user.nid?.verified ?? false,
+      },
+      referralCode: user.referralCode || "",
+      referredBy: user.referredBy || "",
+      referralRewards: user.referralRewards ?? 0,
+      loginAttempts: user.loginAttempts ?? 0,
+      lockUntil: user.lockUntil ? new Date(user.lockUntil).toISOString().slice(0, 16) : "",
+      profileCompletionPercentage: user.profileCompletion?.percentage ?? 0,
     } : {
       name: "",
       email: "",
@@ -99,18 +141,54 @@ export function UserForm({
       password: "",
       isActive: true,
       isVerified: false,
+      avatar: "",
+      preferences: {
+        notifications: { email: true, sms: true, push: true },
+        privacy: { profileVisibility: "public", dataSharing: false },
+      },
+      nid: { front: "", back: "", verified: false },
+      referralCode: "",
+      referredBy: "",
+      referralRewards: 0,
+      loginAttempts: 0,
+      lockUntil: "",
+      profileCompletionPercentage: 0,
     },
   });
 
-  const handleSubmit = (data: UserFormData) => {
-    const submitData = { ...data };
-    
-    // Remove password if it's empty in edit mode
-    if (isEdit && !submitData.password) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleSubmit = (data: any) => {
+    const submitData: Record<string, unknown> = {
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      role: data.role,
+      isActive: data.isActive,
+      isVerified: data.isVerified,
+      avatar: data.avatar?.trim() ? data.avatar.trim() : null,
+      preferences: data.preferences,
+      nid: {
+        front: data.nid?.front?.trim() ? data.nid.front.trim() : null,
+        back: data.nid?.back?.trim() ? data.nid.back.trim() : null,
+        verified: data.nid?.verified ?? false,
+      },
+      referralCode: data.referralCode?.trim() ? data.referralCode.trim() : null,
+      referredBy: data.referredBy?.trim() ? data.referredBy.trim() : null,
+      referralRewards: data.referralRewards,
+      loginAttempts: data.loginAttempts,
+      lockUntil: data.lockUntil ? new Date(data.lockUntil).toISOString() : null,
+      profileCompletion: {
+        percentage: data.profileCompletionPercentage,
+      },
+    };
+
+    if (data.password && data.password.trim()) {
+      submitData.password = data.password;
+    } else {
       delete submitData.password;
     }
-    
-    onSubmit(submitData);
+
+    onSubmit(submitData as CreateUserData | UpdateUserData);
   };
 
   // Role options based on current user's role
@@ -145,7 +223,6 @@ export function UserForm({
       <form 
       
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
       onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <Card data-testid="user-form-card">
           <CardHeader>
@@ -162,7 +239,6 @@ export function UserForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="name"
                 render={({ field }) => (
@@ -182,7 +258,6 @@ export function UserForm({
 
               <FormField
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="email"
                 render={({ field }) => (
@@ -205,7 +280,6 @@ export function UserForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
@@ -229,7 +303,6 @@ export function UserForm({
 
               <FormField
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                 control={form.control}
                 name="role"
                 render={({ field }) => (
@@ -267,7 +340,6 @@ export function UserForm({
             {/* Password Field */}
             <FormField
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
               control={form.control}
               name="password"
               render={({ field }) => (
@@ -310,6 +382,231 @@ export function UserForm({
               )}
             />
 
+            {/* Avatar & Preferences */}
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="text-lg font-medium">Profile & Preferences</h3>
+              <FormField
+                control={form.control}
+                name="avatar"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Avatar URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://..." {...field} data-testid="user-avatar-input" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="preferences.notifications.email"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <FormLabel className="text-sm">Email notifications</FormLabel>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="user-notif-email-switch" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="preferences.notifications.sms"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <FormLabel className="text-sm">SMS notifications</FormLabel>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="user-notif-sms-switch" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="preferences.notifications.push"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <FormLabel className="text-sm">Push notifications</FormLabel>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="user-notif-push-switch" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="preferences.privacy.dataSharing"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                      <FormLabel className="text-sm">Data sharing</FormLabel>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="user-data-sharing-switch" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="preferences.privacy.profileVisibility"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Profile visibility</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} data-testid="user-profile-visibility-select">
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select visibility" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="public">Public</SelectItem>
+                        <SelectItem value="private">Private</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* NID Documents */}
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="text-lg font-medium">Identity (NID)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="nid.front"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>NID Front URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://..." {...field} data-testid="user-nid-front-input" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="nid.back"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>NID Back URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://..." {...field} data-testid="user-nid-back-input" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="nid.verified"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">NID Verified</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="user-nid-verified-switch" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Admin-only fields */}
+            {(currentUserRole === "admin") && (
+              <div className="space-y-4 border-t pt-4">
+                <h3 className="text-lg font-medium">Admin Controls</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="referralCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Referral Code</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="user-referral-code-input" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="referredBy"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Referred By</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="user-referred-by-input" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="referralRewards"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Referral Rewards</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} data-testid="user-referral-rewards-input" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="loginAttempts"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Login Attempts</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} data-testid="user-login-attempts-input" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lockUntil"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Lock Until</FormLabel>
+                        <FormControl>
+                          <Input type="datetime-local" {...field} data-testid="user-lock-until-input" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="profileCompletionPercentage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Profile Completion %</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={0} max={100} {...field} data-testid="user-profile-completion-input" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Status Switches - Only for Admin/Moderator */}
             {(currentUserRole === "admin" || currentUserRole === "moderator") && (
               <div className="space-y-4">
@@ -319,7 +616,6 @@ export function UserForm({
                   <div className="space-y-4">
                     <FormField
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                       control={form.control}
                       name="isActive"
                       render={({ field }) => (
@@ -343,7 +639,6 @@ export function UserForm({
 
                     <FormField
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error  
                       control={form.control}
                       name="isVerified"
                       render={({ field }) => (

@@ -28,7 +28,33 @@ export interface UpdateUserData {
   role?: "admin" | "moderator" | "user";
   isActive?: boolean;
   isVerified?: boolean;
-  avatar?: string;
+  avatar?: string | null;
+  password?: string;
+  preferences?: {
+    notifications?: { email?: boolean; sms?: boolean; push?: boolean };
+    privacy?: { profileVisibility?: "public" | "private"; dataSharing?: boolean };
+  };
+  nid?: {
+    front?: string | null;
+    back?: string | null;
+    verified?: boolean;
+  };
+  referralCode?: string | null;
+  referredBy?: string | null;
+  referralRewards?: number;
+  loginAttempts?: number;
+  lockUntil?: string | null;
+  profileCompletion?: {
+    basicInfo?: boolean;
+    contactVerified?: boolean;
+    identityVerified?: boolean;
+    percentage?: number;
+  };
+  emailVerification?: {
+    attempts?: number;
+    expires?: string | null;
+  };
+  registrationIP?: string | null;
 }
 
 class UserService {
@@ -41,6 +67,20 @@ class UserService {
 
   async getUser(phone: string): Promise<ApiResponse<User>> {
     return api.get<User>(`${this.baseEndpoint}/${phone}`);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getUserAddresses(phone: string): Promise<ApiResponse<any[]>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return api.get<any[]>(`${this.baseEndpoint}/${phone}/address`);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async uploadUserFile(phone: string, type: "avatar" | "nid-front" | "nid-back", dataUrl: string): Promise<ApiResponse<any>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return api.post<any>(`${this.baseEndpoint}/${phone}/upload`, { type, dataUrl });
   }
 
   async createUser(data: CreateUserData): Promise<ApiResponse<User>> {

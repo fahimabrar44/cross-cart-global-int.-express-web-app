@@ -459,13 +459,14 @@ export class AuthMiddleware {
         "unknown";
 
       const log = new ApiAccessLog({
-        userId: user.id,
+        user: user.id,
         endpoint: req.nextUrl.pathname,
         method: req.method,
+        status: 200,
+        success: true,
         ip: clientIP,
         userAgent: req.headers.get("user-agent") || "unknown",
         timestamp: new Date(),
-        statusCode: 200, // Will be updated by response middleware if available
       });
 
       await log.save();

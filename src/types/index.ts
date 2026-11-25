@@ -1,24 +1,45 @@
 // Core User and Authentication Types
 export interface User {
   id: string;
+  _id?: string;
   name: string;
   email: string;
   phone: string;
   role: "user" | "admin" | "moderator";
-  avatar?: string;
+  avatar?: string | null;
   isVerified: boolean;
   isActive: boolean;
   lastLogin?: string;
   createdAt?: string;
   updatedAt?: string;
   nid?: {
-    front?: string;
-    back?: string;
+    front?: string | null;
+    back?: string | null;
     verified?: boolean;
   };
   preferences?: {
     notifications?: { email?: boolean; sms?: boolean; push?: boolean };
     privacy?: { profileVisibility?: "public" | "private"; dataSharing?: boolean };
+  };
+  referralCode?: string | null;
+  referredBy?: string | null;
+  referralRewards?: number;
+  loginAttempts?: number;
+  lockUntil?: string | null;
+  registrationIP?: string | null;
+  profileCompletion?: {
+    basicInfo?: boolean;
+    contactVerified?: boolean;
+    identityVerified?: boolean;
+    percentage?: number;
+  };
+  emailVerification?: {
+    attempts?: number;
+    expires?: string | null;
+  };
+  passwordReset?: {
+    attempts?: number;
+    expires?: string | null;
   };
 }
 
@@ -41,6 +62,32 @@ export interface UpdateUserData {
   password?: string;
   isActive?: boolean;
   isVerified?: boolean;
+  avatar?: string | null;
+  preferences?: {
+    notifications?: { email?: boolean; sms?: boolean; push?: boolean };
+    privacy?: { profileVisibility?: "public" | "private"; dataSharing?: boolean };
+  };
+  nid?: {
+    front?: string | null;
+    back?: string | null;
+    verified?: boolean;
+  };
+  referralCode?: string | null;
+  referredBy?: string | null;
+  referralRewards?: number;
+  loginAttempts?: number;
+  lockUntil?: string | null;
+  profileCompletion?: {
+    basicInfo?: boolean;
+    contactVerified?: boolean;
+    identityVerified?: boolean;
+    percentage?: number;
+  };
+  emailVerification?: {
+    attempts?: number;
+    expires?: string | null;
+  };
+  registrationIP?: string | null;
 }
 
 export interface CreateCountryData {

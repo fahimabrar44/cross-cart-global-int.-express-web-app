@@ -8,14 +8,37 @@ import bcrypt from "bcryptjs";
 interface UpdateUserBody {
   name?: string;
   email?: string;
+  phone?: string;
   role?: "user" | "admin" | "moderator";
   isActive?: boolean;
   isVerified?: boolean;
   password?: string;
+  avatar?: string | null;
   preferences?: {
     notifications?: { email?: boolean; sms?: boolean; push?: boolean };
     privacy?: { profileVisibility?: "public" | "private"; dataSharing?: boolean };
   };
+  nid?: {
+    front?: string | null;
+    back?: string | null;
+    verified?: boolean;
+  };
+  referralCode?: string | null;
+  referredBy?: string | null;
+  referralRewards?: number;
+  loginAttempts?: number;
+  lockUntil?: string | null;
+  profileCompletion?: {
+    basicInfo?: boolean;
+    contactVerified?: boolean;
+    identityVerified?: boolean;
+    percentage?: number;
+  };
+  emailVerification?: {
+    attempts?: number;
+    expires?: string | null;
+  };
+  registrationIP?: string | null;
 }
 
 // GET: fetch account information by phone (self, admin, or moderator)
@@ -96,16 +119,32 @@ export async function PUT(
       return errorResponse({ status: 400, message: "Invalid role", req });
     }
 
-    // Build a sanitized flat update object. `phone` is the lookup identifier and
-    // must not be changed here; unknown/extra fields are ignored.
-    // Privileged fields (role, isActive, isVerified, password) are admin-only so
-    // users cannot escalate their own permissions via self-service updates.
+    // If an admin is changing the phone (the lookup key), make sure the new
+    // value is not already taken by another account.
+    if (body.phone !== undefined && body.phone !== phone) {
+      if (!isAdmin) {
+        return errorResponse({ status: 403, message: "Admin access required", req });
+      }
+      const existing = await User.findOne({ phone: body.phone }).select("_id").lean();
+      if (existing) {
+        return errorResponse({ status: 409, message: "Phone number already in use", req });
+      }
+    }
+
+    // Build a sanitized flat update object. Unknown/extra fields are ignored.
+    // Privileged fields are admin-only so users cannot escalate their own
+    // permissions via self-service updates.
     const update: Record<string, unknown> = {};
     if (body.name !== undefined) update.name = body.name;
     if (body.email !== undefined) update.email = body.email;
+    if (body.avatar !== undefined) update.avatar = body.avatar;
     if (body.preferences?.notifications !== undefined) update["preferences.notifications"] = body.preferences.notifications;
     if (body.preferences?.privacy !== undefined) update["preferences.privacy"] = body.preferences.privacy;
+
+    // Self-service password change is intentionally NOT allowed here; admins can
+    // set a password directly, everyone else uses the reset-password flow.
     if (isAdmin) {
+      if (body.phone !== undefined) update.phone = body.phone;
       if (body.role !== undefined) update.role = body.role;
       if (body.isActive !== undefined) update.isActive = body.isActive;
       if (body.isVerified !== undefined) update.isVerified = body.isVerified;
@@ -114,6 +153,27 @@ export async function PUT(
         // matching the signup flow) to avoid storing plaintext passwords.
         update.password = await bcrypt.hash(body.password, 12);
       }
+      if (body.nid !== undefined) {
+        if (body.nid.front !== undefined) update["nid.front"] = body.nid.front;
+        if (body.nid.back !== undefined) update["nid.back"] = body.nid.back;
+        if (body.nid.verified !== undefined) update["nid.verified"] = body.nid.verified;
+      }
+      if (body.referralCode !== undefined) update.referralCode = body.referralCode;
+      if (body.referredBy !== undefined) update.referredBy = body.referredBy;
+      if (body.referralRewards !== undefined) update.referralRewards = body.referralRewards;
+      if (body.loginAttempts !== undefined) update.loginAttempts = body.loginAttempts;
+      if (body.lockUntil !== undefined) update.lockUntil = body.lockUntil ? new Date(body.lockUntil) : null;
+      if (body.profileCompletion !== undefined) {
+        if (body.profileCompletion.basicInfo !== undefined) update["profileCompletion.basicInfo"] = body.profileCompletion.basicInfo;
+        if (body.profileCompletion.contactVerified !== undefined) update["profileCompletion.contactVerified"] = body.profileCompletion.contactVerified;
+        if (body.profileCompletion.identityVerified !== undefined) update["profileCompletion.identityVerified"] = body.profileCompletion.identityVerified;
+        if (body.profileCompletion.percentage !== undefined) update["profileCompletion.percentage"] = body.profileCompletion.percentage;
+      }
+      if (body.emailVerification !== undefined) {
+        if (body.emailVerification.attempts !== undefined) update["emailVerification.attempts"] = body.emailVerification.attempts;
+        if (body.emailVerification.expires !== undefined) update["emailVerification.expires"] = body.emailVerification.expires ? new Date(body.emailVerification.expires) : null;
+      }
+      if (body.registrationIP !== undefined) update.registrationIP = body.registrationIP;
     }
 
     if (Object.keys(update).length === 0) {

@@ -90,9 +90,13 @@ export const POST = createRateLimitedHandler(
         user.refreshTokens = user.refreshTokens.slice(-5); // keep last 5 tokens
       }
 
-      // Update last login
-      user.lastLogin = new Date();
-      await user.save();
+      // Update last login and rotated refresh tokens. Use updateOne (instead of
+      // save()) so a concurrent account update (e.g. an admin editing this user)
+      // cannot trigger a Mongoose VersionError on the stale document instance.
+      await User.updateOne(
+        { _id: user._id },
+        { $set: { refreshTokens: user.refreshTokens, lastLogin: new Date() } }
+      );
 
       // Respond with new tokens and user info
       const response = successResponse({
@@ -108,7 +112,7 @@ export const POST = createRateLimitedHandler(
             avatar: user.avatar || null,
             isVerified: user.isVerified,
             isActive: user.isActive,
-            lastLogin: user.lastLogin,
+            lastLogin: new Date(),
           },
           accessToken: newAccessToken,
           refreshToken: newRefreshToken,
