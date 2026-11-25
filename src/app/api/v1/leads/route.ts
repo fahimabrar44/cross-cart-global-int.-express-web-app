@@ -87,8 +87,20 @@ export const GET = createModeratorHandler(async ({ req }) => {
     const limit = Math.max(1, Math.min(200, parseInt(q.limit || "50", 10)));
     const skip = (page - 1) * limit;
 
-    const total = await Lead.countDocuments();
-    const leads = await Lead.find()
+    const filter: Record<string, unknown> = {};
+    if (q.search && q.search.trim()) {
+      const s = q.search.trim();
+      const regex = new RegExp(s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+      filter.$or = [
+        { name: regex },
+        { phone: regex },
+        { email: regex },
+        { serviceType: regex },
+      ];
+    }
+
+    const total = await Lead.countDocuments(filter);
+    const leads = await Lead.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)

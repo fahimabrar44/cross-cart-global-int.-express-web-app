@@ -37,8 +37,15 @@ export const GET = createModeratorHandler(async ({ req }) => {
     }
 
     if (q.currentStatus) query.currentStatus = q.currentStatus;
-    if (q.search)
-      query["history.description"] = { $regex: q.search, $options: "i" };
+    if (q.search && q.search.trim()) {
+      const s = q.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(s, "i");
+      query.$or = [
+        { trackId: regex },
+        { currentStatus: regex },
+        { "history.description": regex },
+      ];
+    }
 
     const allowedSortFields = new Set([
       "createdAt",

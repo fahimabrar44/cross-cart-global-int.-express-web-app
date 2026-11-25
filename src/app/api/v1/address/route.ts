@@ -10,18 +10,52 @@ export const GET = createModeratorHandler(async ({ req }) => {
   try {
     await connectDB();
 
-    
+    const url = new URL(req.url);
+    const q = Object.fromEntries(url.searchParams.entries());
+    const page = Math.max(1, parseInt(q.page || "1", 10));
+    const limit = Math.max(1, Math.min(200, parseInt(q.limit || "20", 10)));
+    const skip = (page - 1) * limit;
 
-    const addresses = await Address.find()
+    const filter: Record<string, unknown> = {};
+    if (q.userId && Types.ObjectId.isValid(q.userId)) filter.user = q.userId;
+    if (q.country) filter["country"] = q.country;
+    if (q.city) filter.city = { $regex: q.city, $options: "i" };
+    if (q.state) filter.state = { $regex: q.state, $options: "i" };
+    if (q.search && q.search.trim()) {
+      const s = q.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(s, "i");
+      filter.$or = [
+        { name: regex },
+        { label: regex },
+        { addressLine: regex },
+        { area: regex },
+        { subCity: regex },
+        { city: regex },
+        { state: regex },
+        { zipCode: regex },
+        { phone: regex },
+      ];
+    }
+
+    const total = await Address.countDocuments(filter);
+    const addresses = await Address.find(filter)
       .populate("user")
       .populate("country")
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
 
     return successResponse({
       status: 200,
       message: "Addresses fetched",
       data: addresses,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
       req,
     });
   } catch (err: unknown) {
