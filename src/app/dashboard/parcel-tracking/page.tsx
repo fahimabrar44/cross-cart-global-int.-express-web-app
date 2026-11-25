@@ -1104,11 +1104,7 @@ export default function ParcelTrackingPage() {
             </Button>
             <Button
               onClick={handleUpdateTrack}
-              disabled={
-                actionLoading ||
-                !updateTrack.currentStatus ||
-                !updateTrack.description
-              }
+              disabled={actionLoading || !updateTrack.currentStatus}
             >
               {actionLoading ? (
                 <>
