@@ -823,6 +823,50 @@ export default function ParcelTrackingPage() {
                           : "Not set"}
                       </span>
                     </div>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        type="date"
+                        value={
+                          selectedTrack.estimatedDelivery
+                            ? new Date(selectedTrack.estimatedDelivery)
+                                .toISOString()
+                                .slice(0, 10)
+                            : ""
+                        }
+                        onChange={(e) => {
+                          if (!selectedTrack) return;
+                          setSelectedTrack({
+                            ...selectedTrack,
+                            estimatedDelivery: e.target.value
+                              ? new Date(e.target.value).toISOString()
+                              : null,
+                          });
+                        }}
+                        className="h-8 text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={actionLoading}
+                        onClick={() => {
+                          if (!selectedTrack) return;
+                          setUpdateTrack({
+                            currentStatus: selectedTrack.currentStatus,
+                            description: "",
+                            location: { city: "", country: "" },
+                            timestamp: new Date().toISOString().slice(0, 16),
+                            estimatedDelivery: selectedTrack.estimatedDelivery
+                              ? new Date(selectedTrack.estimatedDelivery)
+                                  .toISOString()
+                                  .slice(0, 10)
+                              : "",
+                          });
+                          setIsAddHistoryModalOpen(true);
+                        }}
+                      >
+                        Save
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <div>
