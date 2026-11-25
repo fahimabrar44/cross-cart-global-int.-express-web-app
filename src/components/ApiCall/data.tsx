@@ -341,6 +341,12 @@ export const UserData = {
       ],
     },
     {
+      title: "Notifications",
+      url: "/dashboard/notifications",
+      icon: Bell,
+      items: [],
+    },
+    {
       title: "Settings",
       url: "/dashboard/settings",
       icon: Settings2,

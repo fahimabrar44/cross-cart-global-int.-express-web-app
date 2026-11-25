@@ -163,12 +163,46 @@ body,
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 5rem;
+  }
   body {
     font-family: var(--font-inter), system-ui, sans-serif;
     @apply bg-background text-foreground;
+    overflow-x: clip;
   }
   .font-heading {
     font-family: var(--font-plus-jakarta), var(--font-inter), system-ui, sans-serif;
+  }
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Avoid iOS zooming the page when a form control receives focus. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

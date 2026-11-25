@@ -5,37 +5,64 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/AuthContext";
-import { AlertCircle, Bell, CheckCircle, Info, Settings } from "lucide-react";
+import {
+  AlertCircle,
+  Bell,
+  CheckCircle,
+  Info,
+  Loader2,
+  Settings,
+} from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+
+interface NotificationUser {
+  _id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+}
 
 interface Notification {
   _id: string;
   title: string;
   message: string;
   type: "info" | "success" | "warning" | "error";
-  category: "order" | "account" | "security" | "system";
-  priority: "low" | "normal" | "high" | "urgent";
+  category: "order" | "account" | "security" | "system" | "payment";
+  priority?: "low" | "normal" | "high" | "urgent";
   isRead: boolean;
   createdAt: string;
-  
+  userId?: string | NotificationUser;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any;
 }
 
-export function NotificationPanel() {
+function recipientLabel(userId: Notification["userId"]): string {
+  if (!userId) return "Unknown recipient";
+  if (typeof userId === "string") return userId;
+  return userId.name || userId.email || userId.phone || "Unknown recipient";
+}
+
+export function NotificationPanel({
+  onUnreadChange,
+}: {
+  onUnreadChange?: () => void;
+}) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
+  const [limit, setLimit] = useState(20);
   const { user } = useAuth();
+  const isStaff = user?.role === "admin" || user?.role === "moderator";
 
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
 
     try {
       setLoading(true);
-      
+
       const queryParams = new URLSearchParams({
-        limit: "20",
+        limit: String(limit),
         sortBy: "createdAt",
         sortOrder: "desc",
       });
@@ -46,36 +73,39 @@ export function NotificationPanel() {
 
       const response = await fetch(`${NOTIFICATION_API}?${queryParams}`, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
+        credentials: "include",
+        cache: "no-store",
       });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.status==200 && data.data) {
+        if (data.success && Array.isArray(data.data)) {
           setNotifications(data.data);
         }
       }
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      console.error("Failed to fetch notifications:", error);
     } finally {
       setLoading(false);
     }
-  }, [user, filter]);
+  }, [user, filter, limit]);
 
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
 
   const markAsRead = async (notificationIds: string[]) => {
-    if (!user) return;
+    if (!user || notificationIds.length === 0) return;
 
     try {
       const response = await fetch(NOTIFICATION_API, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           notificationIds,
           isRead: true,
@@ -83,17 +113,17 @@ export function NotificationPanel() {
       });
 
       if (response.ok) {
-        // Update local state
-        setNotifications(prev => 
-          prev.map(notif => 
-            notificationIds.includes(notif._id) 
-              ? { ...notif, isRead: true }
-              : notif
+        setNotifications((prev) =>
+          prev.map((notification) =>
+            notificationIds.includes(notification._id)
+              ? { ...notification, isRead: true }
+              : notification
           )
         );
+        onUnreadChange?.();
       }
     } catch (error) {
-      console.error('Failed to mark notifications as read:', error);
+      console.error("Failed to mark notifications as read:", error);
     }
   };
 
@@ -123,7 +153,7 @@ export function NotificationPanel() {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((notification) => !notification.isRead).length;
 
   if (!user) {
     return (
@@ -142,15 +172,15 @@ export function NotificationPanel() {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
+    <Card className="w-full border-0 shadow-none">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
             <CardTitle>Notifications</CardTitle>
             {unreadCount > 0 && (
               <Badge variant="destructive" className="text-xs">
-                {unreadCount}
+                {unreadCount} unread
               </Badge>
             )}
           </div>
@@ -159,111 +189,132 @@ export function NotificationPanel() {
             size="sm"
             onClick={() => setFilter(filter === "all" ? "unread" : "all")}
           >
-            <Settings className="h-4 w-4 mr-1" />
+            <Settings className="mr-1 h-4 w-4" />
             {filter === "all" ? "Show Unread" : "Show All"}
           </Button>
         </div>
         <CardDescription>
-          Stay updated with your account activity and system updates
+          {isStaff
+            ? "All system notifications across every user"
+            : "Updates and alerts for your account"}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : notifications.length === 0 ? (
-          <div className="text-center py-8">
-            <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="font-medium text-foreground mb-2">No notifications</h3>
-            <p className="text-gray-600 text-sm">
-              {filter === "unread" 
-                ? "You're all caught up! No unread notifications." 
-                : "You don't have any notifications yet."}
+          <div className="py-8 text-center">
+            <Bell className="mx-auto mb-4 h-12 w-12 text-gray-300" />
+            <h3 className="mb-2 font-medium text-foreground">No notifications</h3>
+            <p className="text-sm text-gray-600">
+              {filter === "unread"
+                ? "You're all caught up! No unread notifications."
+                : isStaff
+                  ? "No system notifications have been created yet."
+                  : "You don't have any notifications yet."}
             </p>
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Bulk Actions */}
             {unreadCount > 0 && (
-              <div className="flex justify-between items-center pb-2 border-b">
+              <div className="flex items-center justify-between border-b pb-2">
                 <span className="text-sm text-gray-600">
-                  {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+                  {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => markAsRead(notifications.filter(n => !n.isRead).map(n => n._id))}
+                  onClick={() =>
+                    markAsRead(
+                      notifications
+                        .filter((notification) => !notification.isRead)
+                        .map((notification) => notification._id)
+                    )
+                  }
                 >
                   Mark all as read
                 </Button>
               </div>
             )}
 
-            {/* Notifications List */}
             <div className="space-y-3">
               {notifications.map((notification) => (
                 <div
                   key={notification._id}
-                  className={`p-4 border rounded-lg transition-colors ${
-                    notification.isRead 
-                      ? 'bg-white border-gray-200' 
-                      : 'bg-blue-50 border-blue-200'
+                  className={`rounded-lg border p-4 transition-colors ${
+                    notification.isRead
+                      ? "border-gray-200 bg-white"
+                      : "border-blue-200 bg-blue-50"
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
                       <div className="mt-0.5">
                         {getTypeIcon(notification.type)}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-medium text-foreground truncate">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <h4 className="truncate font-medium text-foreground">
                             {notification.title}
                           </h4>
-                          <Badge 
-                            variant="outline" 
-                            className={getPriorityBadgeColor(notification.priority)}
-                          >
-                            {notification.priority}
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
+                          {notification.priority && (
+                            <Badge
+                              variant="outline"
+                              className={getPriorityBadgeColor(notification.priority)}
+                            >
+                              {notification.priority}
+                            </Badge>
+                          )}
+                          <Badge variant="secondary" className="text-xs capitalize">
                             {notification.category}
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p className="mb-2 text-sm text-gray-600">
                           {notification.message}
                         </p>
+                        {isStaff && (
+                          <p className="mb-1 text-xs font-medium text-gray-500">
+                            To: {recipientLabel(notification.userId)}
+                          </p>
+                        )}
                         <p className="text-xs text-gray-500">
                           {new Date(notification.createdAt).toLocaleString()}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      {!notification.isRead && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => markAsRead([notification._id])}
-                          className="h-8 w-8 p-0"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    {!notification.isRead && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => markAsRead([notification._id])}
+                        className="h-8 w-8 p-0"
+                        title="Mark as read"
+                        aria-label="Mark as read"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Load More */}
-            {notifications.length >= 20 && (
-              <div className="text-center pt-4 border-t">
-                <Button variant="outline" onClick={fetchNotifications}>
-                  Load More Notifications
+            <div className="flex items-center justify-between gap-2 border-t pt-3">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/dashboard/notifications">View all</Link>
+              </Button>
+              {notifications.length >= limit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLimit((current) => current + 20)}
+                >
+                  Load more
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </CardContent>

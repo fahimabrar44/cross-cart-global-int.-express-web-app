@@ -136,15 +136,15 @@ const ourCompany = [
 const FooterBar = () => {
   return (
     <footer className="w-full h-auto bg-[#12352A] text-white">
-      <div className="container h-auto m-auto p-5">
-        <div className="w-full h-auto p-2 py-6">
-          <div className="w-full h-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div className="lg:border-r border-white/10 border-dashed">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <div className="w-full h-auto">
+          <div className="w-full h-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-6 lg:gap-8">
+            <div className="sm:col-span-2 lg:col-span-1 lg:border-r border-white/10 border-dashed">
               <div className={"flex gap-2 pb-2"}>
-                <Logo isFooter={true} width={220} height={80} />
+                <Logo isFooter={true} width={220} height={80} className="h-14 w-auto sm:h-16" />
               </div>
 
-              <div className="text-sm font-medium pr-2 text-[#B7C9C0] py-1">Cross Cart Global International Express connects Bangladesh to the world through trusted global courier partners — DHL, FedEx, UPS, Aramex, and leading local carriers.
+              <div className="py-1 pr-2 text-sm font-medium text-[#B7C9C0]">Cross Cart Global International Express connects Bangladesh to the world through trusted global courier partners — DHL, FedEx, UPS, Aramex, and leading local carriers.
 We make international delivery smarter, faster, and more affordable by offering exclusive agency rates and hassle-free service. <br />
 💼 Direct costs more. Cross Cart Global International Express saves you.
               </div>
@@ -246,8 +246,8 @@ We make international delivery smarter, faster, and more affordable by offering 
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-between align-middle py-4 pb-0 flex-row border-t border-white/10 border-dashed">
-          <div className={"text-sm w-full text-center text-[#B7C9C0] "}>
+        <div className="mt-6 flex flex-row items-center justify-between border-t border-dashed border-white/10 py-4 pb-0 align-middle">
+          <div className={"w-full text-center text-xs text-[#B7C9C0] sm:text-sm"}>
             ©<Link href="/" className="hover:text-[#F5C400]">Cross Cart Global International Express</Link> All Rights
             Reserved.
           </div>

@@ -1,5 +1,6 @@
 import connectDB from "@/config/db";
 import { Notification } from "@/server/models/Notification.model";
+import { User } from "@/server/models/User.model";
 import { createAuthHandler } from "@/server/common/apiWrapper";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { Types } from "mongoose";
@@ -20,6 +21,10 @@ export const GET = createAuthHandler(async ({ req, user }) => {
   try {
     await connectDB();
 
+    if (!user) {
+      return errorResponse({ status: 401, message: "Unauthorized", req });
+    }
+
     const url = new URL(req.url);
     const q: GetQuery = Object.fromEntries(url.searchParams.entries());
 
@@ -29,12 +34,14 @@ export const GET = createAuthHandler(async ({ req, user }) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {};
 
-    // Role-based filtering
-    if (user?.role === "user") {
-      // Regular users can only see their own notifications
+    const isStaff = user?.role === "admin" || user?.role === "moderator";
+
+    // Role-based filtering: regular users only ever see their own
+    // notifications. Admin/moderator see every notification in the system and
+    // may optionally narrow the list to a single recipient.
+    if (!isStaff) {
       query.userId = new Types.ObjectId(user.id);
     } else if (q.user && Types.ObjectId.isValid(q.user)) {
-      // Admin/moderator can filter by specific user
       query.userId = new Types.ObjectId(q.user);
     }
 
@@ -55,20 +62,29 @@ export const GET = createAuthHandler(async ({ req, user }) => {
     const sortBy = allowedSortFields.has(q.sortBy || "") ? (q.sortBy as string) : "createdAt";
     const sortOrder = (q.sortOrder || "desc").toLowerCase() === "asc" ? 1 : -1;
 
-    const total = await Notification.countDocuments(query);
-    const notifications = await Notification.find(query)
+    // Count unread with the same role scope, ignoring the read/type filters so
+    // the header badge always reflects the viewer's real unread total.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .sort({ [sortBy]: sortOrder } as any)
-      .skip(skip)
-      .limit(limit)
-      .populate('userId', 'name email phone')
-      .lean();
+    const unreadQuery: any = { ...query };
+    delete unreadQuery.isRead;
+
+    const [total, unread, notifications] = await Promise.all([
+      Notification.countDocuments(query),
+      Notification.countDocuments({ ...unreadQuery, isRead: false }),
+      Notification.find(query)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .sort({ [sortBy]: sortOrder } as any)
+        .skip(skip)
+        .limit(limit)
+        .populate("userId", "name email phone role")
+        .lean(),
+    ]);
 
     return successResponse({
       status: 200,
       message: "Notifications fetched successfully",
       data: notifications,
-      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      meta: { page, limit, total, unread, totalPages: Math.ceil(total / limit) },
       req,
     });
   } catch (error: unknown) {
@@ -96,6 +112,60 @@ export const POST = createAuthHandler(async ({ req, user }) => {
         status: 400, 
         message: "Message is required", 
         req 
+      });
+    }
+
+    const content = {
+      title: body.title,
+      message: body.message,
+      type: body.type || "info",
+      category: body.category || "system",
+      channels: body.channels || ["inapp"],
+    };
+
+    // Broadcast to every active normal user (admin-only).
+    const isBroadcast =
+      body.broadcast === true ||
+      body.audience === "all" ||
+      body.userId === "all";
+
+    if (isBroadcast) {
+      if (user?.role !== "admin") {
+        return errorResponse({
+          status: 403,
+          message: "Only admins can broadcast notifications",
+          req,
+        });
+      }
+
+      const recipients = await User.find({ role: "user", isActive: true })
+        .select("_id")
+        .lean();
+
+      if (recipients.length === 0) {
+        return successResponse({
+          status: 200,
+          message: "No active users to notify",
+          data: { count: 0 },
+          req,
+        });
+      }
+
+      const created = await Notification.insertMany(
+        recipients.map((recipient) => ({
+          ...content,
+          userId: recipient._id,
+          isRead: false,
+        }))
+      );
+
+      return successResponse({
+        status: 201,
+        message: `Notification sent to ${created.length} user${
+          created.length === 1 ? "" : "s"
+        }`,
+        data: { count: created.length },
+        req,
       });
     }
 
@@ -130,20 +200,25 @@ export const POST = createAuthHandler(async ({ req, user }) => {
       });
     }
 
+    const targetExists = await User.exists({ _id: targetUserId });
+    if (!targetExists) {
+      return errorResponse({
+        status: 404,
+        message: "Target user not found",
+        req,
+      });
+    }
+
     const notification = new Notification({
       userId: targetUserId,
-      title: body.title,
-      message: body.message,
-      type: body.type || "info",
-      category: body.category || "system",
-      channels: body.channels || ["inapp"],
+      ...content,
       isRead: body.isRead || false,
     });
 
     await notification.save();
 
     // Populate user data for response
-    await notification.populate('userId', 'name email phone');
+    await notification.populate("userId", "name email phone role");
 
     return successResponse({ 
       status: 201, 

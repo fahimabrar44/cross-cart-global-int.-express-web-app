@@ -185,33 +185,38 @@ const NavBar = () => {
   const isMobile = useIsMobile();
   const router = useRouter();
 
-  const handleScroll = () => {
-    const offset = window.scrollY;
-
-    if (offset > 120) {
-      setNavBarScrolled(true);
-    } else {
-      setNavBarScrolled(false);
-    }
-  };
-
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    let frame = 0;
+
+    const handleScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        setNavBarScrolled(window.scrollY > 8);
+        frame = 0;
+      });
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
-  // className="shadow-sm  z-[40]"
+
   return (
     <header
-      className={`z-[40] w-full  bg-white border-b border-soft-green ${
-        navBarScrolled
-          ? " fixed w-full h-auto animate-in duration-100 shadow-card"
-          : "animate-in duration-100 w-full lg:px-6 m-auto fixed "
+      className={`fixed inset-x-0 top-0 z-40 w-full border-b border-soft-green bg-white/95 backdrop-blur-md transition-shadow duration-200 supports-[backdrop-filter]:bg-white/90 ${
+        navBarScrolled ? "shadow-card" : ""
       }`}
     >
-      <div className="flex items-center justify-between px-4 py-2  ">
+      <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-2 px-3 sm:h-[72px] sm:px-4 lg:px-6">
         {/* Logo */}
-        <div className="flex items-center gap-8">
-          <Logo />
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4 lg:gap-6 xl:gap-8">
+          <Logo
+            className="h-9 w-auto sm:h-11 lg:h-12"
+            priority
+          />
 
           {/* NavigationMenu */}
           <NavigationMenu className="hidden lg:flex">
@@ -278,8 +283,8 @@ const NavBar = () => {
                 <NavigationMenuTrigger className="font-semibold text-foreground hover:text-primary">
                   {NavData?.[1]?.title}
                 </NavigationMenuTrigger>
-                <NavigationMenuContent className="bg-white border-border border rounded-xl shadow-hover">
-                  <ul className=" flex w-[800px] gap-2 p-2  ">
+                <NavigationMenuContent className="rounded-xl border border-border bg-white shadow-hover">
+                  <ul className="flex w-[min(640px,calc(100vw-2rem))] gap-2 p-2 xl:w-[800px]">
                     {NavData?.[1]?.items.map((component) => (
                       <ListItem
                         key={component.title}
@@ -289,12 +294,12 @@ const NavBar = () => {
                         {component.description}
                       </ListItem>
                     ))}
-                    <li className=" rounded-lg overflow-hidden ">
+                    <li className="hidden shrink-0 overflow-hidden rounded-lg xl:block">
                       <Image
                         src={"/logistic.png"}
                         width={380}
                         height={160}
-                        className="w-[380px] h-[160px] object-cover"
+                        className="h-[160px] w-[380px] object-cover"
                         alt="logistic-image"
                       />
                     </li>
@@ -306,8 +311,8 @@ const NavBar = () => {
                 <NavigationMenuTrigger className="font-semibold text-foreground hover:text-primary">
                   Logistics Solutions
                 </NavigationMenuTrigger>
-                <NavigationMenuContent className="bg-white border-border border rounded-xl shadow-hover">
-                  <ul className=" flex w-[800px] gap-2 p-2  ">
+                <NavigationMenuContent className="rounded-xl border border-border bg-white shadow-hover">
+                  <ul className="flex w-[min(640px,calc(100vw-2rem))] gap-2 p-2 xl:w-[800px]">
                     {NavData?.[2]?.items.map((component) => (
                       <ListItem
                         key={component.title}
@@ -318,12 +323,12 @@ const NavBar = () => {
                       </ListItem>
                     ))}
 
-                    <li className=" rounded-lg overflow-hidden ">
+                    <li className="hidden shrink-0 overflow-hidden rounded-lg xl:block">
                       <Image
                         src={"/solutions.webp"}
                         width={380}
                         height={160}
-                        className="w-[380px] h-[160px] rounded-xl object-cover"
+                        className="h-[160px] w-[380px] rounded-xl object-cover"
                         alt="Cross Cart Global logistics solutions"
                       />
                     </li>
@@ -363,12 +368,12 @@ const NavBar = () => {
         </div>
 
         {/* Right side buttons */}
-        <div className="flex items-center gap-4">
-          <ul className="hidden lg:flex space-x-4 text-sm font-medium text-gray-700">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3 lg:gap-4">
+          <ul className="hidden items-center gap-3 text-[13px] font-medium text-gray-700 lg:flex xl:gap-4 xl:text-sm">
             <li>
               <Link
                 href="/career"
-                className="text-foreground hover:text-primary  font-semibold cursor-pointer"
+                className="whitespace-nowrap font-semibold text-foreground transition-colors hover:text-primary"
               >
                 Career
               </Link>
@@ -376,19 +381,20 @@ const NavBar = () => {
             <li>
               <Link
                 href="/crosscart-corporate"
-                className="text-foreground hover:text-primary  font-semibold cursor-pointer"
+                className="whitespace-nowrap font-semibold text-foreground transition-colors hover:text-primary"
               >
-                Cross Cart Corporate
+                <span className="xl:hidden">Corporate</span>
+                <span className="hidden xl:inline">Cross Cart Corporate</span>
               </Link>
             </li>
           </ul>
           {isAuthenticated && (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild className="h-13 w-full">
-                <Avatar className="h-12 w-12  rounded-full cursor-pointer">
-                  <AvatarImage src={""} alt={user?.name} />
+              <DropdownMenuTrigger asChild>
+                <Avatar className="h-9 w-9 cursor-pointer rounded-full sm:h-10 sm:w-10">
+                  <AvatarImage src={user?.avatar} alt={user?.name} />
                   <AvatarFallback className="rounded-full bg-primary text-white">
-                    {user?.name.split("")[0]}
+                    {user?.name?.charAt(0)?.toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
@@ -442,66 +448,92 @@ const NavBar = () => {
           {!isAuthenticated && (
             <Link
               href={"/auth/signin"}
-              className="bg-primary text-white font-semibold  hover:bg-[#087F4F] px-4 py-3 sm:px-5 rounded-xl transition-colors"
+              className="whitespace-nowrap rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#087F4F] sm:px-5 sm:py-3"
             >
               Sign In
             </Link>
           )}
 
           {/* Mobile Menu */}
-          <div className="block lg:hidden">
-            <div className="flex items-center justify-between">
-              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    aria-label="Open navigation menu"
-                    className=" sm:px-5.5 px-5 py-6 text-foreground hover:bg-primary hover:text-white border-border cursor-pointer"
-                  >
-                    <Menu className="size-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="overflow-y-auto ">
-                  <SheetHeader className="border-b py-2">
+          <div className="flex items-center lg:hidden">
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Open navigation menu"
+                  className="h-10 w-10 shrink-0 cursor-pointer border-border text-foreground hover:bg-primary hover:text-white sm:h-11 sm:w-11"
+                >
+                  <Menu className="size-5 sm:size-6" />
+                </Button>
+              </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="flex h-[100dvh] w-[min(22rem,92vw)] flex-col gap-0 overflow-hidden p-0 sm:max-w-sm"
+                >
+                  <SheetHeader className="shrink-0 border-b px-4 py-3 pr-16">
                     <SheetTitle>
                       <div
                         className="flex items-center gap-2"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        <Logo />
+                        <Logo className="h-10 w-auto" />
                       </div>
                     </SheetTitle>
                   </SheetHeader>
-                  <div className="flex flex-col gap-6 p-4 py-1">
+
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
                     <Accordion
                       type="single"
                       collapsible
-                      className="flex w-full flex-col gap-4"
+                      className="flex w-full flex-col gap-1"
                     >
                       {NavData.map((item) =>
                         renderMobileMenuItem({ ...item, setMobileMenuOpen })
                       )}
                     </Accordion>
-
-                    <div className="flex flex-col gap-3"></div>
                   </div>
-                  <div className=" relative w-full h-full">
-                    <div className="px-4 w-full absolute bottom-3">
-                      {isAuthenticated && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild className="h-13 w-full">
-                            <Button
-                              size="lg"
-                              className="bg-white text-foreground hover:bg-white p-2 shadow-card"
-                            >
+
+                  <div className="shrink-0 border-t bg-white p-4">
+                    {isAuthenticated && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="h-auto w-full justify-start gap-3 px-3 py-2"
+                          >
+                            <Avatar className="h-9 w-9 rounded-lg">
+                              <AvatarImage src={user?.avatar} alt={user?.name} />
+                              <AvatarFallback className="rounded-lg">
+                                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+                              <span className="truncate font-medium">
+                                {user?.name}
+                              </span>
+                              <span className="truncate text-xs">
+                                {user?.email}
+                              </span>
+                            </div>
+                            <ChevronsUpDown className="ml-auto size-4 shrink-0" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                          side={isMobile ? "bottom" : "top"}
+                          align="end"
+                          sideOffset={4}
+                        >
+                          <DropdownMenuLabel className="p-0 font-normal">
+                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                               <Avatar className="h-8 w-8 rounded-lg">
                                 <AvatarImage src={user?.avatar} alt={user?.name} />
                                 <AvatarFallback className="rounded-lg">
-                                  {user?.name.split("")[0]}
+                                  {user?.name?.charAt(0)?.toUpperCase() || "U"}
                                 </AvatarFallback>
                               </Avatar>
-                              <div className="grid flex-1 text-left text-sm leading-tight">
+                              <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-medium">
                                   {user?.name}
                                 </span>
@@ -509,81 +541,56 @@ const NavBar = () => {
                                   {user?.email}
                                 </span>
                               </div>
-                              <ChevronsUpDown className="ml-auto size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-                            side={isMobile ? "bottom" : "right"}
-                            align="end"
-                            sideOffset={4}
-                          >
-                            <DropdownMenuLabel className="p-0 font-normal">
-                              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                <Avatar className="h-8 w-8 rounded-lg">
-                                  <AvatarImage src={""} alt={user?.name} />
-                                  <AvatarFallback className="rounded-lg">
-                                    CN
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                  <span className="truncate font-medium">
-                                    {user?.name}
-                                  </span>
-                                  <span className="truncate text-xs">
-                                    {user?.email}
-                                  </span>
-                                </div>
-                              </div>
-                            </DropdownMenuLabel>
+                            </div>
+                          </DropdownMenuLabel>
 
-                            <DropdownMenuSeparator />
-                            <DropdownMenuGroup>
-                              <DropdownMenuItem
-                                className="cursor-pointer"
-                                onClick={() => {
-                                  router.push("/dashboard");
-                                }}
-                              >
-                                <BadgeCheck />
-                                Account
-                              </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                            <DropdownMenuSeparator />
+                          <DropdownMenuSeparator />
+                          <DropdownMenuGroup>
                             <DropdownMenuItem
                               className="cursor-pointer"
                               onClick={() => {
-                                logout();
-                                router.push("/");
+                                setMobileMenuOpen(false);
+                                router.push("/dashboard");
                               }}
                             >
-                              <LogOut />
-                              Sign out
+                              <BadgeCheck />
+                              Account
                             </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                      {!isAuthenticated && (
-                        <div className="w-full h-auto flex gap-3 justify-center align-middle items-center">
-                          <Link
-                            href={"/auth/signin"}
-                            className="px-3 py-4 flex justify-center align-middle items-center w-[48%] bg-primary hover:bg-[#087F4F] cursor-pointer font-bold text-white rounded-lg transition-colors"
+                          </DropdownMenuGroup>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="cursor-pointer"
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              logout();
+                              router.push("/");
+                            }}
                           >
-                            Sign In
-                          </Link>
-                          <Link
-                            href={"/auth/signup"}
-                            className="px-3 py-4 text-white w-[48%] bg-primary hover:bg-[#087F4F] rounded-lg cursor-pointer font-bold flex justify-center align-middle items-center transition-colors"
-                          >
-                            Sign Up
-                          </Link>
-                        </div>
-                      )}
-                    </div>
+                            <LogOut />
+                            Sign out
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                    {!isAuthenticated && (
+                      <div className="flex w-full items-center gap-3">
+                        <Link
+                          href={"/auth/signin"}
+                          className="flex w-1/2 items-center justify-center rounded-lg bg-primary px-3 py-3 font-bold text-white transition-colors hover:bg-[#087F4F]"
+                        >
+                          Sign In
+                        </Link>
+                        <Link
+                          href={"/auth/signup"}
+                          className="flex w-1/2 items-center justify-center rounded-lg bg-primary px-3 py-3 font-bold text-white transition-colors hover:bg-[#087F4F]"
+                        >
+                          Sign Up
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>
-            </div>
           </div>
         </div>
       </div>
@@ -642,7 +649,7 @@ const renderMobileMenuItem = (item: MenuItem) => {
         value={item.title}
         className="border-b-0 "
       >
-        <AccordionTrigger className="text-md py-0 font-semibold hover:no-underline cursor-pointer text-foreground">
+        <AccordionTrigger className="min-h-11 py-2 text-base font-semibold text-foreground hover:no-underline cursor-pointer">
           {item.title}
         </AccordionTrigger>
         <AccordionContent
@@ -661,7 +668,7 @@ const renderMobileMenuItem = (item: MenuItem) => {
     <Link
       key={item.title}
       href={item.href}
-      className="text-md font-semibold cursor-pointer text-foreground"
+      className="flex min-h-11 cursor-pointer items-center py-2 text-base font-semibold text-foreground"
       onClick={() => item.setMobileMenuOpen?.(false)}
     >
       {item.title}

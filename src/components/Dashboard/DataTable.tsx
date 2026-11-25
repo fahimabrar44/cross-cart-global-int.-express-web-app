@@ -136,10 +136,10 @@ export function DataTable({
   return (
     <Card data-testid={`data-table-${title.toLowerCase().replace(/\s+/g, '-')}`}>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>{title}</CardTitle>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-lg">{title}</CardTitle>
           <div className="flex items-center space-x-2">
-            <div className="relative">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search..."
@@ -152,8 +152,8 @@ export function DataTable({
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-md border">
+      <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+        <div className="max-w-full rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -263,25 +263,26 @@ export function DataTable({
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-2 py-4">
-            <div className="text-sm text-muted-foreground">
+          <div className="flex flex-col gap-3 px-0 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-2">
+            <div className="text-xs text-muted-foreground sm:text-sm">
               Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
               {Math.min(currentPage * itemsPerPage, filteredData.length)} of{" "}
               {filteredData.length} results
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-between gap-2 sm:justify-end">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 data-testid="pagination-prev"
+                aria-label="Previous page"
               >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
+                <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Previous</span>
               </Button>
               <div className="flex items-center space-x-1">
-                <span className="text-sm">
+                <span className="text-xs sm:text-sm">
                   Page {currentPage} of {totalPages}
                 </span>
               </div>
@@ -293,9 +294,10 @@ export function DataTable({
                 }
                 disabled={currentPage === totalPages}
                 data-testid="pagination-next"
+                aria-label="Next page"
               >
-                Next
-                <ChevronRight className="h-4 w-4" />
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="h-4 w-4 sm:ml-1" />
               </Button>
             </div>
           </div>

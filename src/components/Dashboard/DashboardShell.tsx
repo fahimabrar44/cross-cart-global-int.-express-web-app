@@ -15,9 +15,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BellRing, X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { Fragment, useCallback, useState, useRef, useEffect } from "react";
 import { NotificationPanel } from "@/components/Dashboard/NotificationPanel";
 import { Badge } from "@/components/ui/badge";
+import { NotificationService } from "@/services/dashboardService";
 
 export default function DashboardShell({
   children,
@@ -27,8 +28,68 @@ export default function DashboardShell({
   const { user } = useAuth();
   const pathname = usePathname();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const notificationRef = useRef<HTMLDivElement>(null);
   const notificationButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Keep the full sidebar on large desktops, collapse it to an icon rail on
+  // tablets, and let phones use the slide-over sidebar.
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1280px)");
+    const apply = () => setSidebarOpen(query.matches);
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
+
+  // Load the real unread count for the signed-in viewer. The API scopes the
+  // list by role, so users see their own count while admins/moderators see the
+  // whole system's unread count.
+  const loadUnreadCount = useCallback(async () => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+
+    try {
+      const response = await NotificationService.getNotifications({
+        limit: 1,
+        read: false,
+      });
+      if (response.success) {
+        setUnreadCount(
+          typeof response.meta?.unread === "number"
+            ? response.meta.unread
+            : (response.data || []).filter((item) => !item.isRead).length
+        );
+      }
+    } catch {
+      // Keep the last known count if the refresh fails.
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadUnreadCount();
+    const interval = setInterval(loadUnreadCount, 60_000);
+    return () => clearInterval(interval);
+  }, [loadUnreadCount]);
+
+  // Pages and the notification panel emit this after creating, reading or
+  // deleting a notification so the header badge stays in sync immediately.
+  useEffect(() => {
+    const handleNotificationsChanged = () => loadUnreadCount();
+    window.addEventListener(
+      "crosscart:notifications-changed",
+      handleNotificationsChanged
+    );
+    return () => {
+      window.removeEventListener(
+        "crosscart:notifications-changed",
+        handleNotificationsChanged
+      );
+    };
+  }, [loadUnreadCount]);
 
   // Generate breadcrumb from pathname
   const pathNameArray = pathname
@@ -57,67 +118,83 @@ export default function DashboardShell({
 
   return (
     <RoleGuard allowedRoles={["admin", "moderator", "user"]}>
-      <SidebarProvider>
+      <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <AppSideBar />
-        <SidebarInset>
+        <SidebarInset className="min-w-0">
           <header
-            className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 rounded-t-xl"
+            className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:h-16"
             data-testid="dashboard-header"
           >
-            <div className="flex items-center gap-2 px-4 relative w-full">
-              <SidebarTrigger className="-ml-1" data-testid="sidebar-trigger" />
-              <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-              <Breadcrumb>
-                <BreadcrumbList>
+            <div className="relative flex w-full min-w-0 items-center gap-1.5 px-3 sm:gap-2 sm:px-4">
+              <SidebarTrigger
+                className="-ml-1 size-9 shrink-0 sm:size-8"
+                data-testid="sidebar-trigger"
+              />
+              <Separator
+                orientation="vertical"
+                className="mr-1 hidden data-[orientation=vertical]:h-4 sm:block"
+              />
+              <Breadcrumb className="min-w-0 flex-1">
+                <BreadcrumbList className="flex-nowrap">
                   {pathNameArray.map((item, index) => (
-                    <div key={item} className="hidden items-center align-middle gap-2 md:flex">
-                      <BreadcrumbItem>
+                    <Fragment key={`${item}-${index}`}>
+                      <BreadcrumbItem
+                        className={
+                          index === pathNameArray.length - 1
+                            ? "flex min-w-0"
+                            : "hidden min-w-0 md:flex"
+                        }
+                      >
                         <BreadcrumbLink
-                          href={`/dashboard/${pathNameArray.slice(0, index + 1).join("/")}`}
-                          className="capitalize"
+                          href={`/dashboard/${pathNameArray
+                            .slice(0, index + 1)
+                            .join("/")}`}
+                          className="block max-w-[45vw] truncate capitalize sm:max-w-none"
                           data-testid={`breadcrumb-${item}`}
                         >
                           {item}
                         </BreadcrumbLink>
                       </BreadcrumbItem>
-                      {index < pathNameArray.length - 1 && <BreadcrumbSeparator />}
-                    </div>
+                      {index < pathNameArray.length - 1 && (
+                        <BreadcrumbSeparator className="hidden md:block" />
+                      )}
+                    </Fragment>
                   ))}
-                  {pathNameArray.length > 0 && (
-                    <BreadcrumbItem>
-                      <BreadcrumbLink
-                        href={`/dashboard/${pathNameArray.join("/")}`}
-                        className="capitalize md:hidden block"
-                        data-testid={`mobile-breadcrumb-${pathNameArray[pathNameArray.length - 1]}`}
-                      >
-                        {pathNameArray[pathNameArray.length - 1]}
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                  )}
                 </BreadcrumbList>
               </Breadcrumb>
 
-              <div className="absolute right-5 top-[8%] flex justify-center align-middle items-center gap-5">
+              <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-3">
                 {/* Notification Button with Badge */}
                 <div className="relative">
                   <button
                     ref={notificationButtonRef}
-                    onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                    className="relative p-1 rounded-full hover:bg-soft-green transition-colors"
+                    onClick={() => {
+                      setIsNotificationOpen((open) => !open);
+                      loadUnreadCount();
+                    }}
+                    className="relative grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-soft-green"
                     data-testid="notification-button"
+                    aria-expanded={isNotificationOpen}
+                    aria-label={
+                      unreadCount > 0
+                        ? `${unreadCount} unread notifications`
+                        : "Notifications"
+                    }
                   >
                     <BellRing
-                      size={24}
-                      className="cursor-pointer hover:text-primary transition-colors"
+                      size={20}
+                      className="cursor-pointer transition-colors hover:text-primary"
                     />
-                    {/* Notification Badge */}
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                      data-testid="notification-badge"
-                    >
-                      3
-                    </Badge>
+                    {/* Real unread count for the current viewer */}
+                    {unreadCount > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] leading-none"
+                        data-testid="notification-badge"
+                      >
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </Badge>
+                    )}
                   </button>
                 </div>
 
@@ -135,25 +212,29 @@ export default function DashboardShell({
           {isNotificationOpen && (
             <div
               ref={notificationRef}
-              className="absolute top-16 right-4 z-50 w-96 max-h-[80vh] overflow-hidden bg-white shadow-lg rounded-lg border"
+              className="fixed inset-x-3 top-14 z-50 max-h-[calc(100dvh-4.5rem)] overflow-hidden rounded-xl border bg-white shadow-lg sm:absolute sm:inset-x-auto sm:right-4 sm:top-16 sm:max-h-[80vh] sm:w-96"
               data-testid="notification-panel"
             >
-              <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center justify-between border-b p-4">
                 <h3 className="font-semibold">Notifications</h3>
                 <button
                   onClick={() => setIsNotificationOpen(false)}
-                  className="p-1 rounded-full hover:bg-soft-green transition-colors"
+                  className="rounded-full p-1 transition-colors hover:bg-soft-green"
+                  aria-label="Close notifications"
                 >
                   <X size={18} />
                 </button>
               </div>
-              <div className="overflow-y-auto max-h-[calc(80vh-60px)]">
-                <NotificationPanel />
+              <div className="max-h-[calc(100dvh-8.5rem)] overflow-y-auto overscroll-contain sm:max-h-[calc(80vh-60px)]">
+                <NotificationPanel onUnreadChange={loadUnreadCount} />
               </div>
             </div>
           )}
 
-          <div className="flex flex-1 flex-col gap-4 p-4" data-testid="dashboard-content">
+          <div
+            className="flex min-w-0 flex-1 flex-col gap-4 p-3 sm:p-4 lg:p-6"
+            data-testid="dashboard-content"
+          >
             {children}
             <Toaster expand={false} position="top-center" closeButton />
           </div>

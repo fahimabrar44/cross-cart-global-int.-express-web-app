@@ -43,8 +43,10 @@ export default function SiteLayout({
           Skip to content
         </a>
         <NavBar />
-        <div className="w-full h-[70px]" aria-hidden="true"></div>
-        <main id="main-content">{children}</main>
+        <div className="h-16 w-full sm:h-[72px]" aria-hidden="true"></div>
+        <main id="main-content" className="min-h-[60vh] w-full">
+          {children}
+        </main>
         <FooterBar />
         <WhatsAppButton />
         <Toaster expand={false} position="top-center" closeButton />

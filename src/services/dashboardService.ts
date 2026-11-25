@@ -276,7 +276,14 @@ export class NotificationService {
   static async getNotifications(params?: {
     page?: number;
     limit?: number;
+    read?: boolean;
     isRead?: boolean;
+    type?: string;
+    category?: string;
+    user?: string;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }): Promise<ApiResponse<any[]>> {
     return apiService.get("/notifications", params);
@@ -300,6 +307,14 @@ export class NotificationService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static async markAsRead(notificationId: string): Promise<ApiResponse<any>> {
     return apiService.patch(`/notifications/${notificationId}`, { isRead: true });
+  }
+
+  static async markMultipleAsRead(
+    notificationIds: string[],
+    isRead = true
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): Promise<ApiResponse<any>> {
+    return apiService.patch("/notifications", { notificationIds, isRead });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

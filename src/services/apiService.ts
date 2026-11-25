@@ -12,6 +12,7 @@ export interface ApiResponse<T = any> {
     limit?: number;
     total?: number;
     totalPages?: number;
+    unread?: number;
   };
   timestamp: string;
   requestId?: string;

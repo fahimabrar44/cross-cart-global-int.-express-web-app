@@ -56,16 +56,16 @@ export function AppSideBar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         };
 
   return (
-    <Sidebar variant="inset" {...props}>
+    <Sidebar variant="inset" collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <div>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Logo />
+                  <Logo className="h-7 w-auto" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-bold">CROSSCART COURIER</span>
                   <span className="truncate text-xs font-semibold">
                     INTERNATIONAL COURIER

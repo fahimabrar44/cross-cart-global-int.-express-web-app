@@ -64,8 +64,15 @@ export async function PUT(
     if (!access.success) return access.response!;
 
     const body = await req.json();
-    const allowedFields = ["title", "message", "type", "read"];
-    
+    const allowedFields = [
+      "title",
+      "message",
+      "type",
+      "category",
+      "channels",
+      "isRead",
+    ];
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     for (const key of allowedFields) if (key in body) updateData[key] = body[key];
@@ -92,16 +99,19 @@ export async function PATCH(
     if (!access.success) return access.response!;
 
     const body = await req.json();
-    console.log(body);
-    
-    const allowedFields = ["title", "message", "type", "isRead"];
-    
+
+    const allowedFields = [
+      "title",
+      "message",
+      "type",
+      "category",
+      "channels",
+      "isRead",
+    ];
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     for (const key of allowedFields) if (key in body) updateData[key] = body[key];
-
-    console.log(updateData);
-    
 
     const updated = await Notification.findByIdAndUpdate(id, updateData, { new: true }).lean();
     if (!updated) return errorResponse({ status: 404, message: "Notification not found", req });
