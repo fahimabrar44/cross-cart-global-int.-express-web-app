@@ -743,7 +743,7 @@ export default function ParcelTrackingPage() {
             columns={columns}
             data={tracks}
             loading={loading}
-            searchPlaceholder="Search tracks by description..."
+            searchPlaceholder="Search by track ID, status, or description..."
             onSearch={handleSearch}
             pagination={{
               page: pagination.page,
@@ -890,52 +890,49 @@ export default function ParcelTrackingPage() {
 
               <div>
                 <h3 className="font-semibold mb-3">Tracking History</h3>
-                <div className="space-y-4">
+                <div className="relative pl-6">
                   {selectedTrack.history && selectedTrack.history.length > 0 ? (
-                    selectedTrack.history.map((step, index) => (
-                      <div
-                        key={index}
-                        className="flex items-start space-x-4 p-4 border rounded-lg"
-                      >
-                        <div className="flex-shrink-0 mt-1">
+                    <ol className="relative border-l-2 border-primary/30 space-y-6">
+                      {selectedTrack.history.map((step, index) => (
+                        <li key={index} className="ml-4">
                           <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            className={`absolute -left-[13px] flex h-6 w-6 items-center justify-center rounded-full ring-4 ring-background ${
                               statusColors[step.status] ||
                               "bg-gray-100 text-gray-800"
                             }`}
                           >
                             {statusIcons[step.status]}
                           </div>
-                        </div>
-                        <div className="flex-grow">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium">
-                              {step.status
-                                ? step.status.replace(/-/g, " ")
-                                : "N/A"}
-                            </h4>
-                            <span className="text-sm text-muted-foreground">
-                              {formatDate(step.timestamp)}
-                            </span>
+                          <div className="rounded-lg border bg-card p-4 shadow-sm">
+                            <div className="flex items-center justify-between gap-2">
+                              <h4 className="font-medium capitalize">
+                                {step.status
+                                  ? step.status.replace(/-/g, " ")
+                                  : "N/A"}
+                              </h4>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                {formatDate(step.timestamp)}
+                              </span>
+                            </div>
+                            <p className="text-sm mt-1 text-muted-foreground">
+                              {step.description || "No description"}
+                            </p>
+                            {step.location && (
+                              <div className="flex items-center mt-2 text-xs text-muted-foreground">
+                                <MapPin className="h-3 w-3 mr-1" />
+                                {step.location.city || "N/A"},{" "}
+                                {step.location.country || "N/A"}
+                              </div>
+                            )}
+                            {step.updatedBy && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Updated by: {step.updatedBy}
+                              </div>
+                            )}
                           </div>
-                          <p className="text-sm mt-1">
-                            {step.description || "No description"}
-                          </p>
-                          {step.location && (
-                            <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                              <MapPin className="h-3 w-3 mr-1" />
-                              {step.location.city || "N/A"},{" "}
-                              {step.location.country || "N/A"}
-                            </div>
-                          )}
-                          {step.updatedBy && (
-                            <div className="text-xs text-muted-foreground mt-1">
-                              Updated by: {step.updatedBy}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))
+                        </li>
+                      ))}
+                    </ol>
                   ) : (
                     <p className="text-sm text-muted-foreground">
                       No tracking history available
