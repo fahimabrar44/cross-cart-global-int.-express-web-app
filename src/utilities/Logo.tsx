@@ -31,7 +31,7 @@ const Logo: React.FC<LogoProps> = ({
         height={imgHeight}
         sizes="(max-width: 768px) 140px, 220px"
         priority={priority}
-        className={`h-auto w-auto object-contain ${className}`}
+        className={`w-auto object-contain ${className}`}
       />
     </Link>
   );

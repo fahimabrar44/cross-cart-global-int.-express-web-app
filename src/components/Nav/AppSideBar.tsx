@@ -9,7 +9,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/AuthContext";
-import Logo from "@/utilities/Logo";
+import Image from "next/image";
 import { AdminData, ModeratorData, UserData } from "../ApiCall/data";
 import { NavUser } from "./NavIUser";
 import { NavMain } from "./NavMain";
@@ -60,12 +60,20 @@ export function AppSideBar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <div>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Logo className="h-7 w-auto" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+            <SidebarMenuButton
+              size="lg"
+              asChild
+              className="group-data-[collapsible=icon]:p-0!"
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <Image
+                  src="/logos/logo.webp"
+                  alt="Cross Cart Global"
+                  width={40}
+                  height={40}
+                  className="size-8 shrink-0 rounded-full object-contain"
+                />
+                <div className="grid min-w-0 flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-bold">CROSSCART COURIER</span>
                   <span className="truncate text-xs font-semibold">
                     INTERNATIONAL COURIER
