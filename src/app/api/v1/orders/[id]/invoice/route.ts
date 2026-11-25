@@ -127,7 +127,7 @@ export async function GET(
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a202c; margin: 24px; }
     .header { display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #006B45; padding-bottom:16px; }
-    .brand-logo { height: 70px; width: auto; }
+    .brand-logo { height: 105px; width: auto; }
     .sub { color:#667eea; font-size:10px; letter-spacing:2px; text-transform:uppercase; }
     h1 { font-size:28px; margin:8px 0 0; }
     .meta { display:flex; gap:48px; margin-top:24px; }
@@ -149,11 +149,10 @@ export async function GET(
   <div class="header">
     <div>
       <img class="brand-logo" src="/full-logo.png" alt="CrossCart Global" />
-      <div class="sub">Global International Express</div>
     </div>
     <div style="text-align:right;">
-      <h1>INVOICE</h1>
-      <p style="margin:4px 0;">#${order.trackId}</p>
+      <h1  style=" font-size:40px">INVOICE</h1>
+      <p style="margin:4px 0; font-size:24px">#${order.trackId}</p>
       <p style="margin:2px 0;font-size:12px;color:#718096;">${order.orderDate ? new Date(order.orderDate).toDateString() : ""}</p>
     </div>
   </div>
