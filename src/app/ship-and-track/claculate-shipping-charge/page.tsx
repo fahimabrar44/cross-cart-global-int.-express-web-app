@@ -27,10 +27,10 @@ export const dynamic = "force-dynamic";
 export default async function CalculateShippingChargePage() {
   const [countries, zones] = await Promise.all([
     fetchPublicData<CountryOption>(
-      "countrys?isActive=true&limit=250&sortBy=name&sortOrder=asc"
+      "countrys?isActive=true&limit=500&sortBy=name&sortOrder=asc"
     ),
     fetchPublicData<ZoneOption>(
-      "zones?isActive=true&limit=100&sortBy=name&sortOrder=asc"
+      "zones?isActive=true&limit=500&sortBy=name&sortOrder=asc"
     ),
   ]);
 

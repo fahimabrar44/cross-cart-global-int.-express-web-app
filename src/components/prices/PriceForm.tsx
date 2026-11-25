@@ -122,15 +122,25 @@ export function PriceForm({ price, onSubmit, onCancel, loading }: PriceFormProps
 
   useEffect(() => {
     (async () => {
-      const res = await countryService.getActiveCountries();
-      if (res.status === 200) setCountries(res.data || []);
+      // Admins must be able to configure a route even before a country/zone is
+      // made publicly active, so load the full lists (not only active ones).
+      const res = await countryService.getCountries({
+        limit: 500,
+        sortBy: "name",
+        sortOrder: "asc",
+      });
+      if (res.status === 200 && Array.isArray(res.data)) setCountries(res.data);
     })();
   }, []);
 
   useEffect(() => {
     (async () => {
-      const res = await zoneService.getActiveZones();
-      if (res.status === 200) setZones(res.data || []);
+      const res = await zoneService.getZones({
+        limit: 200,
+        sortBy: "name",
+        sortOrder: "asc",
+      });
+      if (res.status === 200 && Array.isArray(res.data)) setZones(res.data);
     })();
   }, []);
 
@@ -216,7 +226,10 @@ export function PriceForm({ price, onSubmit, onCancel, loading }: PriceFormProps
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Origin Country</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select Origin" />
@@ -225,12 +238,13 @@ export function PriceForm({ price, onSubmit, onCancel, loading }: PriceFormProps
                       <SelectContent>
                         {countries.length === 0 && (
                           <SelectItem value="__none__" disabled>
-                            No active countries. Add a country first.
+                            No countries available. Add a country first.
                           </SelectItem>
                         )}
                         {countries.map((c) => (
                           <SelectItem key={c._id} value={c._id}>
                             {c.name}
+                            {c.isActive === false ? " (inactive)" : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -247,7 +261,10 @@ export function PriceForm({ price, onSubmit, onCancel, loading }: PriceFormProps
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Destination Zone</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select Destination Zone" />
@@ -256,12 +273,13 @@ export function PriceForm({ price, onSubmit, onCancel, loading }: PriceFormProps
                       <SelectContent>
                         {zones.length === 0 && (
                           <SelectItem value="__none__" disabled>
-                            No active zones. Add zones first.
+                            No zones available. Add zones first.
                           </SelectItem>
                         )}
                         {zones.map((z) => (
                           <SelectItem key={z._id} value={z._id}>
                             {z.name}
+                            {z.isActive === false ? " (inactive)" : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>

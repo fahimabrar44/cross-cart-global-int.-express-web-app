@@ -19,6 +19,7 @@ const REF_TTL_MS = 5 * 60 * 1000;
 type GetQuery = {
   from?: string;
   to?: string;
+  toCountryId?: string;
   fromName?: string;
   toName?: string;
   rateName?: string;
@@ -82,6 +83,17 @@ export async function GET(req: NextRequest) {
     if (q.to && Types.ObjectId.isValid(q.to)) {
       query.to = new Types.ObjectId(q.to);
     }
+    if (q.toCountryId && Types.ObjectId.isValid(q.toCountryId)) {
+      // A destination country can be priced directly (legacy charts) or
+      // through the zone that contains it (current charts).
+      const countryOid = new Types.ObjectId(q.toCountryId);
+      const zoneRows = await Zone.find({ countryIds: countryOid })
+        .select("_id")
+        .lean();
+      query.to = {
+        $in: [countryOid, ...zoneRows.map((zone) => zone._id)],
+      };
+    }
 
     if (q.fromName) {
       const countryIds = await resolveCountryIds(q.fromName);
@@ -124,7 +136,7 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    if (q.isActive === "true") query.isActive = true;
+    if (q.isActive === "true") query.isActive = { $ne: false };
     if (q.isActive === "false") query.isActive = false;
 
     if (q.search && q.search.trim()) {
@@ -163,6 +175,7 @@ export async function GET(req: NextRequest) {
       "prices:list",
       q.from ?? "",
       q.to ?? "",
+      q.toCountryId ?? "",
       q.fromName ?? "",
       q.toName ?? "",
       q.rateName ?? "",
@@ -178,19 +191,65 @@ export async function GET(req: NextRequest) {
     // see fresh data — skip the cache. Caching is only for public/API-key
     // consumers, where a brief staleness is acceptable and saves DB load.
     const loadPrices = async () => {
-      const [total, activeTotal, prices] = await Promise.all([
+      const [total, activeTotal, priceDocs] = await Promise.all([
         Price.countDocuments(query),
-        Price.countDocuments({ ...query, isActive: true }),
+        Price.countDocuments({ ...query, isActive: { $ne: false } }),
         Price.find(query)
           .populate("from")
-          .populate("to")
           .sort({ [sortBy]: sortOrder })
           .skip(skip)
           .limit(limit)
           .lean(),
       ]);
 
-      return { total, activeTotal, prices };
+      // Resolve the destination manually so charts whose `to` points at a
+      // country (legacy data) still return a usable name. `populate("to")`
+      // would null those out because the current ref is Zone.
+      const rows = priceDocs as unknown as Array<Record<string, unknown>>;
+      const destinationIds = Array.from(
+        new Set(
+          rows
+            .map((row) => String(row.to ?? ""))
+            .filter((id) => Types.ObjectId.isValid(id))
+        )
+      );
+
+      if (destinationIds.length > 0) {
+        const objectIds = destinationIds.map((id) => new Types.ObjectId(id));
+        const [zoneDocs, countryDocs] = await Promise.all([
+          Zone.find({ _id: { $in: objectIds } }).select("name code").lean(),
+          Country.find({ _id: { $in: objectIds } }).select("name code").lean(),
+        ]);
+
+        const destinations = new Map<
+          string,
+          { _id: Types.ObjectId; name: string; code?: string | null }
+        >();
+        countryDocs.forEach((doc) => {
+          destinations.set(String(doc._id), {
+            _id: doc._id as Types.ObjectId,
+            name: doc.name,
+            code: doc.code,
+          });
+        });
+        // Zones win if an ID exists in both collections.
+        zoneDocs.forEach((doc) => {
+          destinations.set(String(doc._id), {
+            _id: doc._id as Types.ObjectId,
+            name: doc.name,
+            code: doc.code,
+          });
+        });
+
+        rows.forEach((row) => {
+          const id = String(row.to ?? "");
+          const destination = destinations.get(id);
+          if (destination) row.to = destination;
+          else if (!id) row.to = null;
+        });
+      }
+
+      return { total, activeTotal, prices: rows };
     };
 
     const result = isInternal

@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const query: any = {};
 
-      if (isActiveParam === "true") query.isActive = true;
+      if (isActiveParam === "true") query.isActive = { $ne: false };
       else if (isActiveParam === "false") query.isActive = false;
 
       if (name) query.name = { $regex: escapeRegex(name), $options: "i" };

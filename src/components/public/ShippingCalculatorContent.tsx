@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export interface CountryOption {
   _id: string;
@@ -32,6 +32,16 @@ export interface ZoneOption {
   name: string;
   code?: string;
   isActive?: boolean;
+  /** Zones are populated with the countries they cover by the list API. */
+  countryIds?: Array<
+    string | { _id: string; name?: string; code?: string; isActive?: boolean }
+  >;
+}
+
+interface PriceRef {
+  _id?: string;
+  name?: string;
+  code?: string;
 }
 
 interface Rate {
@@ -45,9 +55,20 @@ interface Rate {
 
 interface PriceData {
   _id: string;
-  from?: { name?: string };
-  to?: { name?: string };
+  from?: string | PriceRef;
+  to?: string | PriceRef;
   rate: Rate[];
+}
+
+interface DestinationOption {
+  _id: string;
+  name: string;
+}
+
+interface DestinationGroup {
+  zoneId: string;
+  zoneName: string;
+  countries: Array<{ _id: string; name: string }>;
 }
 
 interface QuoteRate {
@@ -73,6 +94,24 @@ interface QuoteData {
   rates: QuoteRate[];
 }
 
+function getId(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object") {
+    const ref = value as { _id?: unknown; id?: unknown };
+    if (typeof ref._id === "string") return ref._id;
+    if (typeof ref.id === "string") return ref.id;
+  }
+  return "";
+}
+
+function getRefName(value: unknown): string {
+  if (value && typeof value === "object") {
+    const ref = value as { name?: unknown };
+    if (typeof ref.name === "string") return ref.name;
+  }
+  return "";
+}
+
 export default function ShippingCalculatorContent({
   initialCountries,
   initialZones,
@@ -80,98 +119,402 @@ export default function ShippingCalculatorContent({
   initialCountries: CountryOption[];
   initialZones: ZoneOption[];
 }) {
-  const [countries] = useState<CountryOption[]>(initialCountries);
-  const [zones] = useState<ZoneOption[]>(initialZones);
+  const [countries, setCountries] = useState<CountryOption[]>(initialCountries);
+  const [zones, setZones] = useState<ZoneOption[]>(initialZones);
   const [fromCountry, setFromCountry] = useState<string>(
     () =>
       initialCountries.find((c) => c.name === "Bangladesh")?._id ||
       initialCountries[0]?._id ||
       ""
   );
-  const [toZone, setToZone] = useState<string>(() => initialZones[0]?._id || "");
+  const [toZone, setToZone] = useState<string>("");
   const [weightKg, setWeightKg] = useState("1");
   const [loading, setLoading] = useState(false);
+  const [routeLoading, setRouteLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [quote, setQuote] = useState<QuoteData | null>(null);
-  const [priceData, setPriceData] = useState<PriceData | null>(null);
+  const [originCharts, setOriginCharts] = useState<PriceData[]>([]);
+  const [routeCharts, setRouteCharts] = useState<PriceData[]>([]);
+
+  const zoneNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    zones.forEach((zone) => map.set(zone._id, zone.name));
+    return map;
+  }, [zones]);
+
+  const zoneById = useMemo(() => {
+    const map = new Map<string, ZoneOption>();
+    zones.forEach((zone) => map.set(zone._id, zone));
+    return map;
+  }, [zones]);
 
   const getCountryName = (id: string) =>
     countries.find((c) => c._id === id)?.name || "";
-  const getZoneName = (id: string) =>
-    zones.find((z) => z._id === id)?.name || "";
+
+  /**
+   * Destinations are derived from the rate charts configured for the selected
+   * origin. This prevents the user from picking a route that has no rates and
+   * keeps "From Country → To Country Zone" a valid pair before calculating.
+   */
+  const destinationOptions = useMemo<DestinationOption[]>(() => {
+    const map = new Map<string, DestinationOption>();
+    originCharts.forEach((chart) => {
+      const id = getId(chart.to);
+      if (!id) return;
+      const zone = zoneById.get(id);
+      if (zone?.isActive === false) return;
+      const country = countries.find((c) => c._id === id);
+      if (country?.isActive === false) return;
+      map.set(id, {
+        _id: id,
+        name:
+          getRefName(chart.to) ||
+          zoneNameById.get(id) ||
+          country?.name ||
+          id,
+      });
+    });
+
+    // If the route lookup failed or no chart exists yet, still show the zone
+    // list so the page does not look broken; the calculate step will explain
+    // that no pricing is configured.
+    if (map.size === 0) {
+      zones.forEach((zone) => {
+        if (zone.isActive === false) return;
+        map.set(zone._id, zone);
+      });
+    }
+
+    return Array.from(map.values());
+  }, [originCharts, zones, zoneById, zoneNameById, countries]);
+
+  /**
+   * Group every destination zone by the countries it covers. The second select
+   * then lets the user pick a real destination country while the rate lookup
+   * still happens against that country's zone.
+   */
+  const destinationGroups = useMemo<DestinationGroup[]>(() => {
+    return destinationOptions.map((destination) => {
+      const zone = zoneById.get(destination._id);
+      const zoneName =
+        destination.name || zone?.name || zoneNameById.get(destination._id) || "";
+
+      const seen = new Set<string>();
+      const groupCountries = (zone?.countryIds || [])
+        .map((entry) => {
+          if (typeof entry === "string") {
+            const match = countries.find((c) => c._id === entry);
+            return {
+              _id: entry,
+              name: match?.name || "",
+              isActive: match?.isActive,
+            };
+          }
+          const match = countries.find((c) => c._id === entry._id);
+          return {
+            _id: entry._id,
+            name: entry.name || match?.name || "",
+            isActive: entry.isActive ?? match?.isActive,
+          };
+        })
+        .filter((country) => {
+          if (!country._id || !country.name) return false;
+          if (country.isActive === false) return false;
+          if (country._id === fromCountry) return false;
+          if (seen.has(country._id)) return false;
+          seen.add(country._id);
+          return true;
+        })
+        .map((country) => ({ _id: country._id, name: country.name }));
+
+      return {
+        zoneId: destination._id,
+        zoneName,
+        countries: groupCountries,
+      };
+    });
+  }, [destinationOptions, zoneById, zoneNameById, countries, fromCountry]);
+
+  // Encoded values: "c:<zoneId>:<countryId>" for a country and
+  // "z:<zoneId>" for a zone without a country mapping (legacy routes or zones
+  // with no countries). Encoding the zone as well keeps duplicate country
+  // names in different zones unambiguous.
+  const destinationChoices = useMemo(
+    () =>
+      destinationGroups.flatMap((group) =>
+        group.countries.length > 0
+          ? group.countries.map(
+              (country) => `c:${group.zoneId}:${country._id}`
+            )
+          : [`z:${group.zoneId}`]
+      ),
+    [destinationGroups]
+  );
+
+  const destinationLabelByValue = useMemo(() => {
+    const map = new Map<string, string>();
+    destinationGroups.forEach((group) => {
+      if (group.countries.length > 0) {
+        group.countries.forEach((country) =>
+          map.set(
+            `c:${group.zoneId}:${country._id}`,
+            `${country.name} — ${group.zoneName}`
+          )
+        );
+      } else {
+        map.set(`z:${group.zoneId}`, group.zoneName);
+      }
+    });
+    return map;
+  }, [destinationGroups]);
+
+  const selectedDestinationLabel = destinationLabelByValue.get(toZone) || "";
+
+  // The zone used for the actual price lookup. A country selection is mapped
+  // back to the zone that contains it.
+  const selectedZoneId = useMemo(() => {
+    if (!toZone) return "";
+    if (toZone.startsWith("z:")) return toZone.slice(2);
+    const [, zoneId] = toZone.split(":");
+    return zoneId || "";
+  }, [toZone]);
+
+  // Public pages are server-rendered, but a failed SSR fetch used to leave the
+  // selects permanently empty. Retry on the client as a safety net.
+  useEffect(() => {
+    if (initialCountries.length > 0 && initialZones.length > 0) return;
+
+    let cancelled = false;
+    (async () => {
+      const [countryResponse, zoneResponse] = await Promise.all([
+        initialCountries.length === 0
+          ? getRequestSend<CountryOption[]>(
+              `${ROOT_API}countrys?isActive=true&limit=500&sortBy=name&sortOrder=asc`
+            )
+          : Promise.resolve(null),
+        initialZones.length === 0
+          ? getRequestSend<ZoneOption[]>(
+              `${ROOT_API}zones?isActive=true&limit=500&sortBy=name&sortOrder=asc`
+            )
+          : Promise.resolve(null),
+      ]);
+
+      if (cancelled) return;
+      if (countryResponse?.data && Array.isArray(countryResponse.data)) {
+        setCountries(countryResponse.data);
+      }
+      if (zoneResponse?.data && Array.isArray(zoneResponse.data)) {
+        setZones(zoneResponse.data);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialCountries.length, initialZones.length]);
+
+  // Keep the origin selection valid after countries load.
+  useEffect(() => {
+    if (countries.length === 0) return;
+    if (countries.some((country) => country._id === fromCountry)) return;
+
+    const bangladesh = countries.find(
+      (country) => country.name.trim().toLowerCase() === "bangladesh"
+    );
+    setFromCountry(bangladesh?._id || countries[0]._id);
+  }, [countries, fromCountry]);
+
+  // Load every active rate chart for the selected origin so the destination
+  // dropdown only contains real routes.
+  useEffect(() => {
+    if (!fromCountry) {
+      setOriginCharts([]);
+      setRouteLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setRouteLoading(true);
+    setNotice("");
+
+    getRequestSend<PriceData[]>(
+      `${ROOT_API}prices?from=${fromCountry}&isActive=true&limit=200`
+    )
+      .then((response) => {
+        if (cancelled) return;
+        if (response.status === 200 && Array.isArray(response.data)) {
+          setOriginCharts(response.data);
+          if (response.data.length === 0) {
+            setNotice(
+              "No rate chart is configured for this origin yet. Please contact support."
+            );
+          }
+        } else {
+          setOriginCharts([]);
+          setNotice(
+            response.message || "Could not load destinations for this origin."
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setOriginCharts([]);
+          setNotice("Could not load destinations for this origin.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setRouteLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fromCountry]);
+
+  // Select the first available destination whenever the origin/route list
+  // changes. While a new origin is loading, keep the previous selection so the
+  // control does not flicker.
+  useEffect(() => {
+    if (routeLoading) return;
+    if (destinationChoices.length === 0) {
+      if (toZone) setToZone("");
+      return;
+    }
+    if (!destinationChoices.includes(toZone)) {
+      setToZone(destinationChoices[0]);
+    }
+  }, [destinationChoices, routeLoading, toZone]);
 
   const resetResults = () => {
     setQuote(null);
-    setPriceData(null);
+    setRouteCharts([]);
     setError("");
+    setNotice("");
+  };
+
+  const handleFromChange = (value: string) => {
+    setFromCountry(value);
+    setToZone("");
+    setOriginCharts([]);
+    setRouteCharts([]);
+    setQuote(null);
+    setError("");
+    setNotice("");
+    setRouteLoading(true);
+  };
+
+  const handleToChange = (value: string) => {
+    setToZone(value);
+    resetResults();
   };
 
   const handleCalculate = async () => {
     setError("");
+    setNotice("");
     setQuote(null);
-    setPriceData(null);
+    setRouteCharts([]);
 
     if (!fromCountry) {
       setError("Please select an origin country");
       return;
     }
     if (!toZone) {
-      setError("Please select a destination zone");
+      setError("Please select a destination country");
+      return;
+    }
+
+    const toCountryId = toZone.startsWith("c:")
+      ? toZone.split(":")[2] || ""
+      : "";
+    const chartDestination = selectedZoneId || toCountryId;
+    if (!chartDestination) {
+      setError("Please select a destination country");
       return;
     }
 
     const parsedKg = Number(weightKg);
-    if (!Number.isFinite(parsedKg) || parsedKg <= 0) {
-      setError("Please enter a valid parcel weight in kilograms");
-      return;
-    }
-    if (parsedKg > MAX_WEIGHT_KG) {
-      setError(`Weight cannot exceed ${MAX_WEIGHT_KG} kg`);
-      return;
-    }
-
-    const weightGrams = Math.round(parsedKg * 1000);
+    const weightValid =
+      Number.isFinite(parsedKg) && parsedKg > 0 && parsedKg <= MAX_WEIGHT_KG;
 
     setLoading(true);
     try {
-      // Quote for the exact weight + full rate chart for this route. The full
-      // chart is already fee-inclusive on the public endpoint, so the values
-      // must not be multiplied again in the UI.
-      const [quoteResponse, chartResponse] = await Promise.all([
-        postRequestSend<Record<string, unknown>, QuoteData>(
-          `${ROOT_API}prices/calculate`,
-          undefined,
-          {
-            fromCountryId: fromCountry,
-            toZoneId: toZone,
-            weight: weightGrams,
-          }
-        ),
-        getRequestSend<PriceData[]>(
-          `${ROOT_API}prices?from=${fromCountry}&to=${toZone}&limit=1`
-        ),
-      ]);
+      const chartPromise = getRequestSend<PriceData[]>(
+        `${ROOT_API}prices?from=${fromCountry}&to=${chartDestination}&isActive=true&limit=200`
+      );
 
-      if (
-        quoteResponse.status === 200 &&
-        quoteResponse.data &&
-        Array.isArray(quoteResponse.data.rates) &&
-        quoteResponse.data.rates.length > 0
-      ) {
-        setQuote(quoteResponse.data);
+      let quoteResponse: {
+        status: number;
+        message: string;
+        data: QuoteData | null;
+      } | null = null;
+      let chartResponse: {
+        status: number;
+        message: string;
+        data: PriceData[] | null;
+      } | null = null;
+
+      if (weightValid) {
+        const [quoteResult, chartResult] = await Promise.all([
+          postRequestSend<Record<string, unknown>, QuoteData>(
+            `${ROOT_API}prices/calculate`,
+            undefined,
+            {
+              fromCountryId: fromCountry,
+              ...(selectedZoneId ? { toZoneId: selectedZoneId } : {}),
+              ...(toCountryId ? { toCountryId } : {}),
+              weight: Math.round(parsedKg * 1000),
+            }
+          ),
+          chartPromise,
+        ]);
+        quoteResponse = quoteResult;
+        chartResponse = chartResult;
       } else {
-        setError(
-          quoteResponse.message ||
-            "No pricing found for this route yet. Please contact our support team."
-        );
+        chartResponse = await chartPromise;
       }
 
-      if (
-        chartResponse.status === 200 &&
-        Array.isArray(chartResponse.data) &&
-        chartResponse.data.length > 0
-      ) {
-        setPriceData(chartResponse.data[0]);
+      const chartData =
+        chartResponse?.status === 200 && Array.isArray(chartResponse.data)
+          ? chartResponse.data
+          : [];
+      const noChart = chartData.length === 0;
+      setRouteCharts(chartData);
+
+      let quoteMessage = "";
+      if (quoteResponse) {
+        if (
+          quoteResponse.status === 200 &&
+          quoteResponse.data &&
+          Array.isArray(quoteResponse.data.rates) &&
+          quoteResponse.data.rates.length > 0
+        ) {
+          setQuote(quoteResponse.data);
+        } else {
+          quoteMessage =
+            quoteResponse.message ||
+            "No pricing found for this route yet. Please contact our support team.";
+        }
+      }
+
+      if (!weightValid) {
+        if (noChart) {
+          setError(
+            "Please enter a valid parcel weight. No rate chart is available for this route."
+          );
+        } else {
+          setNotice(
+            "Enter a valid parcel weight to see the exact price. The full rate chart is shown below."
+          );
+        }
+      } else if (quoteMessage) {
+        if (noChart) setError(quoteMessage);
+        else setNotice(`${quoteMessage} The full rate chart is shown below.`);
+      } else if (noChart) {
+        setError(
+          chartResponse?.message ||
+            "No pricing found for this route yet. Please contact our support team."
+        );
       }
     } catch {
       setError("Failed to fetch prices. Please try again.");
@@ -279,14 +622,12 @@ export default function ShippingCalculatorContent({
                   <select
                     id="calc-from"
                     value={fromCountry}
-                    onChange={(e) => {
-                      setFromCountry(e.target.value);
-                      resetResults();
-                    }}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                    onChange={(e) => handleFromChange(e.target.value)}
+                    disabled={countries.length === 0}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     {countries.length === 0 && (
-                      <option value="">Select Country</option>
+                      <option value="">Loading countries...</option>
                     )}
                     {countries.map((c) => (
                       <option key={c._id} value={c._id}>
@@ -296,30 +637,59 @@ export default function ShippingCalculatorContent({
                   </select>
                 </div>
 
-                {/* To Zone */}
+                {/* To Country Zone */}
                 <div>
                   <label
                     htmlFor="calc-to"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    To Zone
+                    To Country Zone
                   </label>
                   <select
                     id="calc-to"
                     value={toZone}
-                    onChange={(e) => {
-                      setToZone(e.target.value);
-                      resetResults();
-                    }}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
+                    onChange={(e) => handleToChange(e.target.value)}
+                    disabled={routeLoading || destinationChoices.length === 0}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
-                    <option value="">Select Zone</option>
-                    {zones.map((z) => (
-                      <option key={z._id} value={z._id}>
-                        {z.name}
-                      </option>
-                    ))}
+                    {routeLoading && (
+                      <option value="">Loading destinations...</option>
+                    )}
+                    {!routeLoading && destinationGroups.length === 0 && (
+                      <option value="">No destinations available</option>
+                    )}
+                    {!routeLoading &&
+                      destinationGroups.map((group) =>
+                        group.countries.length > 0 ? (
+                          <optgroup key={group.zoneId} label={group.zoneName}>
+                            {group.countries.map((country) => (
+                              <option
+                                key={`${group.zoneId}:${country._id}`}
+                                value={`c:${group.zoneId}:${country._id}`}
+                              >
+                                {country.name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ) : (
+                          <optgroup key={group.zoneId} label={group.zoneName}>
+                            <option value={`z:${group.zoneId}`}>
+                              {group.zoneName} — all countries
+                            </option>
+                          </optgroup>
+                        )
+                      )}
                   </select>
+                  {!routeLoading && destinationGroups.length > 0 && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Countries are grouped by their destination zone.
+                    </p>
+                  )}
+                  {routeLoading && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Loading rate-chart destinations for this origin...
+                    </p>
+                  )}
                 </div>
 
                 {/* Weight */}
@@ -348,10 +718,10 @@ export default function ShippingCalculatorContent({
                 </div>
               </div>
 
-              {(countries.length === 0 || zones.length === 0) && (
+              {countries.length === 0 && (
                 <div className="mt-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-center text-sm">
-                  Shipping routes are being updated. Please contact support for a
-                  manual quote.
+                  Country list is loading. If this message stays, please refresh
+                  the page or contact support.
                 </div>
               )}
 
@@ -359,15 +729,27 @@ export default function ShippingCalculatorContent({
               <div className="mt-8 text-center">
                 <button
                   onClick={handleCalculate}
-                  disabled={loading}
+                  disabled={
+                    loading ||
+                    routeLoading ||
+                    !fromCountry ||
+                    !toZone ||
+                    countries.length === 0
+                  }
                   className="bg-primary text-white py-4 px-12 rounded-lg hover:bg-[#087F4F] transition-colors font-bold text-lg disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
                 >
                   {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {loading ? "Calculating..." : "Get Shipping Rates"}
+                  {loading ? "Loading price chart..." : "Get Price Chart"}
                 </button>
               </div>
 
               {/* Results */}
+              {notice && !error && (
+                <div className="mt-8 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-center">
+                  {notice}
+                </div>
+              )}
+
               {error && (
                 <div className="mt-8 bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-center">
                   {error}
@@ -380,7 +762,7 @@ export default function ShippingCalculatorContent({
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                       <h4 className="text-xl font-bold text-[#12352A]">
                         {quote.from?.name || getCountryName(fromCountry)} →{" "}
-                        {quote.to?.name || getZoneName(toZone)}
+                        {selectedDestinationLabel || quote.to?.name || ""}
                       </h4>
                       <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full">
                         {quote.weightKg} kg • {quote.tierLabel}
@@ -388,9 +770,9 @@ export default function ShippingCalculatorContent({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {sortedRates.map((rate) => (
+                      {sortedRates.map((rate, index) => (
                         <div
-                          key={rate.name}
+                          key={`${rate.name}-${index}`}
                           className="p-4 bg-white rounded-lg border border-gray-200 flex flex-col gap-3"
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -434,42 +816,66 @@ export default function ShippingCalculatorContent({
               )}
 
               {/* Full rate chart for the selected route */}
-              {priceData && priceData.rate?.length > 0 && (
+              {routeCharts.length > 0 && (
                 <div className="mt-8">
                   <h4 className="text-lg font-bold text-[#12352A] mb-3">
                     Full rate chart
                   </h4>
                   <div className="space-y-4">
-                    {priceData.rate.map((r, idx) => {
-                      const tiers = Object.entries(r.price || {}).filter(
-                        ([, value]) =>
-                          typeof value === "number" && Number(value) > 0
-                      );
-                      if (tiers.length === 0) return null;
+                    {routeCharts.map((chart, chartIndex) => {
+                      const chartFrom =
+                        getRefName(chart.from) || getCountryName(fromCountry);
+                      const chartTo =
+                        getRefName(chart.to) ||
+                        zoneNameById.get(selectedZoneId) ||
+                        selectedDestinationLabel ||
+                        "";
+                      const chartRates = Array.isArray(chart.rate)
+                        ? chart.rate
+                        : [];
 
                       return (
                         <div
-                          key={`${r.name}-${idx}`}
+                          key={chart._id || `chart-${chartIndex}`}
                           className="p-4 bg-white rounded-lg border border-gray-200"
                         >
-                          <div className="font-bold text-[#12352A] capitalize mb-3">
-                            {r.name}
+                          <div className="font-bold text-[#12352A] mb-3">
+                            {chartFrom} → {chartTo}
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-                            {tiers.map(([key, value]) => (
+
+                          {chartRates.map((r, idx) => {
+                            const tiers = Object.entries(r.price || {}).filter(
+                              ([, value]) =>
+                                typeof value === "number" && Number(value) > 0
+                            );
+                            if (tiers.length === 0) return null;
+
+                            return (
                               <div
-                                key={key}
-                                className="p-2 bg-gray-50 rounded flex items-center justify-between gap-2"
+                                key={`${r.name}-${idx}`}
+                                className="mb-4 last:mb-0"
                               >
-                                <div className="font-medium text-gray-600">
-                                  {weightTierLabel(key)}
+                                <div className="font-bold text-[#12352A] capitalize mb-3">
+                                  {r.name}
                                 </div>
-                                <div className="font-bold text-[#12352A]">
-                                  ${Number(value).toFixed(3)}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+                                  {tiers.map(([key, value]) => (
+                                    <div
+                                      key={key}
+                                      className="p-2 bg-gray-50 rounded flex items-center justify-between gap-2"
+                                    >
+                                      <div className="font-medium text-gray-600">
+                                        {weightTierLabel(key)}
+                                      </div>
+                                      <div className="font-bold text-[#12352A]">
+                                        ${Number(value).toFixed(3)}
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
-                            ))}
-                          </div>
+                            );
+                          })}
                         </div>
                       );
                     })}

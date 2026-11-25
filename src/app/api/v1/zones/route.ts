@@ -50,8 +50,10 @@ export async function GET(req: NextRequest) {
       const query: any = {};
 
       if (typeof isActiveParam === "string") {
-        if (isActiveParam.toLowerCase() === "true") query.isActive = true;
-        else if (isActiveParam.toLowerCase() === "false") query.isActive = false;
+        if (isActiveParam.toLowerCase() === "true")
+          query.isActive = { $ne: false };
+        else if (isActiveParam.toLowerCase() === "false")
+          query.isActive = false;
       }
 
       if (name) query.name = { $regex: name, $options: "i" };

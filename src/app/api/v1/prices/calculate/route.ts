@@ -47,6 +47,22 @@ interface ZoneLean {
   name?: string;
   code?: string;
   isActive?: boolean;
+  countryIds?: unknown[];
+}
+
+function zoneContainsCountry(
+  zone: ZoneLean | null,
+  countryId: Types.ObjectId
+): boolean {
+  if (!zone || !Array.isArray(zone.countryIds)) return false;
+  return zone.countryIds.some((id) => String(id) === String(countryId));
+}
+
+interface DestinationLean {
+  _id: unknown;
+  name?: string;
+  code?: string;
+  isActive?: boolean;
 }
 
 interface PriceLean {
@@ -87,7 +103,17 @@ export const POST = createRateLimitedHandler(
       }
 
       const fromCountryId = body.fromCountryId ?? body.from;
-      const toZoneId = body.toZoneId ?? body.to;
+      const rawToZoneId = body.toZoneId ?? body.to;
+      const rawToCountryId = body.toCountryId;
+      const toZoneId =
+        typeof rawToZoneId === "string" && Types.ObjectId.isValid(rawToZoneId)
+          ? rawToZoneId
+          : "";
+      const toCountryId =
+        typeof rawToCountryId === "string" &&
+        Types.ObjectId.isValid(rawToCountryId)
+          ? rawToCountryId
+          : "";
       const rawWeight = Number(body.weight);
       const rateName =
         typeof body.rateName === "string" && body.rateName.trim()
@@ -104,10 +130,10 @@ export const POST = createRateLimitedHandler(
           req,
         });
       }
-      if (typeof toZoneId !== "string" || !Types.ObjectId.isValid(toZoneId)) {
+      if (!toZoneId && !toCountryId) {
         return errorResponse({
           status: 400,
-          message: "Valid toZoneId is required",
+          message: "Valid toCountryId or toZoneId is required",
           req,
         });
       }
@@ -127,36 +153,87 @@ export const POST = createRateLimitedHandler(
       }
 
       const weight = Math.round(rawWeight);
-      const cacheKey = `prices:calc:${fromCountryId}:${toZoneId}`;
+      const cacheKey = `prices:calc:${fromCountryId}:${toZoneId || "-"}:${
+        toCountryId || "-"
+      }`;
 
       const looked = await withTtlCache<{
-        origin: {
-          _id: unknown;
-          name?: string;
-          code?: string;
-          isActive?: boolean;
-        } | null;
-        zone: {
-          _id: unknown;
-          name?: string;
-          code?: string;
-          isActive?: boolean;
-        } | null;
+        origin: OriginLean | null;
+        destination: DestinationLean | null;
+        zone: ZoneLean | null;
         price: { rate?: RateRow[] } | null;
       }>(cacheKey, REF_TTL_MS, async () => {
-        const [originDoc, zoneDoc, priceDoc] = (await Promise.all([
-          Country.findById(new Types.ObjectId(fromCountryId)).lean(),
-          Zone.findById(new Types.ObjectId(toZoneId)).lean(),
-          Price.findOne({
-            from: new Types.ObjectId(fromCountryId),
-            to: new Types.ObjectId(toZoneId),
-            isActive: true,
-          }).lean(),
+        const fromOid = new Types.ObjectId(fromCountryId);
+        const zoneOid = toZoneId ? new Types.ObjectId(toZoneId) : null;
+        const countryOid = toCountryId
+          ? new Types.ObjectId(toCountryId)
+          : null;
+
+        const [originDoc, zoneDoc, countryDoc] = (await Promise.all([
+          Country.findById(fromOid).lean(),
+          zoneOid ? Zone.findById(zoneOid).lean() : Promise.resolve(null),
+          countryOid ? Country.findById(countryOid).lean() : Promise.resolve(null),
         ])) as unknown as [
           OriginLean | null,
           ZoneLean | null,
-          PriceLean | null,
+          OriginLean | null,
         ];
+
+        let destinationDoc: DestinationLean | null = null;
+        let effectiveZone: ZoneLean | null = zoneDoc;
+        let priceDoc: PriceLean | null = null;
+
+        if (countryOid) {
+          if (countryDoc) {
+            // Older charts may store the destination country directly.
+            priceDoc = (await Price.findOne({
+              from: fromOid,
+              to: countryOid,
+              isActive: { $ne: false },
+            }).lean()) as PriceLean | null;
+
+            // Current charts store the destination zone; map the selected
+            // country to the zone that contains it.
+            if (!priceDoc) {
+              if (!zoneContainsCountry(effectiveZone, countryOid)) {
+                effectiveZone = (await Zone.findOne({
+                  countryIds: countryOid,
+                  isActive: { $ne: false },
+                }).lean()) as ZoneLean | null;
+              }
+              if (effectiveZone) {
+                priceDoc = (await Price.findOne({
+                  from: fromOid,
+                  to: effectiveZone._id,
+                  isActive: { $ne: false },
+                }).lean()) as PriceLean | null;
+              }
+            }
+
+            destinationDoc = countryDoc;
+          }
+        } else if (zoneOid && zoneDoc) {
+          priceDoc = (await Price.findOne({
+            from: fromOid,
+            to: zoneOid,
+            isActive: { $ne: false },
+          }).lean()) as PriceLean | null;
+          destinationDoc = zoneDoc;
+        } else if (zoneOid) {
+          // Legacy charts may have stored a country ID in the `to` field even
+          // though the current model expects a zone.
+          const legacyCountry = (await Country.findById(
+            zoneOid
+          ).lean()) as OriginLean | null;
+          if (legacyCountry) {
+            priceDoc = (await Price.findOne({
+              from: fromOid,
+              to: zoneOid,
+              isActive: { $ne: false },
+            }).lean()) as PriceLean | null;
+            destinationDoc = legacyCountry;
+          }
+        }
 
         return {
           origin: originDoc
@@ -167,12 +244,20 @@ export const POST = createRateLimitedHandler(
                 isActive: originDoc.isActive,
               }
             : null,
-          zone: zoneDoc
+          destination: destinationDoc
             ? {
-                _id: zoneDoc._id,
-                name: zoneDoc.name,
-                code: zoneDoc.code,
-                isActive: zoneDoc.isActive,
+                _id: destinationDoc._id,
+                name: destinationDoc.name,
+                code: destinationDoc.code,
+                isActive: destinationDoc.isActive,
+              }
+            : null,
+          zone: effectiveZone
+            ? {
+                _id: effectiveZone._id,
+                name: effectiveZone.name,
+                code: effectiveZone.code,
+                isActive: effectiveZone.isActive,
               }
             : null,
           price: priceDoc
@@ -190,10 +275,12 @@ export const POST = createRateLimitedHandler(
           req,
         });
       }
-      if (!looked.zone) {
+      if (!looked.destination) {
         return errorResponse({
           status: 404,
-          message: "Destination zone not found",
+          message: toCountryId
+            ? "Destination country not found"
+            : "Destination zone not found",
           req,
         });
       }
@@ -204,10 +291,19 @@ export const POST = createRateLimitedHandler(
           req,
         });
       }
-      if (looked.zone.isActive === false) {
+      if (looked.zone && looked.zone.isActive === false) {
         return errorResponse({
           status: 400,
           message: "This destination zone is currently unavailable",
+          req,
+        });
+      }
+      if (looked.destination.isActive === false) {
+        return errorResponse({
+          status: 400,
+          message: toCountryId
+            ? "This destination country is currently unavailable"
+            : "This destination zone is currently unavailable",
           req,
         });
       }
@@ -288,9 +384,9 @@ export const POST = createRateLimitedHandler(
             code: looked.origin.code,
           },
           to: {
-            _id: looked.zone._id,
-            name: looked.zone.name,
-            code: looked.zone.code,
+            _id: looked.destination._id,
+            name: looked.destination.name,
+            code: looked.destination.code,
           },
           weight,
           weightKg: Number((weight / 1000).toFixed(3)),
