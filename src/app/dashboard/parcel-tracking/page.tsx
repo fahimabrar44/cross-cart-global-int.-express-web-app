@@ -234,6 +234,7 @@ export default function ParcelTrackingPage() {
       country: "",
     },
     timestamp: new Date().toISOString().slice(0, 16),
+    estimatedDelivery: "",
   });
 
   // Check permissions
@@ -354,6 +355,7 @@ export default function ParcelTrackingPage() {
           location: updateTrack.location,
           updatedBy: user?.id || null,
           timestamp: updateTrack.timestamp || undefined,
+          estimatedDelivery: updateTrack.estimatedDelivery || undefined,
         }),
       });
 
@@ -371,6 +373,7 @@ export default function ParcelTrackingPage() {
             country: "",
           },
           timestamp: new Date().toISOString().slice(0, 16),
+          estimatedDelivery: "",
         });
         loadTracks();
       } else {
@@ -425,6 +428,9 @@ export default function ParcelTrackingPage() {
         country: "",
       },
       timestamp: new Date().toISOString().slice(0, 16),
+      estimatedDelivery: track.estimatedDelivery
+        ? new Date(track.estimatedDelivery).toISOString().slice(0, 10)
+        : "",
     });
     setIsAddHistoryModalOpen(true);
   };
@@ -1074,6 +1080,17 @@ export default function ParcelTrackingPage() {
                 value={updateTrack.timestamp}
                 onChange={(e) =>
                   setUpdateTrack({ ...updateTrack, timestamp: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="estimatedDeliveryUpdate">Estimated Delivery</Label>
+              <Input
+                id="estimatedDeliveryUpdate"
+                type="date"
+                value={updateTrack.estimatedDelivery}
+                onChange={(e) =>
+                  setUpdateTrack({ ...updateTrack, estimatedDelivery: e.target.value })
                 }
               />
             </div>
