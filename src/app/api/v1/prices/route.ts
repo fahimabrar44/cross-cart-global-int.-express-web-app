@@ -261,35 +261,41 @@ export async function GET(req: NextRequest) {
         }>(cacheKey, REF_TTL_MS, loadPrices);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prices = result.prices as any[];
+    const storedPrices = result.prices as any[];
 
     // For public / API-key consumers apply profit % then fuel surcharge onto
     // every rate field so the returned values are the final chargeable prices.
-    // Admins & moderators keep the base (actual) rates.
-    if (!isInternal) {
-      prices.forEach((doc) => {
-        (doc.rate || []).forEach(
-          (r: {
-            profitPercentage?: number;
-            fuel?: number;
-            price?: Record<string, number>;
-          }) => {
-            const profit = Number(r.profitPercentage) || 0;
-            const fuel = Number(r.fuel) || 0;
-            if (r.price && typeof r.price === "object") {
+    // Admins & moderators keep the base (actual) rates. Build new objects so
+    // the cached response is never mutated.
+    const prices = isInternal
+      ? storedPrices
+      : storedPrices.map((doc) => ({
+          ...doc,
+          rate: (doc.rate || []).map(
+            (r: {
+              profitPercentage?: number;
+              fuel?: number;
+              price?: Record<string, number>;
+            }) => {
+              if (!r.price || typeof r.price !== "object") return r;
+
+              const profit = Number(r.profitPercentage) || 0;
+              const fuel = Number(r.fuel) || 0;
+              const price: Record<string, number> = {};
+
               Object.keys(r.price).forEach((tier) => {
                 const base = Number(r.price?.[tier]) || 0;
                 // Match the /prices/calculate formula:
                 //   base * (1 + fuel/100) * (1 + profit%/100)
-                r.price![tier] = Number(
+                price[tier] = Number(
                   (base * (1 + fuel / 100) * (1 + profit / 100)).toFixed(3)
                 );
               });
+
+              return { ...r, price };
             }
-          }
-        );
-      });
-    }
+          ),
+        }));
 
     return successResponse({
       status: 200,

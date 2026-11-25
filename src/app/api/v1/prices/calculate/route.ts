@@ -5,6 +5,7 @@ import { Zone } from "@/server/models/Zone.model";
 import { successResponse, errorResponse } from "@/server/common/response";
 import { verifyApiKeyIfProvided } from "@/server/common/apiKeyAuth";
 import { createRateLimitedHandler } from "@/server/common/apiWrapper";
+import { exactMatchRegex } from "@/server/common/regex";
 import { Types } from "mongoose";
 import { withTtlCache } from "@/server/services/referenceCache";
 import {
@@ -69,6 +70,61 @@ interface PriceLean {
   rate?: RateRow[];
 }
 
+/** Accept a raw ID, `{ _id }` object, or a trimmed string. */
+function extractIdCandidate(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (value && typeof value === "object") {
+    const ref = value as { _id?: unknown; id?: unknown };
+    if (typeof ref._id === "string") return ref._id.trim();
+    if (typeof ref.id === "string") return ref.id.trim();
+  }
+  return "";
+}
+
+async function resolveCountryId(value: unknown): Promise<string> {
+  const candidate = extractIdCandidate(value);
+  if (!candidate) return "";
+  if (Types.ObjectId.isValid(candidate)) return candidate;
+
+  const rx = exactMatchRegex(candidate);
+  const country = (await Country.findOne({
+    $or: [{ name: rx }, { code: rx }],
+  })
+    .select("_id")
+    .lean()) as { _id: unknown } | null;
+
+  return country ? String(country._id) : "";
+}
+
+async function resolveZoneId(value: unknown): Promise<string> {
+  const candidate = extractIdCandidate(value);
+  if (!candidate) return "";
+  if (Types.ObjectId.isValid(candidate)) return candidate;
+
+  const rx = exactMatchRegex(candidate);
+  const zone = (await Zone.findOne({ $or: [{ name: rx }, { code: rx }] })
+    .select("_id")
+    .lean()) as { _id: unknown } | null;
+
+  return zone ? String(zone._id) : "";
+}
+
+async function resolveFirstCountryId(...values: unknown[]): Promise<string> {
+  for (const value of values) {
+    const id = await resolveCountryId(value);
+    if (id) return id;
+  }
+  return "";
+}
+
+async function resolveFirstZoneId(...values: unknown[]): Promise<string> {
+  for (const value of values) {
+    const id = await resolveZoneId(value);
+    if (id) return id;
+  }
+  return "";
+}
+
 /**
  * POST /api/v1/prices/calculate
  *
@@ -102,38 +158,56 @@ export const POST = createRateLimitedHandler(
         });
       }
 
-      const fromCountryId = body.fromCountryId ?? body.from;
-      const rawToZoneId = body.toZoneId ?? body.to;
-      const rawToCountryId = body.toCountryId;
-      const toZoneId =
-        typeof rawToZoneId === "string" && Types.ObjectId.isValid(rawToZoneId)
-          ? rawToZoneId
-          : "";
-      const toCountryId =
-        typeof rawToCountryId === "string" &&
-        Types.ObjectId.isValid(rawToCountryId)
-          ? rawToCountryId
-          : "";
+      // Accept IDs as well as names/codes from older clients. The public
+      // calculator sends IDs, but tolerating names makes the endpoint resilient
+      // to cached bundles and external API consumers.
+      const fromCountryId = await resolveFirstCountryId(
+        body.fromCountryId,
+        body.from,
+        body.fromCountry,
+        body.fromCountryName,
+        body.fromName
+      );
+      let toCountryId = await resolveFirstCountryId(
+        body.toCountryId,
+        body.toCountry,
+        body.toCountryName
+      );
+      const toZoneId = await resolveFirstZoneId(
+        body.toZoneId,
+        body.to,
+        body.toZone,
+        body.toCountryZoneId,
+        body.toZoneName
+      );
+
+      // `to` may be a country name/code in older payloads.
+      if (!toCountryId && !toZoneId) {
+        toCountryId = await resolveFirstCountryId(
+          body.to,
+          body.toZone,
+          body.toCountryZoneId
+        );
+      }
+
       const rawWeight = Number(body.weight);
       const rateName =
         typeof body.rateName === "string" && body.rateName.trim()
           ? body.rateName.trim()
           : undefined;
 
-      if (
-        typeof fromCountryId !== "string" ||
-        !Types.ObjectId.isValid(fromCountryId)
-      ) {
+      if (!fromCountryId) {
         return errorResponse({
           status: 400,
-          message: "Valid fromCountryId is required",
+          message: "Valid fromCountryId (or country name/code) is required",
           req,
         });
       }
       if (!toZoneId && !toCountryId) {
         return errorResponse({
           status: 400,
-          message: "Valid toCountryId or toZoneId is required",
+          message:
+            "Valid toCountryId/toZoneId (or destination name/code) is required",
           req,
         });
       }

@@ -104,6 +104,10 @@ function getId(value: unknown): string {
   return "";
 }
 
+function isObjectId(value: string): boolean {
+  return /^[a-f0-9]{24}$/i.test(value);
+}
+
 function getRefName(value: unknown): string {
   if (value && typeof value === "object") {
     const ref = value as { name?: unknown };
@@ -433,6 +437,28 @@ export default function ShippingCalculatorContent({
       return;
     }
 
+    const fromCountryLabel =
+      countries.find((country) => country._id === fromCountry)?.name || "";
+    const toCountryLabel = toCountryId
+      ? countries.find((country) => country._id === toCountryId)?.name || ""
+      : "";
+    const zoneLabel = selectedZoneId
+      ? zoneNameById.get(selectedZoneId) || ""
+      : "";
+
+    const fromQuery = isObjectId(fromCountry)
+      ? `from=${fromCountry}`
+      : `fromName=${encodeURIComponent(fromCountryLabel || fromCountry)}`;
+    // Prefer the selected country: the server resolves it to the correct zone,
+    // so the chart still loads if the client-side zone mapping is stale.
+    const destinationQuery = toCountryId
+      ? isObjectId(toCountryId)
+        ? `toCountryId=${toCountryId}`
+        : `toName=${encodeURIComponent(toCountryLabel || toCountryId)}`
+      : isObjectId(chartDestination)
+        ? `to=${chartDestination}`
+        : `toName=${encodeURIComponent(zoneLabel || chartDestination)}`;
+
     const parsedKg = Number(weightKg);
     const weightValid =
       Number.isFinite(parsedKg) && parsedKg > 0 && parsedKg <= MAX_WEIGHT_KG;
@@ -440,7 +466,7 @@ export default function ShippingCalculatorContent({
     setLoading(true);
     try {
       const chartPromise = getRequestSend<PriceData[]>(
-        `${ROOT_API}prices?from=${fromCountry}&to=${chartDestination}&isActive=true&limit=200`
+        `${ROOT_API}prices?${fromQuery}&${destinationQuery}&isActive=true&limit=200`
       );
 
       let quoteResponse: {
@@ -461,8 +487,15 @@ export default function ShippingCalculatorContent({
             undefined,
             {
               fromCountryId: fromCountry,
-              ...(selectedZoneId ? { toZoneId: selectedZoneId } : {}),
-              ...(toCountryId ? { toCountryId } : {}),
+              ...(fromCountryLabel
+                ? { fromCountryName: fromCountryLabel }
+                : {}),
+              ...(selectedZoneId
+                ? { toZoneId: selectedZoneId, toZoneName: zoneLabel }
+                : {}),
+              ...(toCountryId
+                ? { toCountryId, toCountryName: toCountryLabel }
+                : {}),
               weight: Math.round(parsedKg * 1000),
             }
           ),

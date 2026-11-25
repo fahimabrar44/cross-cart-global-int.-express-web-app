@@ -7,9 +7,17 @@ const store = new Map<string, CacheEntry>();
 
 const clone = <T>(value: T): T => {
   try {
-    return structuredClone(value);
+    // JSON round-trip first: it respects BSON ObjectId.toJSON() (hex string)
+    // and Date.toJSON() (ISO string). structuredClone turns ObjectId instances
+    // into `{ buffer: ... }` plain objects, which broke every cached public API
+    // response (country/zone IDs arrived on the client as objects).
+    return JSON.parse(JSON.stringify(value)) as T;
   } catch {
-    return Array.isArray(value) ? ([...value] as unknown as T) : value;
+    try {
+      return structuredClone(value);
+    } catch {
+      return Array.isArray(value) ? ([...value] as unknown as T) : value;
+    }
   }
 };
 
